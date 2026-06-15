@@ -51,8 +51,13 @@ jobs:
 
               # 4. Atualizar symlink de forma atômica para a pasta de development
               echo "🔗 Atualizando link simbólico de DEV..."
-              ln -sfn "$NEW_RELEASE" "$APP_DIR/current_tmp"
-              mv -Tf "$APP_DIR/current_tmp" "$APP_DIR/current"
+              
+              # Se current for uma pasta real, remove
+              if [ -d "$APP_DIR/current" ] && [ ! -L "$APP_DIR/current" ]; then
+                  rm -rf "$APP_DIR/current"
+              fi
+              
+              ln -sfn "$NEW_RELEASE" "$APP_DIR/current"
 
               echo "🔗 DEV apontando para $NEW_RELEASE"
 
