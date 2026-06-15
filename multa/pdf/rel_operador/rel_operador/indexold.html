@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<style type="text/css">
+<!--
+.style12 {color: #0000CC}
+.style13 {font-weight: bold}
+.style9 {	color: #0000CC;
+	font-weight: bold;
+}
+-->
+</style>
+<head>
+<title>Vigban</title>
+<meta http-equiv="Content-Type" content="text/html">
+<link rel="shortcut icon" href="favicon-16.png" />
+<link href="mainstyle.css" rel="stylesheet" type="text/css">
+</head>
+</head>
+<body>
+<div id="page">
+	<div class="header">
+		<a href="index.html"><img src="logo.gif" width="233" height="71" border="0"></a><br>
+</div>
+	<div class="message">
+		Bem vindo </div>
+
+<div class="content">
+		<h4><span class="style9">Escolha um per&iacute;odo para a emiss&atilde;o do relat&oacute;rio de liga&ccedil;oes:</span></h4>
+        <form action="relatorio.php" method="POST" name="formulario" >
+          <table width="491" border="0" align="left">
+            <tr>
+              <td colspan="2"><p class="style13"><span class="style12">Informe 
+                o per&iacute;odo desejado </span>:</p>
+                  <p>
+                    <select name="dia">
+                      <option value="dia">Dia</option>
+                      <option value="01">01</option>
+                      <option value="02">02</option>
+                      <option value="03">03</option>
+                      <option value="04">04</option>
+                      <option value="05">05</option>
+                      <option value="06">06</option>
+                      <option value="07">07</option>
+                      <option value="08">08</option>
+                      <option value="09">09</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                      <option value="13">13</option>
+                      <option value="14">14</option>
+                      <option value="15">15</option>
+                      <option value="16">16</option>
+                      <option value="17">17</option>
+                      <option value="18">18</option>
+                      <option value="19">19</option>
+                      <option value="20">20</option>
+                      <option value="21">21</option>
+                      <option value="22">22</option>
+                      <option value="23">23</option>
+                      <option value="24">24</option>
+                      <option value="25">25</option>
+                      <option value="26">26</option>
+                      <option value="27">27</option>
+                      <option value="28">28</option>
+                      <option value="29">29</option>
+                      <option value="30">30</option>
+                      <option value="31">31</option>
+                    </select>
+                    <select name ="mes">
+                      <option value="mes">Mes</option>
+                      <option value="01">Janeiro</option>
+                      <option value="02">Fevereiro</option>
+                      <option value="03">Marco</option>
+                      <option value="04">Abril</option>
+                      <option value="05">Maio</option>
+                      <option value="06">Junho</option>
+                      <option value="07">Julho</option>
+                      <option value="08">Agosto</option>
+                      <option value="09">Setembro</option>
+                      <option value="10">Outubro</option>
+                      <option value="11">Novembro</option>
+                      <option value="12">Dezembro</option>
+                    </select>
+                    <select name="ano" onBlur="data()">
+                      <option value="ano" selected>Ano</option>
+                      <option value="2007">2007</option>
+                      <option value="2008">2008</option>
+                      <option value="2009">2009</option>
+                      <option value="2010">2010</option>
+                      <option value="2011">2011</option>
+                      <option value="2012">2012</option>
+                      <option value="2013">2013</option>
+                    </select>
+                    at&eacute;
+                    <select name="diaf" id="diaf">
+                      <option value="dia">Dia</option>
+                      <option value="01">01</option>
+                      <option value="02">02</option>
+                      <option value="03">03</option>
+                      <option value="04">04</option>
+                      <option value="05">05</option>
+                      <option value="06">06</option>
+                      <option value="07">07</option>
+                      <option value="08">08</option>
+                      <option value="09">09</option>
+                      <option value="10">10</option>
+                      <option value="11">11</option>
+                      <option value="12">12</option>
+                      <option value="13">13</option>
+                      <option value="14">14</option>
+                      <option value="15">15</option>
+                      <option value="16">16</option>
+                      <option value="17">17</option>
+                      <option value="18">18</option>
+                      <option value="19">19</option>
+                      <option value="20">20</option>
+                      <option value="21">21</option>
+                      <option value="22">22</option>
+                      <option value="23">23</option>
+                      <option value="24">24</option>
+                      <option value="25">25</option>
+                      <option value="26">26</option>
+                      <option value="27">27</option>
+                      <option value="28">28</option>
+                      <option value="29">29</option>
+                      <option value="30">30</option>
+                      <option value="31">31</option>
+                    </select>
+                    <select name ="mesf" id="mesf">
+                      <option value="mes">Mes</option>
+                      <option value="01">Janeiro</option>
+                      <option value="02">Fevereiro</option>
+                      <option value="03">Marco</option>
+                      <option value="04">Abril</option>
+                      <option value="05">Maio</option>
+                      <option value="06">Junho</option>
+                      <option value="07">Julho</option>
+                      <option value="08">Agosto</option>
+                      <option value="09">Setembro</option>
+                      <option value="10">Outubro</option>
+                      <option value="11">Novembro</option>
+                      <option value="12">Dezembro</option>
+                    </select>
+                    <select name="anof" id="anof" onBlur="data()">
+                      <option value="ano" selected>Ano</option>
+                      <option value="2007">2007</option>
+                      <option value="2008">2008</option>
+                      <option value="2009">2009</option>
+                      <option value="2010">2010</option>
+                      <option value="2011">2011</option>
+                      <option value="2012">2012</option>
+                      <option value="2013">2013</option>
+                    </select>
+                    <script language="JavaScript">
+<!--
+
+function data()
+{
+dia=document.formulario.dia.value;
+mes=document.formulario.mes.value;
+ano=document.formulario.ano.value;
+
+diaf=document.formulario.diaf.value;
+mesf=document.formulario.mesf.value;
+anof=document.formulario.anof.value;
+
+if((mes=="04" || mes=="06" || mes=="09" || mes=="11")&&dia>30)
+{
+alert("Dia incorreto !!! O m&ecirc;s especificado cont&eacute;m no m&aacute;ximo 30 dias.");
+}
+
+if(ano%4==0&&mes=="02"&&dia>29)
+{
+alert("Dia incorreto !!! O m&ecirc;s especificado cont&eacute;m no m&aacute;ximo 29 dias.");
+}
+
+if(ano%4!=0&&mes=="02"&&dia>28)
+{
+alert("Dia incorreto !!! O m&ecirc;s especificado cont&eacute;m no m&aacute;ximo 28 dias.");
+}
+
+
+if((mesf=="04" || mesf=="06" || mesf=="09" || mesf=="11")&&diaf>30)
+{
+alert("Dia incorreto !!! O m&ecirc;s especificado cont&eacute;m no m&aacute;ximo 30 dias.");
+}
+
+if(anof%4==0&&mesf=="02"&&diaf>29)
+{
+alert("Dia incorreto !!! O m&ecirc;s especificado cont&eacute;m no m&aacute;ximo 29 dias.");
+}
+
+if(anof%4!=0&&mesf=="02"&&diaf>28)
+{
+alert("Dia incorreto !!! O m&ecirc;s especificado cont&eacute;m no m&aacute;ximo 28 dias.");
+}
+
+
+}
+
+//-->
+</script>
+                    <br>
+                  </p>
+            <tr>
+              <td  align="center"><div align="center">
+                <input name="action" type="submit" value="Visualizar" />
+                &nbsp;&nbsp;&nbsp;
+                <input name="action" type="submit" value="Gerar Relatorio" />
+              </div></td>
+            </tr>
+            <tr>
+              <td align="center"><div align="center"></div></td>
+            </tr>
+            <input type="hidden" name="nivel" value="<? echo $nivel; ?>">
+          </table>
+    </form>
+<br>
+		<br>
+		<br>
+		<br>
+		<br>
+		<br>
+	</div>
+</div>
+</body>
+</html>

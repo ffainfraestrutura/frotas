@@ -1,0 +1,207 @@
+<?php
+require_once __DIR__ . '/includes/autofrota_common.php';
+$autofrotaSessao = autofrotaInit();
+
+$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '0');
+$matriculaLogada = trim((string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? ''));
+
+if (!function_exists('autofrotaNomePorMatricula')) {
+    function autofrotaNomePorMatricula($matricula)
+    {
+        $matricula = trim((string) $matricula);
+
+        if ($matricula === '') {
+            return '';
+        }
+
+        $conexoes = array(
+            $GLOBALS['connBdFrota'] ?? null,
+            $GLOBALS['conn'] ?? null,
+            $GLOBALS['mysqli'] ?? null,
+            $GLOBALS['conexao'] ?? null,
+        );
+
+        foreach ($conexoes as $conexao) {
+            if ($conexao instanceof mysqli) {
+                $sql = 'SELECT nome FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1';
+                $stmt = mysqli_prepare($conexao, $sql);
+
+                if (!$stmt) {
+                    continue;
+                }
+
+                mysqli_stmt_bind_param($stmt, 's', $matricula);
+                mysqli_stmt_execute($stmt);
+                mysqli_stmt_bind_result($stmt, $nome);
+
+                $nomeEncontrado = '';
+                if (mysqli_stmt_fetch($stmt)) {
+                    $nomeEncontrado = trim((string) $nome);
+                }
+
+                mysqli_stmt_close($stmt);
+
+                if ($nomeEncontrado !== '') {
+                    return $nomeEncontrado;
+                }
+            }
+        }
+
+        return '';
+    }
+}
+
+if ($perfilLogado === '0' || $perfilLogado === '') {
+    http_response_code(403);
+    exit('Sem permissão.');
+}
+
+$usuarioLogado = autofrotaNomePorMatricula($matriculaLogada);
+if ($usuarioLogado === '') {
+    $usuarioLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['usuario'] ?? 'Usuário');
+}
+$linksPortal = [
+    [
+        'titulo' => 'Condutores',
+        'descricao' => 'Consulte e filtre a listagem de condutores.',
+        'url' => 'condutores/listagem-condutor.php',
+        'icone' => 'fa-id-card',
+    ],
+    [
+        'titulo' => 'Veículos Cadastrados',
+        'descricao' => 'Acesse os veículos cadastrados e seus filtros de gestão.',
+        'url' => 'veiculos/listagem-veiculo.php',
+        'icone' => 'fa-car',
+    ],
+    [
+        'titulo' => 'Registros de Manutenção',
+        'descricao' => 'Visualize e filtre registros de manutenção da frota.',
+        'url' => 'manutencoes/listagem-manutencao.php',
+        'icone' => 'fa-screwdriver-wrench',
+    ],
+    [
+        'titulo' => 'Multas da Frota',
+        'descricao' => 'Acompanhe, consulte e filtre as multas registradas para a frota.',
+        'url' => 'multa/multasfrota.php',
+        'icone' => 'fa-file-invoice-dollar',
+    ],
+];
+?>
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="AutoFrota" />
+    <meta name="author" content="FFA" />
+    <title>AutoFrota - Início</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
+    <style>
+        body {
+            background: linear-gradient(180deg, #f3f6fc 0%, #eef2f8 100%);
+            color: #212529;
+            font-size: 14px;
+        }
+
+        #layoutSidenav_content {
+            padding: 14px 12px 0;
+        }
+
+        .page-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .welcome-hero {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 12px 32px rgba(15, 23, 42, .08);
+        }
+
+        .welcome-hero h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .welcome-hero p {
+            font-size: 16px;
+            margin-bottom: 0;
+            color: #495057;
+        }
+
+        .portal-card {
+            height: 100%;
+            backdrop-filter: blur(2px);
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            transition: transform .15s ease, box-shadow .15s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(15, 23, 42, .08);
+            color: inherit;
+        }
+
+        .portal-icon {
+            box-shadow: inset 0 0 0 1px rgba(13, 110, 253, .14);
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e7f1ff;
+            color: #0d6efd;
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+
+<body class="sb-nav-fixed">
+    <?php autofrotaMenu(); ?>
+
+    <div id="layoutSidenav_content">
+        <main class="page-wrapper py-2">
+            <section class="welcome-hero mb-4">
+                <br>
+                <h1>Seja bem-vindo, <?= htmlspecialchars($usuarioLogado) ?>, ao Portal AutoFrota.</h1>
+                <p>Confira os módulos disponíveis e acesse rapidamente os principais recursos de
+                    operação da AutoFrota.</p>
+            </section>
+
+            <section class="row g-3" aria-label="Links disponíveis no AutoFrota">
+                <?php foreach ($linksPortal as $link): ?>
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <a class="card portal-card" href="<?= htmlspecialchars($link['url']) ?>">
+                            <div class="card-body">
+                                <span class="portal-icon"><i class="fas <?= htmlspecialchars($link['icone']) ?>"></i></span>
+                                <h2 class="h5 card-title mb-2"><?= htmlspecialchars($link['titulo']) ?></h2>
+                                <p class="card-text text-muted"><?= htmlspecialchars($link['descricao']) ?></p>
+                            </div>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </section>
+        </main>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sidebarToggle')?.addEventListener('click', function (event) {
+            event.preventDefault();
+            document.body.classList.toggle('sb-sidenav-toggled');
+        });
+    </script>
+</body>
+
+</html>

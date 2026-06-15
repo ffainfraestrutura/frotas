@@ -1,0 +1,377 @@
+<?php
+require 'fpdf.php';
+require('../../conecta.php');
+require('../../conecta2.php');
+header("Content-type: text/html; charset=utf-8");
+
+
+
+/*$link = "$_SERVER[REQUEST_URI]";
+$idaux = explode("=", $link);
+$id = $idaux[1];*/
+
+$id = $_POST['id'];
+
+//echo $id;
+//$id='2759';
+$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite= '$id';";
+$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
+
+$nome = $row['nome'];
+$cpf = $row['cpf'];
+$matricula = $row['matricula'];
+$placa = $row['placa'];
+$autoinfra = $row['autoinfra'];
+//$valor = $row['valor'];
+$dtcons = $row['dtcons'];
+
+$locadora = $row['locadora'];
+$idmulta = $row['idmulta'];
+
+/*$valordescaux = $row['valor'] * 8 / 10;
+$valordesc = sprintf('%0.2f', round($valordescaux, 2));
+$valortotal2 = $valordesc+80;
+$valortotal = sprintf('%0.2f', round($valortotal2, 2));*/
+
+if ($idmulta != '') {
+	$sql1 = "SELECT * FROM bdfrota.tbmulta where idtbmulta= '$idmulta';";
+} else {
+	$sql1 = "SELECT * FROM bdfrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
+}
+//print $sql1;
+$resultado1 = mysqli_query($conexao, $sql1) or die(mysqli_error($conexao));
+$row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
+$valor1 = $row1['valor'];
+$valdesconto1 = $row1['valdesconto'];
+$taxaadm1 = $row1['taxaadm'];
+$juros = $row1['juros'];
+$valortotal = $row1['valtotal'];
+$valparcelas = $row1['valparcelas'];
+$filial = $row1['filial'];
+$dataInfra = $row1['datainfracao'];
+$valorparcelas = $row1['valparcelas'];
+$numparcelas = $row1['numparcelas'];
+$valorparcelas = str_replace('.', ',', $valorparcelas);
+if (strpos($valorparcelas, ",") === false) {
+	$valorparcelas = $valorparcelas . ",00";
+}
+
+$dataInfra1 = explode(" ", $dataInfra);
+$dataInfra2 = explode("-", $dataInfra1[0]);
+$dataInfraf = $dataInfra2[2] . "/" . $dataInfra2[1] . "/" . $dataInfra2[0] . " " . $dataInfra1[1];
+
+if ($locadora == '') {
+	$sql2 = "SELECT idlocador FROM bdfrota.tbveiculo WHERE placa='$placa';";
+	$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
+	$locadora = $row2['idlocador'];
+}
+
+$sql2 = "SELECT cnpj, Estado FROM bdaniel.tbfilial WHERE nome='$filial'; ";
+$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
+$cnpj = $row2['cnpj'];
+$estadofilial = $row2['Estado'];
+
+if ($filial == '') {
+	$sql3 = "SELECT unidade FROM bdfrota.tbveiculo WHERE placa='$placa';";
+	$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+	$row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
+	$estadofilial = $row3['unidade'];
+}
+
+
+if ($estadofilial == 'SP') {
+	if (empty($cnpj)) {
+		$cnpj = '08.375.450/0005-02';
+	}
+
+	$cidadeass = 'SÃO PAULO/SP';
+
+} elseif ($estadofilial == 'RJ') {
+	if (empty($cnpj)) {
+		$cnpj = '08.375.450/0001-70';
+	}
+
+	$cidadeass = 'RIO DE JANEIRO/RJ';
+
+} elseif ($estadofilial == 'PR') {
+	if (empty($cnpj)) {
+		$cnpj = '08.375.450/0017-38';
+	}
+
+	$cidadeass = 'CURITIBA/PR';
+}
+
+
+
+if ($taxaadm1 == '' || $taxaadm1 == '0') {
+	if ($locadora == '2' || $locadora == '9' || $locadora == '16' || $locadora == '17' || $locadora == '19') {//movida
+		$taxaadm1 = round((0.15 * $valor1), 2);
+	} elseif ($locadora == '3' || $locadora == '4' || $locadora == '14' || $locadora == '15') {//localiza
+		$taxaadm1 = '25.00';
+	} elseif ($locadora == '6' || $locadora == '8') {
+		$taxaadm1 = round((0.2 * $valor1), 2);
+
+	}
+}
+
+//if($valortotal == ''){
+$valortotal = ($valor1 + $taxaadm1) - $valdesconto1;
+//}
+
+if ($taxaadm1 == '') {
+	$taxaadm1 = '0.00';
+}
+
+//tratando valor
+$valor1 = str_replace('.', ',', $valor1);
+$valortotal = str_replace('.', ',', $valortotal);
+$valdesconto1 = str_replace('.', ',', $valdesconto1);
+
+$taxaadm1 = str_replace('.', ',', $taxaadm1);
+
+$preco = explode(',', $valortotal);
+$centavos = $preco[1];
+$real = $preco[0];
+
+if (strlen($centavos) == 1) {
+	$valortotal = $valortotal . "0";
+}
+
+
+
+
+if (strpos($taxaadm1, ",") === false) {
+	$taxaadm1 = $taxaadm1 . ",00";
+}
+
+if (strpos($valortotal, ",") === false) {
+	$valortotal = $valortotal . ",00";
+}
+
+$hoje = date('Y-m-d');
+$datah = explode("-", $hoje);
+$ano = $datah[0];
+$mes = $datah[1];
+
+switch ($mes) {
+	case 1:
+		$mesd = 'janeiro';
+		break;
+
+	case 2:
+		$mesd = 'fevereiro';
+		break;
+
+	case 3:
+		$mesd = 'março';
+		break;
+
+	case 4:
+		$mesd = 'abril';
+		break;
+
+	case 5:
+		$mesd = 'maio';
+		break;
+
+	case 6:
+		$mesd = 'junho';
+		break;
+
+	case 7:
+		$mesd = 'julho';
+		break;
+
+	case 8:
+		$mesd = 'agosto';
+		break;
+
+	case 9:
+		$mesd = 'setembro';
+		break;
+
+	case 10:
+		$mesd = 'outubro';
+		break;
+
+	case 11:
+		$mesd = 'novembro';
+		break;
+
+	case 12:
+		$mesd = 'dezembro';
+		break;
+
+	default:
+		$mesd = '';
+}
+
+$dia = $datah[2];
+
+$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
+$resultado2a = mysqli_query($conexao, $sql2a) or die(mysqli_error($conexao));
+$row2a = mysqli_fetch_array($resultado2a, MYSQLI_BOTH);
+$idtbfuncionario = $row2a['idtbfuncionario'];
+
+//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
+$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
+$rg = $row2['rg'];
+$cpf = $row2['cpf'];
+$endereco = utf8_encode($row2['endereco']);
+$bairro = utf8_encode($row2['bairro']);
+$cidade = utf8_encode($row2['cidade']);
+$estado = $row2['estado'];
+$cep = $row2['cep'];
+$matricula = $row2['matricula'];
+
+$sql3 = "SELECT renavam, chassi FROM bdfrota.tbveiculo WHERE placa='$placa'; ";
+$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+$row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
+$chassi = $row3['chassi'];
+$renavam = $row3['renavam'];
+
+$sql4 = "SELECT numcnh FROM bdfrota.tbcnh WHERE matricula='$matricula'; ";
+$resultado4 = mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
+$row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
+$cnh = $row4['numcnh'];
+
+
+class PDF extends FPDF
+{
+	// Page header
+/*function Header()
+{
+	// Logo
+	$this->Image('../../img/logo.png',10,6,20);
+	// Arial bold 15
+	$this->SetFont('Arial','B',12);
+	// Cor de fundo
+	$this->SetFillColor(215);
+	// Line break
+	$this->Ln(0.1);
+	// Move to the right
+	$this->Cell(22);
+	// Title
+	$this->Cell(160,20,'RECIBO DE ADIANTAMENTO SALARIAL',1,1,'C','true');
+	// Line break
+	$this->Ln(2);
+}*/
+
+}
+
+// Instanciation of inherited class
+$pdf = new PDF();
+
+$pdf->AliasNbPages();
+$pdf->AddPage();
+
+$pdf->Image('../../src/images/logo.png', 10, 6, 20);
+// Arial bold 15
+$pdf->SetFont('Arial', 'B', 12);
+// Cor de fundo
+$pdf->SetFillColor(215);
+// Line break
+$pdf->Ln(0.1);
+// Move to the right
+$pdf->Cell(22);
+// Title
+$pdf->Cell(160, 20, 'RECIBO DE ADIANTAMENTO SALARIAL', 1, 1, 'C', 'true');
+// Line break
+$pdf->Ln(2);
+
+$pdf->SetFont('Arial', '', 10);
+$pdf->Cell(5);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: FFA INFRAESTRUTURA E SERVIÇOS LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
+
+$pdf->Ln(2);
+$pdf->Cell(5);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregado: $nome\nCPF: $cpf\n"), 1, 1);
+$pdf->Ln(2);
+$pdf->Cell(5);//R$ 15,62
+$pdf->MultiCell(177, 5, utf8_decode("Adiantamento Salarial para pagamento de MULTA DO VEÍCULO $placa\n\nAuto de infração: $autoinfra\nValor da multa: R$ $valor1\nValor Taxa Administração Locadora: R$ $taxaadm1\n\nValor desconto: $valdesconto1\nTotal: R$ $valortotal\nQuantidade de Parcelas: $numparcelas\nValor das Parcelas: R$ $valorparcelas\n\nDeclaro, para os devidos fins, que recebi da empresa, a título de Adiantamento Salarial para pagamento de multa, a importância de R$ $valortotal, em espécie.\nEm conformidade com o disposto no artigo 462, caput, da Consolidação das Leis do Trabalho (CLT), estou ciente de que o referido valor será integralmente descontado da minha remuneração mensal, por meio de $numparcelas parcelas de R$ $valorparcelas, a serem abatidas diretamente na folha de pagamento, até a quitação total do valor antecipado..\n\n$cidadeass, $dia de $mesd de $ano. \n\n\n\n\n______________________________________________________\n     Assinatura do Empregado\n\n\n\n\n\n"), 1, 1);
+
+// Instanciation of inherited class
+/*class PDF extends FPDF
+{
+// Page header
+function Header()
+	{
+		// Logo
+		//$this->Image('../../src/images/logo-movida.png',10,6,30);
+		// Arial bold (negrito) 11
+		$this->SetFont('Times','B',12);
+		// Cor de fundo
+		$this->SetFillColor(255);
+		// Line break (quebra de linha)
+		$this->Ln(10);
+		// Move to the right - espaçamento antes do texto começar
+		$this->Cell(10);
+		// Título
+		$this->Cell(0,10, utf8_decode('Indicação de Condutor e Declaração de Responsabilidade'),0,1,'C','false');
+		// Line break (quebra de linha)
+		$this->Ln(2);
+	}
+
+}*/
+
+$pdf->AddPage();
+
+// Logo
+//$this->Image('../../src/images/logo-movida.png',10,6,30);
+
+// Line break (quebra de linha)
+$pdf->Ln(10);
+// Move to the right - espaçamento antes do texto começar
+$pdf->Cell(10);
+
+$pdf->Image('./logo_unidasrac.PNG', 175, 10, 30, 0, 'PNG');
+
+$pdf->Ln(10);
+
+// Arial bold (negrito) 11
+$pdf->SetFont('Arial', 'B', 14);
+// Cor de fundo
+$pdf->SetFillColor(255);
+
+$pdf->Cell(15);
+// Título
+$pdf->Cell(0, 15, utf8_decode('UNIDAS LOCADORA S.A.'), 0, 1, 'L', 'false');
+// Line break (quebra de linha)
+$pdf->Ln(2);
+
+$pdf->SetFont('Arial', '', 10);
+
+$pdf->Cell(15); //espaçamento a esquerda antes do texto começar
+$pdf->MultiCell(0, 6, utf8_decode("Filial: AV RAJA GABAGLIA - 1781\n    30380-045 - BELO HORIZONTE - MG \n Telefone da Loje: 0800 771 5158"), 0, 'L');
+
+$pdf->Ln(-18);
+$pdf->Cell(100);
+$pdf->MultiCell(0, 5, utf8_decode("Inscr. CNPJ.:  45.736.131/0001-70\nInscrição Estadual: "), 0, 'J');
+
+$pdf->SetFont('Arial', 'B', 14);
+$pdf->Ln(10);
+$pdf->Cell(120);
+$pdf->MultiCell(0, 5, utf8_decode("Nota de Débito Nº"), 0, 'J');
+
+$pdf->SetFont('Arial', 'B', 13);
+$pdf->Ln(0);
+$pdf->Cell(120);
+$pdf->MultiCell(0, 5, utf8_decode("2633785 MAT"), 0, 'J');
+
+$pdf->Ln(2);
+$pdf->Cell(10);
+$pdf->MultiCell(0, 5, utf8_decode("\nCuritiba, _____de ___________ de_____"), 0, 'C');
+
+$pdf->Ln(5);
+$pdf->Cell(10);
+$pdf->MultiCell(0, 5, utf8_decode("\n_______________________________________________________________\nAssinatura do Condutor\n(Assinatura Idêntica a da CNH)"), 0, 'C');
+
+$pdf->Output();
+
+/* \n\nValor desconto: $valdesconto1*/
+?>

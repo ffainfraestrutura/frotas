@@ -1,0 +1,4 @@
+ip=127.0.0.1
+usuario=admin
+senha=2@@9@st3r1sk
+bd=cdr

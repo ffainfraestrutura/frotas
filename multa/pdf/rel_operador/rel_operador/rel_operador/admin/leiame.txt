@@ -1,0 +1,18 @@
+11-11-2009
+
+1- Configurações:
+1.1 - Para cadastrar periodos altere o arquivo config.txt,
+e coloque os periodos no seguinte formato:
+manhã=08:00-12:00  
+tarde=12:00-18:00
+noite=18:00-24:00
+
+o nome do horário deve ser escrito primeiro, e o periodo deve
+ser escrito após o sinal de "=", o horário inicial vem escrito
+primeiro e o horario final do periodo vem em seguinda após 
+o sinal"-", usado para separar os periodos.
+sempre coloque o horário areedondado e sem minutos
+para que o sistema funcione corretamente.
+No caso do horário de meia noite como horário final de um
+período, coloque o número 24:00, e como horário inicial de um período
+coloque o número 00:00.
