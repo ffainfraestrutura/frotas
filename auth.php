@@ -1,18 +1,7 @@
 <?php
-function caminhoBaseAutofrota(): string {
-    $scriptName = str_replace('\\', '/', (string) ($_SERVER['SCRIPT_NAME'] ?? ''));
-    $portalDir = '/' . basename(__DIR__);
-    $pos = strrpos($scriptName, $portalDir . '/');
-
-    if ($pos !== false) {
-        return substr($scriptName, 0, $pos + strlen($portalDir));
-    }
-
-    if (substr($scriptName, -strlen($portalDir)) === $portalDir) {
-        return $scriptName;
-    }
-
-    return $portalDir;
+function caminhoBaseAutofrota(): string
+{
+    return '/';
 }
 
 function urlAutofrota(string $path = ''): string {

@@ -1,0 +1,76 @@
+name: Deploy Development
+
+on:
+  push:
+    branches:
+      - development # ou 'master', dependendo de como se chama a sua branch principal
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy DEV via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            bash << 'DEPLOY'
+              # Interrompe o script imediatamente se qualquer comando falhar
+              set -e
+
+              # Altera os caminhos para apontar para a pasta 'dev'
+              APP_DIR="/opt/apps/frotas/dev"
+              RELEASES="$APP_DIR/releases"
+              SHARED="$APP_DIR/shared"
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              NEW_RELEASE="$RELEASES/$TIMESTAMP"
+
+              echo "🚀 Iniciando Deploy DEV $TIMESTAMP"
+
+              # 1. Garantir que a pasta de releases existe
+              mkdir -p "$RELEASES"
+
+              # 2. Clonar a branch main/master direto para a nova pasta do timestamp
+              # Alterado o parâmetro '-b' para a sua branch de development (main)
+              git clone -b development git@github.com:ffainfraestrutura/frotas.git "$NEW_RELEASE"
+
+              # Entrar na pasta do novo release e garantir permissões para o Apache/Docker
+              cd "$NEW_RELEASE"
+              chmod -R 755 "$NEW_RELEASE"
+
+              # 3. Copiar .env de development (se existir no shared de development)
+              if [ -f "$SHARED/.env" ]; then
+                  cp "$SHARED/.env" .env
+                  echo "📄 Arquivo .env copiado do SHARED de Development."
+              else
+                  echo "⚠️ Aviso: .env não encontrado em $SHARED. Certifique-se de que as configs de DEV estão lá."
+              fi
+
+              # 4. Atualizar symlink de forma atômica para a pasta de development
+              echo "🔗 Atualizando link simbólico de DEV..."
+              
+              # Se current for uma pasta real, remove
+              if [ -d "$APP_DIR/current" ] && [ ! -L "$APP_DIR/current" ]; then
+                  rm -rf "$APP_DIR/current"
+              fi
+              
+              ln -sfn "$NEW_RELEASE" "$APP_DIR/current"
+
+              echo "🔗 DEV apontando para $NEW_RELEASE"
+
+              # 5. Subir containers de Development na pasta da Stack
+              # Alterado para rodar apenas os containers de development: 'apache' e 'mysql'
+              echo "🐳 Atualizando os containers Docker de development..."
+              cd "$APP_DIR"
+              docker compose restart
+
+              # 6. Limpar releases antigas (mantém as 5 últimas de development)
+              echo "🧹 Limpando histórico antigo de DEV..."
+              cd "$RELEASES"
+              ls -1dt * 2>/dev/null | tail -n +6 | xargs rm -rf 2>/dev/null || true
+
+              echo "✅ Deploy DEV finalizado com sucesso!"
+            DEPLOY
