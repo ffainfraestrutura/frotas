@@ -2,8 +2,8 @@
 /**
  * Configurações de conexão com o banco do portal Autofrotas.
  */
-$servidor = '10.17.0.2';
-$usuarioDb = 'blvp';
+$servidor = 'localhost';
+$usuarioDb = 'admin';
 $senhaDb = '@F3r7n6c2';
 $banco = 'bdautofrotas';
 
