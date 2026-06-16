@@ -79,6 +79,34 @@ function nuloSeVazio(?string $valor): ?string
     return $valor === '' ? null : $valor;
 }
 
+function nuloSeVazioNumerico(string $valor): ?int
+{
+    $valor = trim($valor);
+    if ($valor === '') {
+        return null;
+    }
+
+    return (int) $valor;
+}
+
+function simNaoParaInt(string $valor): ?int
+{
+    $valor = strtoupper(trim($valor));
+    if ($valor === 'SIM') {
+        return 1;
+    }
+    if ($valor === 'NÃO' || $valor === 'NAO' || $valor === 'NãO' || $valor === 'NÃo') {
+        return 0;
+    }
+    if ($valor === '1') {
+        return 1;
+    }
+    if ($valor === '0') {
+        return 0;
+    }
+    return null;
+}
+
 function salvarUploadVeiculo(string $campo, string $prefixo, string $placa): string
 {
     if (empty($_FILES[$campo]['tmp_name']) || !is_uploaded_file($_FILES[$campo]['tmp_name'])) {
@@ -173,48 +201,48 @@ $dados = [
     'categoria' => nuloSeVazio(campoPost('categoria')),
     'tipo' => nuloSeVazio(campoPost('tipoveic', campoPost('classificacao'))),
     'cor' => campoPost('cor'),
-    'zerokm' => nuloSeVazio(campoPost('zerokm')),
+    'zerokm' => simNaoParaInt(campoPost('zerokm')),
     'anofabr' => campoPost('anofabric'),
-    'anomodelo' => campoPost('anomodelo'),
-    'velocmax' => campoPost('velmax'),
+    'anomodelo' => nuloSeVazioNumerico(campoPost('anomodelo')),
+    'velocmax' => nuloSeVazioNumerico(campoPost('velmax')),
     'renavam' => campoPost('renavam'),
     'chassi' => strtoupper(campoPost('chassi')),
     'nummotor' => campoPost('nummotor'),
     'combustivel' => campoPost('combustivel'),
-    'tanque' => campoPost('tanque'),
+    'tanque' => nuloSeVazio(campoPost('tanque')),
     'motorizacao' => campoPost('motorizacao'),
-    'nportas' => campoPost('nportas'),
-    'npassageiros' => campoPost('npassageiros'),
-    'calibragem' => campoPost('calibragem'),
-    'aro' => campoPost('aro'),
-    'qtdpneus' => campoPost('qtdpneus'),
-    'qtdestepe' => campoPost('qtdestepes'),
-    'qtdeixos' => campoPost('qtdeixos'),
-    'gnv' => campoPost('gnv'),
-    'gps' => campoPost('gps'),
-    'tagpedagio' => campoPost('tagpedagio'),
+    'nportas' => nuloSeVazioNumerico(campoPost('nportas')),
+    'npassageiros' => nuloSeVazioNumerico(campoPost('npassageiros')),
+    'calibragem' => nuloSeVazio(campoPost('calibragem')),
+    'aro' => nuloSeVazioNumerico(campoPost('aro')),
+    'qtdpneus' => nuloSeVazioNumerico(campoPost('qtdpneus')),
+    'qtdestepe' => nuloSeVazioNumerico(campoPost('qtdestepes')),
+    'qtdeixos' => nuloSeVazioNumerico(campoPost('qtdeixos')),
+    'gnv' => simNaoParaInt(campoPost('gnv')),
+    'gps' => simNaoParaInt(campoPost('gps')),
+    'tagpedagio' => simNaoParaInt(campoPost('tagpedagio')),
     'status' => campoPost('status', '1'),
-    'hodometro' => str_replace('.', '', campoPost('hodometro')),
+    'hodometro' => nuloSeVazioNumerico(str_replace('.', '', campoPost('hodometro'))),
     'tipoposse' => campoPost('tipoposse'),
-    'idlocador' => campoPost('locador'),
+    'idlocador' => nuloSeVazioNumerico(campoPost('locador')),
     'statusvel' => campoPost('statusvel'),
     'tipovel' => campoPost('tipovel'),
     'situacao' => campoPost('situacao'),
-    'hodometroinicial' => campoPost('hodometroinicial'),
+    'hodometroinicial' => nuloSeVazioNumerico(campoPost('hodometroinicial')),
     'datamovimentacao' => nuloSeVazio(montarDataHora(campoPost('datamovimentacao'), campoPost('horamovimentacao'))),
     'matcond' => campoPost('matcond'),
     'dtentrega' => nuloSeVazio(campoPost('dtentrega')),
     'dtdevolucao' => nuloSeVazio(campoPost('dtdevolucao')),
-    'gpsemp' => campoPost('gpsemp'),
-    'doccrlv' => campoPost('doccrlv'),
-    'airbag' => campoPost('airbag'),
-    'rack' => campoPost('rack'),
-    'blindagem' => campoPost('blindagem'),
+    'gpsemp' => simNaoParaInt(campoPost('gpsemp')),
+    'doccrlv' => simNaoParaInt(campoPost('doccrlv')),
+    'airbag' => simNaoParaInt(campoPost('airbag')),
+    'rack' => simNaoParaInt(campoPost('rack')),
+    'blindagem' => simNaoParaInt(campoPost('blindagem')),
     'oficina' => campoPost('oficina'),
     'ncontloc' => campoPost('ncontloc'),
     'dtdisponivelloc' => nuloSeVazio(campoPost('dtdisponivelloc')),
     'dtdevolucaoloc' => nuloSeVazio(campoPost('dtdevolucaoloc')),
-    'valaquisicao' => normalizarNumeroBr(campoPost('valaquisicao')),
+    'valaquisicao' => nuloSeVazio(normalizarNumeroBr(campoPost('valaquisicao'))),
     'obsveiculo' => campoPost('obsveiculo'),
     'baseffa' => campoPost('baseffa'),
     'unidade' => campoPost('unidade'),
