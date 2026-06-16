@@ -21,9 +21,20 @@ if (!function_exists('autofrotaNomePorMatricula')) {
             $GLOBALS['conexao'] ?? null,
         );
 
+        $bancoAtual = '';
+        if (isset($GLOBALS['databaseName']) && is_string($GLOBALS['databaseName']) && $GLOBALS['databaseName'] !== '') {
+            $bancoAtual = $GLOBALS['databaseName'];
+        } elseif (isset($GLOBALS['database']) && is_string($GLOBALS['database']) && $GLOBALS['database'] !== '') {
+            $bancoAtual = $GLOBALS['database'];
+        }
+
+        $usarSchema = preg_match('/^[a-zA-Z0-9_]+$/', $bancoAtual) === 1;
+        $sql = $usarSchema
+            ? 'SELECT nome FROM `' . $bancoAtual . '`.tbfuncionario WHERE matricula = ? LIMIT 1'
+            : 'SELECT nome FROM tbfuncionario WHERE matricula = ? LIMIT 1';
+
         foreach ($conexoes as $conexao) {
             if ($conexao instanceof mysqli) {
-                $sql = 'SELECT nome FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1';
                 $stmt = mysqli_prepare($conexao, $sql);
 
                 if (!$stmt) {
