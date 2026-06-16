@@ -89,6 +89,24 @@ function nuloSeVazioNumerico(string $valor): ?int
     return (int) $valor;
 }
 
+function simNaoParaInt(string $valor): ?int
+{
+    $valor = strtoupper(trim($valor));
+    if ($valor === 'SIM') {
+        return 1;
+    }
+    if ($valor === 'NÃO' || $valor === 'NAO' || $valor === 'NãO' || $valor === 'NÃo') {
+        return 0;
+    }
+    if ($valor === '1') {
+        return 1;
+    }
+    if ($valor === '0') {
+        return 0;
+    }
+    return null;
+}
+
 function salvarUploadVeiculo(string $campo, string $prefixo, string $placa): string
 {
     if (empty($_FILES[$campo]['tmp_name']) || !is_uploaded_file($_FILES[$campo]['tmp_name'])) {
@@ -183,7 +201,7 @@ $dados = [
     'categoria' => nuloSeVazio(campoPost('categoria')),
     'tipo' => nuloSeVazio(campoPost('tipoveic', campoPost('classificacao'))),
     'cor' => campoPost('cor'),
-    'zerokm' => nuloSeVazio(campoPost('zerokm')),
+    'zerokm' => simNaoParaInt(campoPost('zerokm')),
     'anofabr' => campoPost('anofabric'),
     'anomodelo' => nuloSeVazioNumerico(campoPost('anomodelo')),
     'velocmax' => nuloSeVazioNumerico(campoPost('velmax')),
@@ -200,9 +218,9 @@ $dados = [
     'qtdpneus' => nuloSeVazioNumerico(campoPost('qtdpneus')),
     'qtdestepe' => nuloSeVazioNumerico(campoPost('qtdestepes')),
     'qtdeixos' => nuloSeVazioNumerico(campoPost('qtdeixos')),
-    'gnv' => campoPost('gnv'),
-    'gps' => campoPost('gps'),
-    'tagpedagio' => campoPost('tagpedagio'),
+    'gnv' => simNaoParaInt(campoPost('gnv')),
+    'gps' => simNaoParaInt(campoPost('gps')),
+    'tagpedagio' => simNaoParaInt(campoPost('tagpedagio')),
     'status' => campoPost('status', '1'),
     'hodometro' => nuloSeVazioNumerico(str_replace('.', '', campoPost('hodometro'))),
     'tipoposse' => campoPost('tipoposse'),
@@ -215,11 +233,11 @@ $dados = [
     'matcond' => campoPost('matcond'),
     'dtentrega' => nuloSeVazio(campoPost('dtentrega')),
     'dtdevolucao' => nuloSeVazio(campoPost('dtdevolucao')),
-    'gpsemp' => campoPost('gpsemp'),
-    'doccrlv' => campoPost('doccrlv'),
-    'airbag' => campoPost('airbag'),
-    'rack' => campoPost('rack'),
-    'blindagem' => campoPost('blindagem'),
+    'gpsemp' => simNaoParaInt(campoPost('gpsemp')),
+    'doccrlv' => simNaoParaInt(campoPost('doccrlv')),
+    'airbag' => simNaoParaInt(campoPost('airbag')),
+    'rack' => simNaoParaInt(campoPost('rack')),
+    'blindagem' => simNaoParaInt(campoPost('blindagem')),
     'oficina' => campoPost('oficina'),
     'ncontloc' => campoPost('ncontloc'),
     'dtdisponivelloc' => nuloSeVazio(campoPost('dtdisponivelloc')),
