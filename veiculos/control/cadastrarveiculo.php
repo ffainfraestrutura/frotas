@@ -79,6 +79,16 @@ function nuloSeVazio(?string $valor): ?string
     return $valor === '' ? null : $valor;
 }
 
+function nuloSeVazioNumerico(string $valor): ?int
+{
+    $valor = trim($valor);
+    if ($valor === '') {
+        return null;
+    }
+
+    return (int) $valor;
+}
+
 function salvarUploadVeiculo(string $campo, string $prefixo, string $placa): string
 {
     if (empty($_FILES[$campo]['tmp_name']) || !is_uploaded_file($_FILES[$campo]['tmp_name'])) {
@@ -175,7 +185,7 @@ $dados = [
     'cor' => campoPost('cor'),
     'zerokm' => nuloSeVazio(campoPost('zerokm')),
     'anofabr' => campoPost('anofabric'),
-    'anomodelo' => campoPost('anomodelo'),
+    'anomodelo' => nuloSeVazioNumerico(campoPost('anomodelo')),
     'velocmax' => campoPost('velmax'),
     'renavam' => campoPost('renavam'),
     'chassi' => strtoupper(campoPost('chassi')),
