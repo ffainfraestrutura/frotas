@@ -1,7 +1,54 @@
 <?php
-require_once __DIR__ . '/../auth.php';
-require_once __DIR__ . '/conecta.php';
-require_once __DIR__ . '/../includes/portal_helpers.php';
+
+$arquivosBootstrap = array(
+    __DIR__ . '/../auth.php',
+    __DIR__ . '/../../auth.php',
+    __DIR__ . '/auth.php',
+);
+$arquivoAuth = '';
+foreach ($arquivosBootstrap as $caminho) {
+    if (is_file($caminho)) {
+        $arquivoAuth = $caminho;
+        break;
+    }
+}
+if ($arquivoAuth === '') {
+    die('Arquivo auth.php não encontrado.');
+}
+require_once $arquivoAuth;
+
+$arquivosConexao = array(
+    __DIR__ . '/conecta.php',
+    __DIR__ . '/../../control/conecta.php',
+    __DIR__ . '/../control/conecta.php',
+);
+$arquivoConexao = '';
+foreach ($arquivosConexao as $caminho) {
+    if (is_file($caminho)) {
+        $arquivoConexao = $caminho;
+        break;
+    }
+}
+if ($arquivoConexao === '') {
+    die('Arquivo conecta.php não encontrado.');
+}
+require_once $arquivoConexao;
+
+$arquivosHelpers = array(
+    __DIR__ . '/../includes/portal_helpers.php',
+    __DIR__ . '/../../includes/portal_helpers.php',
+);
+$arquivoHelpers = '';
+foreach ($arquivosHelpers as $caminho) {
+    if (is_file($caminho)) {
+        $arquivoHelpers = $caminho;
+        break;
+    }
+}
+if ($arquivoHelpers === '') {
+    die('Arquivo portal_helpers.php não encontrado.');
+}
+require_once $arquivoHelpers;
 exigirLogin();
 
 $acao = trim((string) ($_POST['acao'] ?? 'cadastrar'));
@@ -13,7 +60,7 @@ $retornoFormulario = $editando && $matriculaOriginal !== ''
     ? '../editar_condutorespj.php?matricula=' . urlencode($matriculaOriginal)
     : '../cadastrar_condutorespj.php';
 
-function redirecionarComMensagem(string $url, string $mensagem): void
+function redirecionarComMensagem($url, $mensagem)
 {
     $separador = strpos($url, '?') === false ? '?' : '&';
     header('Location: ' . $url . $separador . 'msg=' . urlencode($mensagem));
@@ -24,6 +71,11 @@ if ($matricula === '' || $nome === '') {
     redirecionarComMensagem($retornoFormulario, 'Informe matrícula e nome.');
 }
 
+$cpfInformado = preg_replace('/\D+/', '', (string) ($_POST['cpf'] ?? ''));
+if ($cpfInformado !== '' && (strlen($cpfInformado) < 8 || strlen($cpfInformado) > 11)) {
+    redirecionarComMensagem($retornoFormulario, 'CPF deve conter entre 8 e 11 dígitos.');
+}
+
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep'];
 $colsInfo = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbfuncionario'", 's', [$databaseName]);
 $colunasExistentes = array_column($colsInfo['linhas'], 'COLUMN_NAME');
@@ -31,6 +83,9 @@ $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
         $valor = trim((string) $_POST[$coluna]);
+        if ($coluna === 'cpf') {
+            $valor = preg_replace('/\D+/', '', $valor);
+        }
         if (in_array($coluna, ['nome','cargo','projeto','endereco','bairro','cidade','uf_trabalho','estado'], true)) {
             $valor = mb_strtoupper($valor, 'UTF-8');
         }
@@ -83,6 +138,27 @@ if ($editando) {
     if ($consulta['erro'] !== '') {
         redirecionarComMensagem('../cadastrar_condutorespj.php', 'Erro ao cadastrar: ' . $consulta['erro']);
     }
+
+    $usuarioExistente = buscarUmaLinha($conn, "SELECT id FROM `{$databaseName}`.`tbusuario` WHERE usuario = ? OR matricula = ? LIMIT 1", 'ss', [$matricula, $matricula]);
+    if ($usuarioExistente !== []) {
+        $consultaUsuario = consultaPreparada(
+            $conn,
+            "UPDATE `{$databaseName}`.`tbusuario` SET usuario = ?, matricula = ?, senha = ?, perfil = '1' WHERE id = ?",
+            'sssi',
+            [$matricula, $matricula, $matricula, (int) $usuarioExistente['id']]
+        );
+    } else {
+        $consultaUsuario = consultaPreparada(
+            $conn,
+            "INSERT INTO `{$databaseName}`.`tbusuario` (usuario, matricula, senha, perfil) VALUES (?, ?, ?, '1')",
+            'sss',
+            [$matricula, $matricula, $matricula]
+        );
+    }
+
+    if ($consultaUsuario['erro'] !== '') {
+        redirecionarComMensagem('../cadastrar_condutorespj.php', 'Condutor PJ cadastrado, mas ocorreu erro ao criar usuário: ' . $consultaUsuario['erro']);
+    }
 }
 
 $email = trim((string) ($_POST['email'] ?? ''));
@@ -112,5 +188,5 @@ if ($email !== '' || $telefone !== '') {
     consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbusuario` SET matricula = ? WHERE matricula = ?", 'ss', [$matricula, $matriculaOriginal]);
 }
 
-$mensagemSucesso = $editando ? 'Condutor PJ atualizado com sucesso.' : 'Condutor PJ cadastrado com sucesso.';
+$mensagemSucesso = $editando ? 'Condutor PJ atualizado com sucesso.' : 'Funcionário e usuário criados com sucesso. Primeiro acesso via matrícula/matrícula.';
 redirecionarComMensagem('../listar_condutorespj.php', $mensagemSucesso);

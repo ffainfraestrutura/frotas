@@ -168,8 +168,8 @@ renderCabecalhoAutofrota('Cadastrar Funcionário');
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <label for="cpf" class="form-label">CPF (somente números):<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-sm" id="cpf" name="cpf" pattern="[0-9]*" inputmode="numeric" maxlength="11" required>
-                                <div class="char-counter incomplete" id="cpf-counter">0/11 dígitos</div>
+                                <input type="text" class="form-control form-control-sm" id="cpf" name="cpf" pattern="[0-9]{8,11}" inputmode="numeric" maxlength="11" minlength="8" required>
+                                <div class="char-counter incomplete" id="cpf-counter">0 dígitos (8-11)</div>
                             </div>
                             <div class="col-md-3">
                                 <label for="rg" class="form-label">RG (somente números):</label>
@@ -340,6 +340,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+            if (inputId === 'cpf') {
+                if (currentLength >= 8 && currentLength <= 11) {
+                    counter.textContent = currentLength + ' dígitos (✓ válido)';
+                    counter.className = 'char-counter complete';
+                } else if (currentLength > 0) {
+                    counter.textContent = currentLength + ' dígitos (8-11 necessários)';
+                    counter.className = 'char-counter incomplete';
+                } else {
+                    counter.textContent = '0 dígitos (8-11)';
+                    counter.className = 'char-counter incomplete';
+                }
+                return;
+            }
+
             counter.textContent = currentLength + '/' + maxLength + ' dígitos';
             if (currentLength === maxLength) {
                 counter.className = 'char-counter complete';
@@ -416,9 +430,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        if (cpf.length !== 11) {
+        if (cpf.length < 8 || cpf.length > 11) {
             event.preventDefault();
-            alert('CPF deve conter exatamente 11 dígitos!');
+            alert('CPF deve conter entre 8 e 11 dígitos!');
             document.getElementById('cpf').focus();
             return;
         }
