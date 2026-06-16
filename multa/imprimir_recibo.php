@@ -68,7 +68,7 @@ try {
             LEFT JOIN tbmovidatramite t
                 ON t.placa = m.placa
                AND t.autoinfra = m.autoinfracao
-            LEFT JOIN bdaniel.tbfuncionario f ON f.matricula = t.matricula
+            LEFT JOIN tbfuncionario f ON f.matricula = t.matricula
             LEFT JOIN tbcnh c ON c.matricula = t.matricula
             WHERE t.idtbmovidatramite = ?";
 

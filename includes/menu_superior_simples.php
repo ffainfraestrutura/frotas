@@ -1,14 +1,12 @@
 <?php
 $usuarioMenu = $_SESSION['nome'] ?? $_SESSION['usuario'] ?? 'Usuário';
-$baseAutofrotaUrl = 'https://ffasip.ddns.net:4747/autofrota/';
-$paginaAtual = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
+$baseAutofrotaUrl = '';
+$paginaAtual = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
-$paginaAtual = str_starts_with($paginaAtual, '/autofrota/') ? $paginaAtual : '/autofrota/' . ltrim($paginaAtual, '/');
-$paginaAtual = rtrim($baseAutofrotaUrl, '/') . $paginaAtual;
 
 function menuSuperiorLink(string $caminho, string $baseAutofrotaUrl): string
 {
-    return rtrim($baseAutofrotaUrl, '/') . '/' . ltrim($caminho, '/');
+    return '/' . ltrim($caminho, '/');
 }
 
 function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAutofrotaUrl): string
