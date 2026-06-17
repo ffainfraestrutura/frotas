@@ -23,7 +23,6 @@ if (!function_exists('autofrotaNomePorMatricula')) {
 
         foreach ($conexoes as $conexao) {
             if ($conexao instanceof mysqli) {
-                $sql = 'SELECT nome FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1';
                 $stmt = mysqli_prepare($conexao, $sql);
 
                 if (!$stmt) {
@@ -78,6 +77,12 @@ $linksPortal = [
         'descricao' => 'Visualize e filtre registros de manutenção da frota.',
         'url' => 'manutencoes/listagem-manutencao.php',
         'icone' => 'fa-screwdriver-wrench',
+    ],
+    [
+        'titulo' => 'Checklist de Vistoria',
+        'descricao' => 'Inicie uma vistoria de um carro ou continue um checklist de vistoria.',
+        'url' => '#',
+        'icone' => 'fa-clipboard-check',
     ],
     [
         'titulo' => 'Multas da Frota',
