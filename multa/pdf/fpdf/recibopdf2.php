@@ -64,9 +64,9 @@ if ($locadora == '') {
 $sql2 = "SELECT 
     fi.CNPJ, fi.estado
 FROM
-    bdaniel.tbfuncionario f
+    tbfuncionario f
         JOIN
-    BdPonto.tbfilial fi ON fi.idtbfilial = f.codfilial
+    tbfilial fi ON fi.idtbfilial = f.codfilial
 WHERE
     f.matricula = '$matcond'";
 $resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
@@ -145,7 +145,7 @@ $resultado5 = mysqli_query($conexao, $sql5) or die(mysqli_error($conexao));
 $row5 = mysqli_fetch_array($resultado5, MYSQLI_BOTH);
 $numcnh = $row5['numcnh'];
 
-$sql6 = "SELECT cpf, rg FROM bdaniel.tbfuncionario WHERE matricula='$matcond'; ";
+$sql6 = "SELECT cpf, rg FROM tbfuncionario WHERE matricula='$matcond'; ";
 $resultado6 = mysqli_query($conexao, $sql6) or die(mysqli_error($conexao));
 $row6 = mysqli_fetch_array($resultado6, MYSQLI_BOTH);
 $cpf = $row6['cpf'];

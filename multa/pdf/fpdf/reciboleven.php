@@ -111,7 +111,7 @@ switch ($mes) {
     	$mesd='';
 }
 
-$sql2 = "SELECT nome, rg, cpf, endereco, bairro, cidade, estado, cep, nome FROM bdaniel.tbfuncionario WHERE matricula = '$matricula'; ";
+$sql2 = "SELECT nome, rg, cpf, endereco, bairro, cidade, estado, cep, nome FROM tbfuncionario WHERE matricula = '$matricula'; ";
 $resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 	$nome = $row2['nome'];

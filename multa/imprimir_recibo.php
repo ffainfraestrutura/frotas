@@ -45,7 +45,7 @@ try {
                 m.etapa,
                 m.orgao,
                 m.datalimitecond,
-                m.valtotal,
+                m.valor,
                 t.nome,
                 t.matricula,
                 t.gravidade,
@@ -106,9 +106,15 @@ try {
     }
 
     debugPrint("Processando dados da multa");
-    $valorTotal = floatval($dados['valtotal']);
+    $valorTotal = floatval($dados['valor']);
     $quantidadeParcelas = 1;
-    $valorParcela = $quantidadeParcelas > 0 ? $valorTotal / $quantidadeParcelas : $valorTotal;
+    $maxParcelas = 12; 
+    
+    while ($valorTotal / $quantidadeParcelas >= 200 && $quantidadeParcelas < $maxParcelas) {
+        $quantidadeParcelas++;
+    }
+
+    $valorParcela = $valorTotal / $quantidadeParcelas;
 
     debugPrint("Valor total: $valorTotal, Valor parcela: $valorParcela");
 
@@ -283,17 +289,17 @@ if (isset($_GET['upload'])) {
         .debug-panel.visible {
             display: block;
         }
-        
+
         .btn-upload {
             background-color: #28a745;
             transition: all 0.3s ease;
         }
-        
+
         .btn-upload:hover {
             background-color: #218838;
             transform: translateY(-1px);
         }
-        
+
         .upload-card {
             border-left: 4px solid #28a745;
         }
@@ -384,7 +390,7 @@ if (isset($_GET['upload'])) {
                                     <td><?php echo htmlspecialchars($dados['autoinfracao']); ?></td>
                                     <td><?php echo formatarData($dados['dtinfra']); ?></td>
                                     <td><?php echo formatarData($dados['datalimitecond']); ?></td>
-                                    <td class="fw-bold"><?php echo formatarValor($dados['valtotal']); ?></td>
+                                    <td class="fw-bold"><?php echo formatarValor($dados['valor']); ?></td>
                                     <td><?php echo $quantidadeParcelas; ?></td>
                                     <td><?php echo formatarValor($valorParcela); ?></td>
                                 </tr>
@@ -444,26 +450,28 @@ if (isset($_GET['upload'])) {
 
                     <!-- Upload com PHP puro -->
                     <div class="upload-card">
-                        <form method="post" action="../control/reciboUpload.php" enctype="multipart/form-data" class="card shadow-sm p-3">
+                        <form method="post" action="../control/reciboUpload.php" enctype="multipart/form-data"
+                            class="card shadow-sm p-3">
                             <input type="hidden" name="id" value="<?= $id ?>">
                             <input type="hidden" name="placa" value="<?= htmlspecialchars($dados['placa'] ?? '') ?>">
-                            <input type="hidden" name="autoinfra" value="<?= htmlspecialchars($dados['autoinfracao'] ?? '') ?>">
+                            <input type="hidden" name="autoinfra"
+                                value="<?= htmlspecialchars($dados['autoinfracao'] ?? '') ?>">
                             <input type="hidden" name="mat_autor" value="<?= htmlspecialchars($mat_autor) ?>">
-                            
+
                             <h6 class="mb-3">
                                 <i class="fa-solid fa-upload me-2 text-success"></i>
                                 Enviar Arquivo Assinado
                             </h6>
-                            
+
                             <div class="mb-3">
-                                <input type="file" name="arquivo" id="arquivo" class="form-control" 
-                                       accept=".jpg,.jpeg,.png,.gif,.pdf" required>
+                                <input type="file" name="arquivo" id="arquivo" class="form-control"
+                                    accept=".jpg,.jpeg,.png,.gif,.pdf" required>
                                 <small class="text-muted mt-1 d-block">
                                     <i class="fa-solid fa-info-circle me-1"></i>
                                     Formatos permitidos: JPG, PNG, GIF, PDF. Máximo: 32MB
                                 </small>
                             </div>
-                            
+
                             <button type="submit" class="btn btn-success btn-upload w-100">
                                 <i class="fa-solid fa-cloud-arrow-up me-2"></i> Enviar Arquivo
                             </button>
@@ -531,13 +539,14 @@ if (isset($_GET['upload'])) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Fechar alertas automaticamente após 5 segundos
-            setTimeout(function() {
+            setTimeout(function () {
                 $('.alert').fadeOut('slow');
             }, 5000);
         });
     </script>
 
 </body>
+
 </html>

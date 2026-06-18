@@ -91,7 +91,7 @@ if ($conn instanceof mysqli) {
                 f.status as status_condutor
             FROM tbmovidatramite mt
             JOIN tbmulta m ON m.idtbmulta = mt.idmulta
-            JOIN bdaniel.tbfuncionario f ON f.matricula = mt.matricula
+            JOIN tbfuncionario f ON f.matricula = mt.matricula
             WHERE {$filtroDp}
                 AND mt.placa <> ''
                 AND mt.placa <> 'ABC1234'
@@ -128,7 +128,7 @@ if ($conn instanceof mysqli) {
                 f.status as status_condutor
             FROM tbmovidatramite mt
             JOIN tbmulta m ON m.idtbmulta = mt.idmulta
-            JOIN bdaniel.tbfuncionario f ON f.matricula = mt.matricula
+            JOIN tbfuncionario f ON f.matricula = mt.matricula
             WHERE {$filtroDp}
                 AND mt.placa <> ''
                 AND mt.placa <> 'ABC1234'

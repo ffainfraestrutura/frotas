@@ -190,7 +190,7 @@ if($status==0){
   $resultado1 = mysqli_query($con, $sql1) or die(mysqli_error($con));;
 
   /*if($matcond != ''){
-    $sql3="SELECT nome, codempresa, codfilial, ccusto FROM bdaniel.tbfuncionario WHERE matricula='$matcond' ";
+    $sql3="SELECT nome, codempresa, codfilial, ccusto FROM tbfuncionario WHERE matricula='$matcond' ";
     $resultado3 = mysqli_query($con, $sql3) or die(mysqli_error($con));
     $row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
       $nomecond = $row3['nome'];

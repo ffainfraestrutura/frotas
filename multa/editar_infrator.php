@@ -127,10 +127,6 @@ while ($row = mysqli_fetch_assoc($resultColab)) {
                         <div class="mt-3 d-flex gap-2 flex-wrap">
                             <button type="submit" name="acao" value="confirmar" class="btn btn-success">Confirmar
                                 Infrator</button>
-                            <a class='btn btn-primary'
-                                href="../control/editarinfrator.php?terceiro=True&id=<?= $idmulta ?>">
-                                Alterar Infrator Para Terceiro
-                            </a>
                         </div>
                     </div>
                 </div>
