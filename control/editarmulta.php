@@ -8,8 +8,8 @@ error_reporting(E_ALL);
 require_once '../func/log.php';
 require_once './conecta.php';
 
-define('REDIRECT_SUCCESS', '../multa/cadastromulta.php');
-define('REDIRECT_ERROR', '../multa/cadastromulta.php');
+define('REDIRECT_SUCCESS', '../multa/multasfrota.php');
+define('REDIRECT_ERROR', '../multa/editar_multa.php');
 
 $db = null;
 $transactionStarted = false;
@@ -33,6 +33,24 @@ if (!isset($_SERVER['REQUEST_METHOD']) || $_SERVER['REQUEST_METHOD'] !== 'POST')
 try {
     $hoje = date('Y-m-d H:i:s');
 
+    // Pegar o ID da multa
+    $idtbmulta = post('idtbmulta');
+    if (empty($idtbmulta)) {
+        throw new Exception('ID da multa nao informado.');
+    }
+
+    // Buscar dados atuais da multa para verificar se existe
+    $sqlCheck = "SELECT placa, matriculac FROM tbmulta WHERE idtbmulta = ? LIMIT 1";
+    $stmtCheck = executarPrepared($db, $sqlCheck, array($idtbmulta));
+    mysqli_stmt_bind_result($stmtCheck, $placaAtual, $matriculaAtual);
+    $multaExiste = mysqli_stmt_fetch($stmtCheck);
+    mysqli_stmt_close($stmtCheck);
+
+    if (!$multaExiste) {
+        throw new Exception('Multa nao encontrada.');
+    }
+
+    // Capturar todos os campos do formulário
     $placa = normalizarPlaca(post('placa'));
     $filial = post('filial');
     $ccusto = post('ccusto');
@@ -63,6 +81,7 @@ try {
     $nomecInformado = upper(post('nomec', ''));
     $matrAutor = somenteNumeros(post('matr_autor'));
 
+    // Campos opcionais
     $descontoapartir = nullableDate(post('descontoapartir', ''));
     $descontadocondutor = post('descontadocondutor', '');
     $tipodesconto = post('tipodesconto', '');
@@ -86,6 +105,7 @@ try {
     $expprotocolo = nullableDate(post('expprotocolo', ''));
     $recprotocolo = nullableDate(post('recprotocolo', ''));
 
+    // Validações obrigatórias
     validarObrigatorios(array(
         'placa' => $placa,
         'filial' => $filial,
@@ -109,6 +129,7 @@ try {
         'matricula do condutor' => $matriculac
     ));
 
+    // Validações de formato
     validarData($datainfracao, 'Data da infracao');
     validarHora($horainfracao, 'Hora da infracao');
     validarData($datalimitecond, 'Data limite do condutor');
@@ -130,6 +151,7 @@ try {
     $numparcelas = max(1, (int)ceil($valorMulta / 200));
     $valparcelas = number_format(ceil(($valorMulta / $numparcelas) * 100) / 100, 2, '.', '');
 
+    // Buscar dados do funcionário
     $funcionario = buscarFuncionarioPorMatricula($db, $matriculac);
     $cpf = $funcionario['cpf'];
     $nomec = $funcionario['nome'] !== '' ? $funcionario['nome'] : $nomecInformado;
@@ -145,26 +167,63 @@ try {
     iniciarTransacao($db);
     $transactionStarted = true;
 
-    $sqlMulta = "
-        INSERT INTO tbmulta (
-            placa, filial, ccusto, fornecedor, anotacao, tipoinfracao, autoinfracao,
-            datainfracao, datalimitecond, datalimiteloc, expedicao, recebimento,
-            vencimento, codigom, pontos, gravidade, valor, valdesconto, taxaadm,
-            juros, valtotal, orgao, endereco, municipio, matriculac, nomec,
-            numparcelas, valparcelas, descontoapartir, descontadocondutor,
-            tipodesconto, datadesconto, realinfrator, pessoaindicada,
-            condassinatura, reciboassinado, recusaassinar, status, etapa,
-            descricaoinfra, valcomdesc, datarecorg, protrecorg, comprpag,
-            pgempresa, datapagempr, motivonpg, numprotocolo, expprotocolo,
-            recprotocolo, datahoracadastro
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, NOW()
-        )
+    // UPDATE da multa
+    $sqlUpdate = "
+        UPDATE tbmulta SET
+            placa = ?,
+            filial = ?,
+            ccusto = ?,
+            fornecedor = ?,
+            anotacao = ?,
+            tipoinfracao = ?,
+            autoinfracao = ?,
+            datainfracao = ?,
+            datalimitecond = ?,
+            datalimiteloc = ?,
+            expedicao = ?,
+            recebimento = ?,
+            vencimento = ?,
+            codigom = ?,
+            pontos = ?,
+            gravidade = ?,
+            valor = ?,
+            valdesconto = ?,
+            taxaadm = ?,
+            juros = ?,
+            valtotal = ?,
+            orgao = ?,
+            endereco = ?,
+            municipio = ?,
+            matriculac = ?,
+            nomec = ?,
+            numparcelas = ?,
+            valparcelas = ?,
+            descontoapartir = ?,
+            descontadocondutor = ?,
+            tipodesconto = ?,
+            datadesconto = ?,
+            realinfrator = ?,
+            pessoaindicada = ?,
+            condassinatura = ?,
+            reciboassinado = ?,
+            recusaassinar = ?,
+            status = ?,
+            etapa = ?,
+            descricaoinfra = ?,
+            valcomdesc = ?,
+            datarecorg = ?,
+            protrecorg = ?,
+            comprpag = ?,
+            pgempresa = ?,
+            datapagempr = ?,
+            motivonpg = ?,
+            numprotocolo = ?,
+            expprotocolo = ?,
+            recprotocolo = ?
+        WHERE idtbmulta = ?
     ";
 
-    executarPrepared($db, $sqlMulta, array(
+    executarPrepared($db, $sqlUpdate, array(
         $placa,
         $filial,
         $ccusto,
@@ -215,20 +274,28 @@ try {
         $numprotocolo,
         $expprotocolo,
         $recprotocolo,
+        $idtbmulta
     ));
 
-    $idtbmulta = (string)mysqli_insert_id($db);
-
-    $sqlTramite = "
-        INSERT INTO tbmovidatramite (
-            placa, autoinfra, pontuacao, gravidade, apCondDV, dtinfra, dtvenc,
-            valor, status, nome, matricula, cpf, tramite, locadora, idmulta
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
+    // Atualizar também a tbmovidatramite se existir
+    $sqlUpdateTramite = "
+        UPDATE tbmovidatramite SET
+            placa = ?,
+            autoinfra = ?,
+            pontuacao = ?,
+            gravidade = ?,
+            apCondDV = ?,
+            dtinfra = ?,
+            dtvenc = ?,
+            valor = ?,
+            nome = ?,
+            matricula = ?,
+            cpf = ?,
+            locadora = ?
+        WHERE idmulta = ?
     ";
 
-    executarPrepared($db, $sqlTramite, array(
+    executarPrepared($db, $sqlUpdateTramite, array(
         $placa,
         $autoinfracao,
         (string)$pontos,
@@ -237,27 +304,25 @@ try {
         $diainfracao,
         $vencimento,
         $valor,
-        '1',
         $nomec,
         $matriculac,
         $cpf,
-        'Inserir infrator',
         $fornecedor,
-        $idtbmulta,
+        $idtbmulta
     ));
 
-    enviarlognovo($hoje, 'Cadastrou multa', $matriculac, $matrAutor, 'cadastro', $placa);
+    enviarlognovo($hoje, 'Editou multa ID: ' . $idtbmulta, $matriculac, $matrAutor, 'edicao', $placa);
 
     confirmarTransacao($db);
     $transactionStarted = false;
 
-    responderComAlerta('Multa cadastrada com sucesso.', REDIRECT_SUCCESS, 'success');
+    responderComAlerta('Multa atualizada com sucesso.', REDIRECT_SUCCESS, 'success');
 } catch (Exception $erro) {
     if ($db instanceof mysqli && $transactionStarted) {
         desfazerTransacao($db);
     }
 
-    error_log('Erro ao cadastrar multa: ' . $erro->getMessage());
+    error_log('Erro ao editar multa: ' . $erro->getMessage());
     responderComAlerta($erro->getMessage(), REDIRECT_ERROR, 'error');
 }
 
@@ -477,7 +542,7 @@ function responderComAlerta($mensagem, $url, $tipo = 'info')
     <html lang="pt-br">
     <head>
         <meta charset="utf-8">
-        <title>Cadastro de Multa</title>
+        <title>Editar Multa</title>
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     </head>
     <body>
@@ -490,9 +555,9 @@ function responderComAlerta($mensagem, $url, $tipo = 'info')
                 confirmButtonColor: "' . ($tipo === 'success' ? '#28a745' : '#dc3545') . '"
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = "../multa/multasfrota.php";
+                    window.location.href = ' . $urlJson . ';
                 } else {
-                    window.location.href = "../multa/multasfrota.php";
+                    window.location.href = ' . $urlJson . ';
                 }
             });
         </script>

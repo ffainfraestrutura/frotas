@@ -57,7 +57,7 @@ if($locadora==''){
 		$locadora= $row2['idlocador'];
 }
 
-$sql2="SELECT cnpj, Estado FROM bdaniel.tbfilial WHERE nome='$filial'; ";
+$sql2="SELECT cnpj, Estado FROM tbfilial WHERE nome='$filial'; ";
 $resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
 	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 		$cnpj= $row2['cnpj'];

@@ -76,7 +76,7 @@ $datainfra1 = explode(" ", $datainfra);
 $datainfra2 = explode("-", $datainfra1[0]);
 $datainfraf = "$datainfra2[2]/$datainfra2[1]/$datainfra2[0] $datainfra1[1]";
 
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM tbfuncionario WHERE nome = '$nome'; ";
 $resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 	$cpf = $row2['cpf'];

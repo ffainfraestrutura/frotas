@@ -66,7 +66,7 @@ function buscarStatusFuncionario(?mysqli $conn, string $matricula): string
         return '';
     }
 
-    $sql = 'SELECT status FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1';
+    $sql = 'SELECT status FROM tbfuncionario WHERE matricula = ? LIMIT 1';
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
         return '';
@@ -134,7 +134,7 @@ if ($conn instanceof mysqli) {
             JOIN
                 tbmulta m ON m.idtbmulta = mt.idmulta
             JOIN
-                bdaniel.tbfuncionario f ON f.matricula = mt.matricula
+                tbfuncionario f ON f.matricula = mt.matricula
             WHERE
                 {$filtroDp}
                 AND mt.placa <> ''
@@ -175,7 +175,7 @@ if ($conn instanceof mysqli) {
             JOIN
                 tbmulta m ON m.idtbmulta = mt.idmulta
             JOIN
-                bdaniel.tbfuncionario f ON f.matricula = mt.matricula
+                tbfuncionario f ON f.matricula = mt.matricula
             WHERE
                 {$filtroDp}
                 AND mt.placa <> ''

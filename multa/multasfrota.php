@@ -22,9 +22,10 @@ $linhasMultas = [];
 
 // CORRIGIDO: Array de tramites corretamente definido
 $tramiteEtapa = [
-    'Inserir infrator'   => 'editar_infrator.php',
-    'Finalizado Frota'   => 'finalizado_frota.php',
+    'Inserir infrator' => 'editar_infrator.php',
+    'Finalizado Frota' => 'finalizado_frota.php',
     'Imprimir Recibo DP' => 'imprimir_recibo.php',
+    'Finalizado DP' => 'finalizado_frota.php',
 ];
 
 // CORRIGIDO: $multaEtapa é o mesmo que $tramiteEtapa
@@ -51,7 +52,7 @@ function buscarNomeFuncionario(?mysqli $conn, string $matricula): string
         return '';
     }
 
-    $sql = 'SELECT nome FROM bdautofrotas.tbfuncionario WHERE matricula = ? LIMIT 1';
+    $sql = 'SELECT nome FROM tbfuncionario WHERE matricula = ? LIMIT 1';
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
         return '';
@@ -72,7 +73,7 @@ function buscarStatusFuncionario(?mysqli $conn, string $matricula): string
         return '';
     }
 
-    $sql = 'SELECT status FROM bdautofrotas.tbfuncionario WHERE matricula = ? LIMIT 1';
+    $sql = 'SELECT status FROM tbfuncionario WHERE matricula = ? LIMIT 1';
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
         return '';
@@ -93,7 +94,7 @@ function buscarCentroCustoFuncionario(?mysqli $conn, string $matricula): string
         return '';
     }
 
-    $sql = 'SELECT ccusto FROM bdautofrotas.tbfuncionario WHERE matricula = ? LIMIT 1';
+    $sql = 'SELECT ccusto FROM tbfuncionario WHERE matricula = ? LIMIT 1';
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
         return '';
@@ -212,7 +213,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                 m.etapa,
                 m.orgao,
                 m.datalimitecond,
-                m.valtotal,
+                m.valor,
                 t.nome,
                 t.matricula,
                 t.gravidade,
@@ -232,7 +233,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
             LEFT JOIN `{$databaseName}`.tbmovidatramite t
                 ON t.placa = m.placa
                AND t.autoinfra = m.autoinfracao
-            JOIN bdaniel.tbfuncionario f ON f.matricula = t.matricula
+            JOIN tbfuncionario f ON f.matricula = t.matricula
             WHERE m.datahoracadastro BETWEEN ? AND ?
         ";
 
@@ -281,15 +282,30 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                     $linkEditar = '';
                     if ($idMov !== '' && is_file($caminhoArquivo)) {
                         $linkVisualizar = '<a href="./docs/' . esc($arquivoPdf) . '" class="btn btn-primary btn-sm d-block mb-1" target="_blank"><i class="fa fa-eye"></i> Visualizar</a>';
-                        $linkEditar = '<a href="./editarMulta.php?id=' . $idMov . '" class="btn btn-warning btn-sm d-block mb-1"><i class="fa fa-pen"></i> Editar</a>';
                     }
 
-                    // CORRIGIDO: Acesso correto ao array $tramiteEtapa
                     $tramiteLink = $tramiteEtapa[$tramite] ?? '';
                     $botaoTramite = '';
+
+                    // Lista de trâmites que não devem ser botões
+                    $tramitesFinalizados = ['Finalizado Frota', 'Finalizado DP'];
+
+                    $tramiteLink = $tramiteEtapa[$tramite] ?? '';
+                    $botaoTramite = '';
+
                     if ($idMov !== '' && $tramiteLink !== '') {
-                        $classeBotaoTramite = $tramite === 'Finalizado Frota' ? 'btn-secondary' : 'btn-success';
-                        $botaoTramite = '<a class="btn ' . $classeBotaoTramite . ' btn-sm w-100" href="' . $tramiteLink . '?id=' . $idMov . '">' . $tramite . '</a>';
+                        $tramitesFinalizados = ['Finalizado Frota', 'Finalizado DP'];
+
+                        if (in_array($tramite, $tramitesFinalizados)) {
+                            // Botão desabilitado (sem link)
+                            $botaoTramite = '<button class="btn btn-secondary btn-sm w-100" disabled>' . $tramite . '</button>';
+
+                        } else {
+                            // Botão normal com link
+                            $classeBotaoTramite = 'btn-success';
+                            $botaoTramite = '<a class="btn ' . $classeBotaoTramite . ' btn-sm w-100" href="' . $tramiteLink . '?id=' . $idMov . '">' . $tramite . '</a>';
+                            $linkEditar = '<a href="./editar_multa.php?id=' . $idMov . '" class="btn btn-warning btn-sm d-block mb-1"><i class="fa fa-pen"></i> Editar</a>';
+                        }
                     }
 
                     $botaoEditarInfrator = '';
@@ -317,11 +333,11 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                             <i class="fa-regular fa-eye"></i>
                         </a>
                     </div>';
-                    
+
                     $htmlAdicionarParecer = $idMov !== ''
                         ? '<form method="post" action="./parecermulta.php" target="_blank"><input type="hidden" name="idtbmovidatramite" value="' . esc($idMov) . '"><button title="Adicionar Parecer" style="border:none;background:transparent;" type="submit"><span class="material-symbols-outlined">edit_note</span></button></form>'
                         : '';
-                    
+
                     $htmlDataEnvio = '<button title="Ver Data Envio" class="btn-icon js-ver-envio" type="button" data-auto="' . esc($autoInfracao) . '" data-placa="' . esc($placa) . '" data-data-envio="' . esc($dataDesconto) . '"><span class="material-symbols-outlined">visibility</span></button>';
 
                     $linhasMultas[] = [
@@ -341,12 +357,12 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                         'apresentar_condutor' => formatarData((string) ($row['datalimitecond'] ?? '')),
                         'situacao_condutor' => $htmlSituacaoCondutor,
                         'etapa' => (string) ($row['etapa'] ?? ''),
-                        'valor' => (string) ($row['valtotal'] ?? ''),
+                        'valor' => (string) ($row['valor'] ?? ''),
                         'tramite' => $htmlTramite,
                         'parecer_inicial' => (string) ($row['parecer'] ?? ''),
                         'parecer_inicial_por' => $nomeParecer,
                         'ult_parecer' => $htmlUltimoParecer,
-                        'adicionar_parecer' => $htmlAdicionarParecer,
+                        // 'adicionar_parecer' => $htmlAdicionarParecer,
                         'data_envio' => $htmlDataEnvio,
                     ];
                 }
@@ -359,6 +375,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -606,7 +623,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                             <th>Valor</th>
                             <th>Trâmite</th>
                             <th>Histórico Parecer</th>
-                            <th>Adicionar Parecer</th>
+                            <!-- <th>Adicionar Parecer</th> -->
                         </tr>
                     </thead>
                 </table>
@@ -640,7 +657,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
             </div>
         </div>
     </div>
-    
+
     <div class="modal fade" id="modalParecer" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

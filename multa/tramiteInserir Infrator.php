@@ -141,7 +141,7 @@ $id = $_POST['id'];
             }
           }
 
-          $sqla = "SELECT cpf, status FROM bdaniel.tbfuncionario WHERE matricula = '$matriculacond'";
+          $sqla = "SELECT cpf, status FROM tbfuncionario WHERE matricula = '$matriculacond'";
           $resultadoa = mysqli_query($conexao, $sqla) or die(mysqli_error($conexao));
           $dados = mysqli_fetch_array($resultadoa, MYSQLI_BOTH);
           $cpf = $dados["cpf"];
