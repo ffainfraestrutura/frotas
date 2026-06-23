@@ -20,8 +20,6 @@ $dataFinalPadrao = $hoje;
 $dataInicialPadrao = date('Y-m-d', strtotime('-6 days'));
 $matriculasSemPermissaoEdicao = 
 ['160030', '410109', '501285', '410039', '411425', '003931'];
-$dataInicial = $_GET['datai'] ?? $_GET['data_inicial'] ?? $_POST['datai'] ?? $_POST['data_inicial'] ?? $dataInicialPadrao;
-$dataFinal = $_GET['dataf'] ?? $_GET['data_final'] ?? $_POST['dataf'] ?? $_POST['data_final'] ?? $dataFinalPadrao;
 $tipoSelecionado = $_GET['tipo'] ?? $_GET['tipo_manutencao'] ?? $_POST['tipo'] ?? $_POST['tipo_manutencao'] ?? '';
 $tiposManutencao = [
     '' => 'Todas',
@@ -32,6 +30,15 @@ $tiposManutencao = [
 ];
 $manutencoes = [];
 $erroConsulta = '';
+
+$dataInicial = normalizarDataFiltro(
+    $_GET['datai'] ?? $_GET['data_inicial'] ?? $_POST['datai'] ?? $_POST['data_inicial'] ?? null,
+    $dataInicialPadrao
+);
+$dataFinal = normalizarDataFiltro(
+    $_GET['dataf'] ?? $_GET['data_final'] ?? $_POST['dataf'] ?? $_POST['data_final'] ?? null,
+    $dataFinalPadrao
+);
 
 if (!isset($tiposManutencao[$tipoSelecionado])) {
     $tipoSelecionado = '';
@@ -75,6 +82,22 @@ function formatarDataManutencao(?string $data): string
     $dataFormatada = date_create($data);
 
     return $dataFormatada ? date_format($dataFormatada, 'd/m/Y') : $data;
+}
+
+function normalizarDataFiltro(?string $valor, string $padrao): string
+{
+    $valor = trim((string) ($valor ?? ''));
+    if ($valor === '') {
+        return $padrao;
+    }
+
+    $data = date_create_from_format('Y-m-d', $valor);
+    if ($data instanceof DateTimeInterface) {
+        return $data->format('Y-m-d');
+    }
+
+    $dataAlternativa = date_create($valor);
+    return $dataAlternativa ? $dataAlternativa->format('Y-m-d') : $padrao;
 }
 
 function descreverTipoManutencao(?string $tipo): string
@@ -155,8 +178,8 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
     $tiposBind = '';
     $parametros = [];
 
-    $where[] = 'man.data >= ?';
-    $where[] = 'man.data <= ?';
+    $where[] = '(man.dataagendamento >= ? OR man.dataagendamento IS NULL OR TRIM(COALESCE(man.dataagendamento, "")) = "")';
+    $where[] = '(man.dataagendamento <= ? OR man.dataagendamento IS NULL OR TRIM(COALESCE(man.dataagendamento, "")) = "")';
     $tiposBind .= 'ss';
     $parametros[] = $dataInicial . ' 00:00:00';
     $parametros[] = $dataFinal . ' 23:59:59';
@@ -183,7 +206,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
         LEFT JOIN `{$databaseName}`.`tbveiculo` vei
             ON vei.placa = man.placa
         WHERE " . implode(' AND ', $where) . "
-        ORDER BY man.data DESC, man.idtbmanprev DESC
+        ORDER BY man.dataagendamento DESC, man.idtbmanprev DESC
     ";
 
     $stmtManutencoes = mysqli_prepare($conn, $sqlManutencoes);
@@ -252,7 +275,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                 <div class="alert alert-warning" role="alert"><?= esc($erroConsulta) ?></div>
             <?php endif; ?>
 
-            <p class="notice">A tela pré carrega com as manutenções cadastradas nos últimos sete dias. Para carregar mais registros, utilize os filtros de período de data de cadastro.</p>
+            <p class="notice">A tela pré carrega com as manutenções cadastradas nos últimos sete dias. Para carregar mais registros, utilize os filtros de período de data de agendamento.</p>
 
             <section class="filter-area">
                 <form action="listagem-manutencao.php" method="get">

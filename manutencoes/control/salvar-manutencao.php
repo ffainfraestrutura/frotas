@@ -61,9 +61,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
 }
 
 $id = (int) ($_POST['idtbmanprev'] ?? 0);
-if ($id <= 0) {
-    redirectComMensagem(0, 'Manutenção inválida.');
-}
+
+// Se id <= 0, trataremos como criação de nova manutenção (inserção)
+$isCreate = $id <= 0;
 
 if (!$podeEditar) {
     redirectComMensagem($id, 'Sem permissão para editar esta manutenção.');
@@ -176,6 +176,81 @@ if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arqui
 
     $doc = $pastaRelativa . $nomeFinal;
 }
+
+    if ($isCreate) {
+        $columns = [
+            'placa','tipo','hodometro','solicitante','status','etapa','dataocorrencia','modelo','fornman','descricao',
+            'ccusto','oficina','dataagendamento','prevsaida','dataentrada','dataretirada','tipopagamento','reembolsoaprov',
+            'valorreembolso','valoroficina','valordesconto','valormaoobra','valormaterial','valortransp','outrosvalor',
+            'descontarcond','datavencimento','datapagamento','formapagam','condicaopag','numparc','valorparcela','dataprimparc',
+            'protocolo','dataconclusao','placaanterior','observacao','doc'
+        ];
+
+        $placeholders = array_fill(0, count($columns), '?');
+        $sqlInsert = 'INSERT INTO bdautofrotas.tbmanprev (' . implode(',', $columns) . ', atualizadoem) VALUES (' . implode(',', $placeholders) . ', NOW())';
+
+        $values = [
+            $placa,
+            $tipo,
+            $hodometro,
+            $solicitante,
+            $status,
+            $etapa,
+            $dataocorrencia,
+            $modelo,
+            $fornman,
+            $descricao,
+            $ccusto,
+            $oficina,
+            $dataagendamentoCompleta,
+            $prevsaida,
+            $dataentrada,
+            $dataretirada,
+            $tipopagamento,
+            $reembolsoaprov,
+            $valorreembolso,
+            $valoroficina,
+            $valordesconto,
+            $valormaoobra,
+            $valormaterial,
+            $valortransp,
+            $outrosvalor,
+            $descontarcond,
+            $datavencimento,
+            $datapagamento,
+            $formapagam,
+            $condicaopag,
+            $numparc,
+            $valorparcela,
+            $dataprimparc,
+            $protocolo,
+            $dataconclusao,
+            $placaanterior,
+            $observacao,
+            $doc,
+        ];
+
+        $stmtIns = mysqli_prepare($conn, $sqlInsert);
+        if ($stmtIns) {
+            $types = str_repeat('s', count($values));
+            $refs = [];
+            $refs[] = & $types;
+            for ($i = 0; $i < count($values); $i++) {
+                $refs[] = & $values[$i];
+            }
+            call_user_func_array([$stmtIns, 'bind_param'], $refs);
+
+            $okIns = mysqli_stmt_execute($stmtIns);
+            if ($okIns) {
+                $newId = mysqli_insert_id($conn);
+                mysqli_stmt_close($stmtIns);
+                header('Location: ../editar-manutencao.php?idtbmanprev=' . $newId . '&msg=' . rawurlencode('Manutenção criada com sucesso.'));
+                exit;
+            }
+            mysqli_stmt_close($stmtIns);
+        }
+        // se falhar inserção, retorna erro abaixo
+    }
 
 $sqlCompleto = "UPDATE bdautofrotas.tbmanprev
 SET placa=?, tipo=?, hodometro=?, solicitante=?, status=?, etapa=?, dataocorrencia=?, modelo=?, fornman=?, descricao=?,

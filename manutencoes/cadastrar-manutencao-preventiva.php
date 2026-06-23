@@ -59,7 +59,11 @@ if (!$man && $placaRecebida !== '') {
     }
 }
 
-if (!$man) { exit('Manutenção não encontrada.'); }
+if (!$man) {
+    // Nenhuma manutenção existente encontrada — inicializa um registro vazio
+    // para permitir criar uma nova manutenção para a placa informada.
+    $man = [];
+}
 
 $planosManutencao = [];
 $sqlPlanos = "SELECT codigo, descricao FROM `{$database}`.`tbplanomanutencao` ORDER BY descricao";
