@@ -82,6 +82,30 @@ function nuloSeVazioEdicaoVeiculo(?string $valor): ?string
     return $valor === '' ? null : $valor;
 }
 
+function nuloSeVazioNumericoEdicaoVeiculo(string $valor): ?int
+{
+    $valor = trim($valor);
+    return $valor === '' ? null : (int) $valor;
+}
+
+function nuloSeVazioDecimalEdicaoVeiculo(string $valor): ?string
+{
+    $valor = normalizarNumeroBrEdicaoVeiculo($valor);
+    return $valor === '' ? null : $valor;
+}
+
+function simNaoParaIntEdicaoVeiculo(string $valor): ?int
+{
+    $valor = strtoupper(trim($valor));
+    if ($valor === 'SIM' || $valor === '1') {
+        return 1;
+    }
+    if ($valor === 'NÃO' || $valor === 'NAO' || $valor === '0') {
+        return 0;
+    }
+    return null;
+}
+
 function salvarUploadDocumentoEdicaoVeiculo(string $campo, string $placa): string
 {
     if (empty($_FILES[$campo]['tmp_name']) || !is_uploaded_file($_FILES[$campo]['tmp_name'])) {
@@ -164,50 +188,50 @@ $dados = [
     'modelo' => campoPostEdicaoVeiculo('modelo'),
     'versao' => campoPostEdicaoVeiculo('versao'),
     'categoria' => campoPostEdicaoVeiculo('categoria'),
-    'tipo' => campoPostEdicaoVeiculo('tipoveic'),
+    'tipo' => nuloSeVazioNumericoEdicaoVeiculo(campoPostAliasEdicaoVeiculo(['tipoveic', 'classificacao'])),
     'cor' => campoPostEdicaoVeiculo('cor'),
-    'zerokm' => campoPostEdicaoVeiculo('zerokm'),
-    'anofabr' => campoPostAliasEdicaoVeiculo(['anofabr', 'anofabric']),
-    'anomodelo' => campoPostEdicaoVeiculo('anomodelo'),
-    'velocmax' => campoPostAliasEdicaoVeiculo(['velocmax', 'velmax']),
+    'zerokm' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('zerokm')),
+    'anofabr' => nuloSeVazioNumericoEdicaoVeiculo(campoPostAliasEdicaoVeiculo(['anofabr', 'anofabric'])),
+    'anomodelo' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('anomodelo')),
+    'velocmax' => nuloSeVazioNumericoEdicaoVeiculo(campoPostAliasEdicaoVeiculo(['velocmax', 'velmax'])),
     'renavam' => campoPostEdicaoVeiculo('renavam'),
     'chassi' => strtoupper(campoPostEdicaoVeiculo('chassi')),
     'nummotor' => campoPostEdicaoVeiculo('nummotor'),
     'combustivel' => campoPostEdicaoVeiculo('combustivel'),
-    'tanque' => campoPostEdicaoVeiculo('tanque'),
+    'tanque' => nuloSeVazioDecimalEdicaoVeiculo(campoPostEdicaoVeiculo('tanque')),
     'motorizacao' => campoPostEdicaoVeiculo('motorizacao'),
-    'nportas' => campoPostEdicaoVeiculo('nportas'),
-    'npassageiros' => campoPostEdicaoVeiculo('npassageiros'),
-    'calibragem' => campoPostEdicaoVeiculo('calibragem'),
-    'aro' => campoPostEdicaoVeiculo('aro'),
-    'qtdpneus' => campoPostEdicaoVeiculo('qtdpneus'),
-    'qtdestepe' => campoPostAliasEdicaoVeiculo(['qtdestepe', 'qtdestepes']),
-    'qtdeixos' => campoPostEdicaoVeiculo('qtdeixos'),
-    'gnv' => campoPostEdicaoVeiculo('gnv'),
-    'gps' => campoPostEdicaoVeiculo('gps'),
-    'tagpedagio' => campoPostEdicaoVeiculo('tagpedagio'),
-    'status' => campoPostEdicaoVeiculo('status', '1'),
-    'hodometro' => str_replace('.', '', campoPostEdicaoVeiculo('hodometro')),
+    'nportas' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('nportas')),
+    'npassageiros' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('npassageiros')),
+    'calibragem' => nuloSeVazioDecimalEdicaoVeiculo(campoPostEdicaoVeiculo('calibragem')),
+    'aro' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('aro')),
+    'qtdpneus' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('qtdpneus')),
+    'qtdestepe' => nuloSeVazioNumericoEdicaoVeiculo(campoPostAliasEdicaoVeiculo(['qtdestepe', 'qtdestepes'])),
+    'qtdeixos' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('qtdeixos')),
+    'gnv' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('gnv')),
+    'gps' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('gps')),
+    'tagpedagio' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('tagpedagio')),
+    'status' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('status', '1')),
+    'hodometro' => nuloSeVazioNumericoEdicaoVeiculo(str_replace('.', '', campoPostEdicaoVeiculo('hodometro'))),
     'tipoposse' => campoPostEdicaoVeiculo('tipoposse'),
-    'idlocador' => campoPostEdicaoVeiculo('locador'),
-    'hodometroinicial' => campoPostEdicaoVeiculo('hodometroinicial'),
-    'statusvel' => campoPostEdicaoVeiculo('statusvel', '1'),
+    'idlocador' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('locador')),
+    'hodometroinicial' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('hodometroinicial')),
+    'statusvel' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('statusvel', '1')),
     'obsveiculo' => campoPostEdicaoVeiculo('obsveiculo'),
     'datamovimentacao' => montarDataHoraEdicaoVeiculo(campoPostEdicaoVeiculo('datamovimentacao'), campoPostEdicaoVeiculo('horamovimentacao')),
     'oficina' => campoPostEdicaoVeiculo('oficina'),
     'dtentrega' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtentrega')),
     'dtdevolucao' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdevolucao')),
-    'tipovel' => campoPostEdicaoVeiculo('tipovel'),
+    'tipovel' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('tipovel')),
     'situacao' => campoPostEdicaoVeiculo('situacao'),
-    'doccrlv' => campoPostEdicaoVeiculo('doccrlv'),
-    'airbag' => campoPostEdicaoVeiculo('airbag'),
-    'gpsemp' => campoPostEdicaoVeiculo('gpsemp'),
-    'rack' => campoPostEdicaoVeiculo('rack'),
+    'doccrlv' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('doccrlv')),
+    'airbag' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('airbag')),
+    'gpsemp' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('gpsemp')),
+    'rack' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('rack')),
     'ncontloc' => campoPostEdicaoVeiculo('ncontloc'),
     'dtdisponivelloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdisponivelloc')),
     'dtdevolucaoloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdevolucaoloc')),
-    'valaquisicao' => normalizarNumeroBrEdicaoVeiculo(campoPostEdicaoVeiculo('valaquisicao')),
-    'blindagem' => campoPostEdicaoVeiculo('blindagem'),
+    'valaquisicao' => nuloSeVazioDecimalEdicaoVeiculo(campoPostEdicaoVeiculo('valaquisicao')),
+    'blindagem' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('blindagem')),
     'basegestao' => campoPostEdicaoVeiculo('basegestao'),
     'ccusto' => campoPostEdicaoVeiculo('centrocusto'),
     'dttermodisp' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dttermo')),
