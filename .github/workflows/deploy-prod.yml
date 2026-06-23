@@ -73,4 +73,4 @@ jobs:
               ls -1dt * 2>/dev/null | tail -n +6 | xargs rm -rf 2>/dev/null || true
 
               echo "✅ Deploy PROD finalizado com sucesso!"
-            Production
+            DEPLOY
