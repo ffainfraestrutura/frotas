@@ -49,7 +49,11 @@ if (!$man && $placaRecebida !== '') {
     }
 }
 
-if (!$man) { exit('Manutenção não encontrada.'); }
+if (!$man) {
+    // Nenhuma manutenção encontrada — inicializa array vazio
+    // para permitir abrir o formulário em branco quando aplicável.
+    $man = [];
+}
 
 $planosManutencao = [];
 $sqlPlanos = "SELECT codigo, descricao FROM `{$database}`.`tbplanomanutencao` ORDER BY descricao";
