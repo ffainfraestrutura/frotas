@@ -155,8 +155,8 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
     $tiposBind = '';
     $parametros = [];
 
-    $where[] = 'man.data >= ?';
-    $where[] = 'man.data <= ?';
+    $where[] = '(man.dataagendamento >= ? OR man.dataagendamento IS NULL OR man.dataagendamento = "")';
+    $where[] = '(man.dataagendamento <= ? OR man.dataagendamento IS NULL OR man.dataagendamento = "")';
     $tiposBind .= 'ss';
     $parametros[] = $dataInicial . ' 00:00:00';
     $parametros[] = $dataFinal . ' 23:59:59';
@@ -183,7 +183,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
         LEFT JOIN `{$databaseName}`.`tbveiculo` vei
             ON vei.placa = man.placa
         WHERE " . implode(' AND ', $where) . "
-        ORDER BY man.data DESC, man.idtbmanprev DESC
+        ORDER BY man.dataagendamento DESC, man.idtbmanprev DESC
     ";
 
     $stmtManutencoes = mysqli_prepare($conn, $sqlManutencoes);
@@ -252,7 +252,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                 <div class="alert alert-warning" role="alert"><?= esc($erroConsulta) ?></div>
             <?php endif; ?>
 
-            <p class="notice">A tela pré carrega com as manutenções cadastradas nos últimos sete dias. Para carregar mais registros, utilize os filtros de período de data de cadastro.</p>
+            <p class="notice">A tela pré carrega com as manutenções com agendamento para os últimos sete dias. Para carregar mais registros, utilize os filtros de período de data de cadastro.</p>
 
             <section class="filter-area">
                 <form action="listagem-manutencao.php" method="get">
