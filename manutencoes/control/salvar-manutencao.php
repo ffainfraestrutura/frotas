@@ -178,58 +178,67 @@ if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arqui
 }
 
     if ($isCreate) {
-        $sqlInsert = "INSERT INTO bdautofrotas.tbmanprev
-        (placa, tipo, hodometro, solicitante, status, etapa, dataocorrencia, modelo, fornman, descricao,
-         ccusto, oficina, dataagendamento, prevsaida, dataentrada, dataretirada, tipopagamento, reembolsoaprov,
-         valorreembolso, valoroficina, valordesconto, valormaoobra, valormaterial, valortransp, outrosvalor,
-         descontarcond, datavencimento, datapagamento, formapagam, condicaopag, numparc, valorparcela, dataprimparc,
-         protocolo, dataconclusao, placaanterior, observacao, doc, atualizadoem)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW())";
+        $columns = [
+            'placa','tipo','hodometro','solicitante','status','etapa','dataocorrencia','modelo','fornman','descricao',
+            'ccusto','oficina','dataagendamento','prevsaida','dataentrada','dataretirada','tipopagamento','reembolsoaprov',
+            'valorreembolso','valoroficina','valordesconto','valormaoobra','valormaterial','valortransp','outrosvalor',
+            'descontarcond','datavencimento','datapagamento','formapagam','condicaopag','numparc','valorparcela','dataprimparc',
+            'protocolo','dataconclusao','placaanterior','observacao','doc'
+        ];
+
+        $placeholders = array_fill(0, count($columns), '?');
+        $sqlInsert = 'INSERT INTO bdautofrotas.tbmanprev (' . implode(',', $columns) . ', atualizadoem) VALUES (' . implode(',', $placeholders) . ', NOW())';
+
+        $values = [
+            $placa,
+            $tipo,
+            $hodometro,
+            $solicitante,
+            $status,
+            $etapa,
+            $dataocorrencia,
+            $modelo,
+            $fornman,
+            $descricao,
+            $ccusto,
+            $oficina,
+            $dataagendamentoCompleta,
+            $prevsaida,
+            $dataentrada,
+            $dataretirada,
+            $tipopagamento,
+            $reembolsoaprov,
+            $valorreembolso,
+            $valoroficina,
+            $valordesconto,
+            $valormaoobra,
+            $valormaterial,
+            $valortransp,
+            $outrosvalor,
+            $descontarcond,
+            $datavencimento,
+            $datapagamento,
+            $formapagam,
+            $condicaopag,
+            $numparc,
+            $valorparcela,
+            $dataprimparc,
+            $protocolo,
+            $dataconclusao,
+            $placaanterior,
+            $observacao,
+            $doc,
+        ];
 
         $stmtIns = mysqli_prepare($conn, $sqlInsert);
         if ($stmtIns) {
-            mysqli_stmt_bind_param(
-                $stmtIns,
-                'ssssssssssssssssssssssssssssssssssssss',
-                $placa,
-                $tipo,
-                $hodometro,
-                $solicitante,
-                $status,
-                $etapa,
-                $dataocorrencia,
-                $modelo,
-                $fornman,
-                $descricao,
-                $ccusto,
-                $oficina,
-                $dataagendamentoCompleta,
-                $prevsaida,
-                $dataentrada,
-                $dataretirada,
-                $tipopagamento,
-                $reembolsoaprov,
-                $valorreembolso,
-                $valoroficina,
-                $valordesconto,
-                $valormaoobra,
-                $valormaterial,
-                $valortransp,
-                $outrosvalor,
-                $descontarcond,
-                $datavencimento,
-                $datapagamento,
-                $formapagam,
-                $condicaopag,
-                $numparc,
-                $valorparcela,
-                $dataprimparc,
-                $protocolo,
-                $dataconclusao,
-                $placaanterior,
-                $observacao,
-                $doc
-            );
+            $types = str_repeat('s', count($values));
+            $refs = [];
+            $refs[] = & $types;
+            for ($i = 0; $i < count($values); $i++) {
+                $refs[] = & $values[$i];
+            }
+            call_user_func_array([$stmtIns, 'bind_param'], $refs);
 
             $okIns = mysqli_stmt_execute($stmtIns);
             if ($okIns) {
