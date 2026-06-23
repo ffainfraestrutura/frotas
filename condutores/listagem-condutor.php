@@ -329,7 +329,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     <div id="layoutSidenav_content">
         <main class="page-wrapper py-3">
-            <h1 class="page-title">Condutores ativos e inativos com Vistorias Realizadas</h1>
+            <h1 class="page-title">Condutores com Vistorias Realizadas</h1>
 
             <!-- <p class="notice">Aviso: Para otimizar o carregamento, nesta página estarão listados apenas os condutores cujo último veículo possui unidade em seu estado. Para visualizar todos os condutores, filtre por "TODOS".</p>
             <p class="notice">Visando a unificação dos processos, a associação/desassociação do veículo a/de condutor deve ser realizada através de um checklist (vistoria).</p> -->
