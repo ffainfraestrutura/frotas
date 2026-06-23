@@ -374,7 +374,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderSelect('status', 'Status', $statusCadastroFormatado, 'valor', 'descricao', true, '', 'Selecione o status...'); ?>
                         <?php renderSelect('statusvel', 'Status do veículo', $statusVeiculoFormatado, 'valor', 'descricao', true, '', 'Selecione o status do veículo...'); ?>
                         <?php renderSelect('tipovel', 'Tipo operacional', $tiposVeiculoFormatado, 'valor', 'descricao', true); ?>
-                        <?php renderInput('situacao', 'Situação', 'text', true, 'placeholder="CONDUTOR FIXO"'); ?>
+                        <?php renderInput('situacao', 'Situação', 'text', true, 'placeholder="FIXO, PROVISÓRIO"'); ?>
                         <?php renderInput('hodometroinicial', 'Hodômetro inicial', 'number', false, 'min="0" step="1"'); ?>
                         <?php renderInput('hodometro', 'Hodômetro atual', 'number', false, 'min="0" step="1"'); ?>
                         <?php renderInput('datamovimentacao', 'Data movimentação', 'date'); ?>
