@@ -329,7 +329,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     <div id="layoutSidenav_content">
         <main class="page-wrapper py-3">
-            <h1 class="page-title">Condutores</h1>
+            <h1 class="page-title">Condutores com Vistorias Realizadas</h1>
 
             <!-- <p class="notice">Aviso: Para otimizar o carregamento, nesta página estarão listados apenas os condutores cujo último veículo possui unidade em seu estado. Para visualizar todos os condutores, filtre por "TODOS".</p>
             <p class="notice">Visando a unificação dos processos, a associação/desassociação do veículo a/de condutor deve ser realizada através de um checklist (vistoria).</p> -->
@@ -367,7 +367,7 @@ if (isset($conn) && $conn instanceof mysqli) {
             </section>
 
             <section class="d-flex justify-content-start actions flex-wrap">
-                <a class="btn btn-secondary" href="cadastrar_condutorespj.php">Cadastrar Condutor</a>
+                <a class="btn btn-secondary" href="cadastrar_condutorespj.php">Cadastrar Funcionário</a>
                 <a class="btn btn-success" href="funcionarios-semcnh.php">Cadastrar CNH de Colaborador</a>
                 <a class="btn btn-secondary" href="listagemcnh.php">Listagens de CNHs Cadastradas</a>
                 <a class="btn btn-primary" href="importarcnh.php">Importar CNHs em Lote</a>

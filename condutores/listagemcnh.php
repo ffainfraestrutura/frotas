@@ -154,7 +154,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 <tr>
                                     <th>Matrícula</th>
                                     <th>Nome</th>
-                                    <th>Unidade</th>
+                                    <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
                                 </tr>
@@ -191,7 +191,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                 <tr>
                                     <th>Matrícula</th>
                                     <th>Nome</th>
-                                    <th>Unidade</th>
+                                    <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
                                 </tr>

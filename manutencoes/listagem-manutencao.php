@@ -275,7 +275,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                 <div class="alert alert-warning" role="alert"><?= esc($erroConsulta) ?></div>
             <?php endif; ?>
 
-            <p class="notice">A tela pré carrega com as manutenções cadastradas nos últimos sete dias. Para carregar mais registros, utilize os filtros de período de data de cadastro.</p>
+            <p class="notice">A tela pré carrega com as manutenções cadastradas nos últimos sete dias. Para carregar mais registros, utilize os filtros de período de data de agendamento.</p>
 
             <section class="filter-area">
                 <form action="listagem-manutencao.php" method="get">

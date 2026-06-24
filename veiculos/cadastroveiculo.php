@@ -351,7 +351,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                 <input type="hidden" name="perfil_autor" value="<?= esc($perfilLogado) ?>">
 
                 <div class="card mb-3">
-                    <div class="card-header">Identificação</div>
+                    <div class="card-header"><i class="fas fa-id-card me-2"></i>Identificação</div>
                     <div class="card-body row g-3">
                         <?php renderInput('placa', 'Placa', 'text', true, 'maxlength="8" style="text-transform: uppercase;"'); ?>
                         <?php renderSelect('uf', 'UF', $opcoesUf, '', '', true); ?>
@@ -369,12 +369,12 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                 </div>
 
                 <div class="card mb-3">
-                    <div class="card-header">Status, posse e movimentação</div>
+                    <div class="card-header"><i class="fas fa-route me-2"></i>Status, posse e movimentação</div>
                     <div class="card-body row g-3">
                         <?php renderSelect('status', 'Status', $statusCadastroFormatado, 'valor', 'descricao', true, '', 'Selecione o status...'); ?>
                         <?php renderSelect('statusvel', 'Status do veículo', $statusVeiculoFormatado, 'valor', 'descricao', true, '', 'Selecione o status do veículo...'); ?>
                         <?php renderSelect('tipovel', 'Tipo operacional', $tiposVeiculoFormatado, 'valor', 'descricao', true); ?>
-                        <?php renderInput('situacao', 'Situação', 'text', true, 'placeholder="CONDUTOR FIXO"'); ?>
+                        <?php renderInput('situacao', 'Situação', 'text', true, 'placeholder="FIXO, PROVISÓRIO"'); ?>
                         <?php renderInput('hodometroinicial', 'Hodômetro inicial', 'number', false, 'min="0" step="1"'); ?>
                         <?php renderInput('hodometro', 'Hodômetro atual', 'number', false, 'min="0" step="1"'); ?>
                         <?php renderInput('datamovimentacao', 'Data movimentação', 'date'); ?>
@@ -389,7 +389,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                 </div>
 
                 <div class="card mb-3">
-                    <div class="card-header">Dados técnicos</div>
+                    <div class="card-header"><i class="fas fa-cogs me-2"></i>Dados técnicos</div>
                     <div class="card-body row g-3">
                         <?php renderInput('velmax', 'Velocidade máxima', 'number', false, 'min="0" step="1"'); ?>
                         <?php renderInput('renavam', 'Renavam'); ?>
@@ -414,7 +414,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                 </div>
 
                 <div class="card mb-3">
-                    <div class="card-header">Documentos, valores e gestão</div>
+                    <div class="card-header"><i class="fas fa-file-invoice-dollar me-2"></i>Documentos, valores e gestão</div>
                     <div class="card-body row g-3">
                         <?php renderInput('doccrlv', 'Documento CRLV'); ?>
                         <?php renderInput('dtdisponivelloc', 'Data disponível locação', 'date'); ?>
@@ -437,7 +437,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                 </div>
 
                 <div class="card mb-3">
-                    <div class="card-header">Anexos</div>
+                    <div class="card-header"><i class="fas fa-paperclip me-2"></i>Anexos</div>
                     <div class="card-body row g-3">
                         <div class="col-md-4">
                             <label class="form-label" for="crlv">CRLV</label>
