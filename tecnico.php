@@ -172,7 +172,7 @@ $pedidosRecentes = consultaPreparada(
 
             <?php if (!$podeSolicitar): ?>
                 <div class="alert alert-warning">
-                    <strong>Atenção:</strong> complete os dados obrigatórios para realizar pedido.
+                    <strong>Atenção:</strong><br> complete os dados obrigatórios para realizar pedido.
                     <?php if (!$temSupervisor): ?><div>Supervisor não encontrado para sua matrícula.</div><?php endif; ?>
                     <?php if (!$temVeiculo): ?><div>Veículo não encontrado para sua matrícula.</div><?php endif; ?>
                     <?php if (!$temSaldo): ?><div>Saldo não encontrado para sua matrícula.</div><?php endif; ?>
