@@ -128,66 +128,76 @@ if ($saldo === []) {
     voltarPedidoTecnico('Pedido não concluído: saldo não encontrado para sua matrícula.');
 }
 
-if (!isset($_FILES['arquivo']) || !is_uploaded_file($_FILES['arquivo']['tmp_name'])) {
-    voltarPedidoTecnico('Envie a foto do hodômetro.');
-}
-if ((int) ($_FILES['arquivo']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-    voltarPedidoTecnico('Não foi possível receber o arquivo enviado.');
-}
-$maxBytes = 10 * 1024 * 1024;
-if ((int) ($_FILES['arquivo']['size'] ?? 0) > $maxBytes) {
-    voltarPedidoTecnico('O arquivo enviado é muito grande. Envie imagens de até 10MB.');
-}
-$extensao = strtolower(pathinfo((string) ($_FILES['arquivo']['name'] ?? ''), PATHINFO_EXTENSION));
-$permitidas = ['jpg', 'jpeg', 'png', 'gif'];
-if (!in_array($extensao, $permitidas, true)) {
-    voltarPedidoTecnico('Envie uma foto do hodômetro.');
-}
+$uploadAviso = '';
+$caminhoFisico = '';
+$caminhoBanco = '';
 
-$mimeArquivo = '';
-if (function_exists('finfo_open')) {
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    if ($finfo !== false) {
-        $mimeArquivo = (string) finfo_file($finfo, (string) $_FILES['arquivo']['tmp_name']);
-        finfo_close($finfo);
-    }
-}
-if ($mimeArquivo !== '' && strpos($mimeArquivo, 'image/') !== 0) {
-    voltarPedidoTecnico('Envie uma foto do hodômetro.');
-}
+if (isset($_FILES['arquivo']) && is_uploaded_file($_FILES['arquivo']['tmp_name'])) {
+    if ((int) ($_FILES['arquivo']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        $uploadAviso = 'Imagem do hodômetro não enviada.';
+    } else {
+        $maxBytes = 10 * 1024 * 1024;
+        $extensao = strtolower(pathinfo((string) ($_FILES['arquivo']['name'] ?? ''), PATHINFO_EXTENSION));
+        $permitidas = ['jpg', 'jpeg', 'png', 'gif'];
+        $mimeArquivo = '';
 
-// Tentar usar pasta /docs primeiro, depois /tmp como fallback
-$pastasPossiveis = [
-    dirname(__DIR__) . '/docs',
-    '/tmp/frotas_docs',
-    sys_get_temp_dir() . '/frotas_docs'
-];
+        if ((int) ($_FILES['arquivo']['size'] ?? 0) > $maxBytes) {
+            $uploadAviso = 'Imagem do hodômetro não enviada.';
+        } elseif (!in_array($extensao, $permitidas, true)) {
+            $uploadAviso = 'Imagem do hodômetro não enviada.';
+        } else {
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo !== false) {
+                    $mimeArquivo = (string) finfo_file($finfo, (string) $_FILES['arquivo']['tmp_name']);
+                    finfo_close($finfo);
+                }
+            }
 
-$docsDir = '';
-foreach ($pastasPossiveis as $pasta) {
-    if (!is_dir($pasta)) {
-        if (!mkdir($pasta, 0777, true)) {
-            continue;
+            if ($mimeArquivo !== '' && strpos($mimeArquivo, 'image/') !== 0) {
+                $uploadAviso = 'Imagem do hodômetro não enviada.';
+            } else {
+                // Tentar usar pasta control/docs primeiro, depois /tmp como fallback
+                $pastasPossiveis = [
+                    __DIR__ . '/docs',
+                    '/tmp/frotas_docs',
+                    sys_get_temp_dir() . '/frotas_docs'
+                ];
+
+                $docsDir = '';
+                foreach ($pastasPossiveis as $pasta) {
+                    if (!is_dir($pasta)) {
+                        if (!mkdir($pasta, 0777, true)) {
+                            continue;
+                        }
+                    }
+                    if (is_writable($pasta)) {
+                        $docsDir = $pasta;
+                        break;
+                    }
+                }
+
+                if ($docsDir === '') {
+                    $uploadAviso = 'Imagem do hodômetro não enviada.';
+                } else {
+                    $nomeArquivo = preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $extensao;
+                    $caminhoFisico = $docsDir . '/' . $nomeArquivo;
+                    $caminhoBanco = '/docs/' . $nomeArquivo;
+
+                    if (!move_uploaded_file($_FILES['arquivo']['tmp_name'], $caminhoFisico)) {
+                        $uploadAviso = 'Imagem do hodômetro não enviada.';
+                        $caminhoFisico = '';
+                        $caminhoBanco = '';
+                    } else {
+                        @chmod($caminhoFisico, 0644);
+                    }
+                }
+            }
         }
     }
-    if (is_writable($pasta)) {
-        $docsDir = $pasta;
-        break;
-    }
+} else {
+    $uploadAviso = 'Imagem do hodômetro não enviada.';
 }
-
-if ($docsDir === '') {
-    voltarPedidoTecnico('Não foi possível acessar nenhuma pasta para salvar documentos. Contate o administrador.');
-}
-
-$nomeArquivo = preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $extensao;
-$caminhoFisico = $docsDir . '/' . $nomeArquivo;
-$caminhoBanco = '/docs/' . $nomeArquivo;
-
-if (!move_uploaded_file($_FILES['arquivo']['tmp_name'], $caminhoFisico)) {
-    voltarPedidoTecnico('Erro no envio da foto. Verifique as permissões da pasta. Contate o administrador.');
-}
-@chmod($caminhoFisico, 0644);
 
 $dataPedido = date('Y-m-d H:i:s');
 $flag = 0;

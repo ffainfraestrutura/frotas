@@ -34,7 +34,8 @@ function numeroTecnico($valor, int $casas = 2): string
 
 $mensagem = (string) ($_SESSION['tecnico_pedido_mensagem'] ?? '');
 $tipoMensagem = (string) ($_SESSION['tecnico_pedido_tipo'] ?? 'info');
-unset($_SESSION['tecnico_pedido_mensagem'], $_SESSION['tecnico_pedido_tipo']);
+$avisoImagem = (string) ($_SESSION['tecnico_pedido_aviso'] ?? '');
+unset($_SESSION['tecnico_pedido_mensagem'], $_SESSION['tecnico_pedido_tipo'], $_SESSION['tecnico_pedido_aviso']);
 
 $_SESSION['form_token_tecnico'] = bin2hex(random_bytes(32));
 $formToken = $_SESSION['form_token_tecnico'];
@@ -101,22 +102,6 @@ $kmOsAtual = (float) ($saldo['kmosatual'] ?? 0);
 $limite = (float) ($saldo['limite'] ?? 0);
 $temSaldo = $saldo !== [];
 $podeSolicitar = $matriculaTecnico !== '' && $temSupervisor && $temVeiculo && $temSaldo;
-
-$uploadDestinationPath = '';
-$uploadDirectories = [
-    __DIR__ . '/docs',
-    '/tmp/frotas_docs',
-    sys_get_temp_dir() . '/frotas_docs',
-];
-foreach ($uploadDirectories as $dir) {
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0777, true);
-    }
-    if (is_dir($dir) && is_writable($dir)) {
-        $uploadDestinationPath = $dir;
-        break;
-    }
-}
 
 function statusPedidoTecnico(array $pedido): string
 {
@@ -185,6 +170,12 @@ $pedidosRecentes = consultaPreparada(
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                 </div>
             <?php endif; ?>
+            <?php if ($avisoImagem !== ''): ?>
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <?= escTecnico($avisoImagem) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                </div>
+            <?php endif; ?>
 
             <?php if (!$podeSolicitar): ?>
                 <div class="alert alert-warning">
@@ -209,7 +200,8 @@ $pedidosRecentes = consultaPreparada(
                         <div class="col-12 col-md-4"><label class="form-label" for="kmhodometro">Hodômetro atual <span class="text-danger">*</span></label><input id="kmhodometro" name="kmhodometro" type="number" min="0" step="1" class="form-control" placeholder="Digite o valor do hodômetro" required></div>
                         <div class="col-12 col-md-4"><label class="form-label" for="valor">Valor solicitado <span class="text-danger">*</span></label><div class="input-group"><span class="input-group-text">R$</span><input id="valor" name="valor" class="form-control" placeholder="0,00" maxlength="10" required></div></div>
                         <div class="col-12"><label class="form-label" for="justificativa">Justificativa <span class="text-danger">*</span></label><textarea id="justificativa" name="justificativa" class="form-control" rows="3" placeholder="Informe uma justificativa para solicitação" required></textarea></div>
-                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro <span class="text-danger">*</span></label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*" capture="environment" required></div>
+                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro <span class="text-muted">(Opcional)</span></label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*" capture="environment"></div>
+                        <div class="col-12"><div class="form-text">A foto é opcional. O pedido será processado mesmo sem imagem.</div></div>
                         <div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary" <?= $podeSolicitar ? '' : 'disabled' ?>><i class="fas fa-paper-plane me-2"></i>Enviar solicitação</button></div>
                     </form>
                 </div>
@@ -238,14 +230,6 @@ $pedidosRecentes = consultaPreparada(
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('sidebarToggle')?.addEventListener('click', e => { e.preventDefault(); document.body.classList.toggle('sb-sidenav-toggled'); });
-        (function() {
-            var uploadPath = <?= json_encode($uploadDestinationPath, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
-            if (uploadPath) {
-                alert('Arquivo será enviado para:\n' + uploadPath);
-            } else {
-                alert('Nenhum caminho de upload detectado.');
-            }
-        })();
         document.getElementById('valor')?.addEventListener('input', function () {
             let valor = this.value.replace(/\D/g, '');
             if (valor === '') { this.value = ''; return; }
