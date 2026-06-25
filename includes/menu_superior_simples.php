@@ -90,7 +90,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Cadastrar condutores</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem de condutores Cadastrados</a></li>
+                                    target="_self">Listagem de condutores</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem geral de condutores com veículos</a></li>
