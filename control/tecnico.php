@@ -26,6 +26,26 @@ function normalizarValorPedidoTecnico(string $valor): float
     return is_numeric($valor) ? (float) $valor : 0.0;
 }
 
+function registrarLogPedidoTecnico(mysqli $conn, string $databaseName, string $matricula, float $valor): void
+{
+    $sql = "INSERT INTO `{$databaseName}`.`tblog`
+        (data_e_hora, acao, flag, matricula, mat_autor, valor_ant, valor_novo)
+        VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        return;
+    }
+
+    $dataHora = date('Y-m-d H:i:s');
+    $acao = 'Pediu cota extra';
+    $flagLog = 2;
+    $valorAnterior = 0.0;
+
+    mysqli_stmt_bind_param($stmt, 'ssissdd', $dataHora, $acao, $flagLog, $matricula, $matricula, $valorAnterior, $valor);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     voltarPedidoTecnico('Método inválido.');
 }
@@ -40,7 +60,7 @@ unset($_SESSION['form_token_tecnico']);
 $valor = normalizarValorPedidoTecnico((string) ($_POST['valor'] ?? ''));
 $justificativa = trim((string) ($_POST['justificativa'] ?? ''));
 $kmhodometro = trim((string) ($_POST['kmhodometro'] ?? ''));
-$placaPost = trim((string) ($_POST['placa'] ?? ''));
+$placaPost = strtoupper(trim((string) ($_POST['placa'] ?? '')));
 
 if ($matricula === '') {
     voltarPedidoTecnico('Matrícula não encontrada na sessão.');
@@ -53,6 +73,9 @@ if ($justificativa === '') {
 }
 if ($kmhodometro === '' || !ctype_digit($kmhodometro)) {
     voltarPedidoTecnico('Informe um hodômetro válido.');
+}
+if ($placaPost === '') {
+    voltarPedidoTecnico('Informe a placa do veículo.');
 }
 
 $supervisor = buscarUmaLinha(
@@ -72,7 +95,8 @@ if ($matriculaSupervisor === '') {
 }
 
 $veiculo = buscarUmaLinha($conn, "SELECT placa FROM `{$databaseName}`.`tbveiculo` WHERE matcond = ? LIMIT 1", 's', [$matricula]);
-$placa = trim((string) ($veiculo['placa'] ?? $placaPost));
+$placaBanco = strtoupper(trim((string) ($veiculo['placa'] ?? '')));
+$placa = $placaPost !== '' ? $placaPost : $placaBanco;
 if ($placa === '') {
     voltarPedidoTecnico('Pedido não concluído: colaborador sem veículo vinculado.');
 }
@@ -120,14 +144,26 @@ if (!isset($_FILES['arquivo']) || !is_uploaded_file($_FILES['arquivo']['tmp_name
 if ((int) ($_FILES['arquivo']['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
     voltarPedidoTecnico('Não foi possível receber o arquivo enviado.');
 }
-$maxBytes = 32 * 1024 * 1024;
+$maxBytes = 10 * 1024 * 1024;
 if ((int) ($_FILES['arquivo']['size'] ?? 0) > $maxBytes) {
-    voltarPedidoTecnico('O arquivo enviado é muito grande. Envie arquivos de até 32MB.');
+    voltarPedidoTecnico('O arquivo enviado é muito grande. Envie imagens de até 10MB.');
 }
 $extensao = strtolower(pathinfo((string) ($_FILES['arquivo']['name'] ?? ''), PATHINFO_EXTENSION));
-$permitidas = ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
+$permitidas = ['jpg', 'jpeg', 'png', 'gif'];
 if (!in_array($extensao, $permitidas, true)) {
-    voltarPedidoTecnico('Envie arquivo JPG, JPEG, PNG, GIF ou PDF.');
+    voltarPedidoTecnico('Envie uma foto do hodômetro.');
+}
+
+$mimeArquivo = '';
+if (function_exists('finfo_open')) {
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    if ($finfo !== false) {
+        $mimeArquivo = (string) finfo_file($finfo, (string) $_FILES['arquivo']['tmp_name']);
+        finfo_close($finfo);
+    }
+}
+if ($mimeArquivo !== '' && strpos($mimeArquivo, 'image/') !== 0) {
+    voltarPedidoTecnico('Envie uma foto do hodômetro.');
 }
 
 $docsDir = dirname(__DIR__) . '/docs';
@@ -169,7 +205,7 @@ if (!$stmt) {
     @unlink($caminhoFisico);
     voltarPedidoTecnico('Erro ao preparar gravação do pedido: ' . mysqli_error($conn));
 }
-$tipos = 'sdssiisdsssssddddiiiddsdi';
+$tipos = 'sdssiissdsdddsdddiiddsdsi';
 $parametros = [
     $matricula,
     $valor,
@@ -209,5 +245,7 @@ if (!mysqli_stmt_execute($stmt)) {
     voltarPedidoTecnico('Erro ao gravar pedido: ' . $erro);
 }
 mysqli_stmt_close($stmt);
+
+registrarLogPedidoTecnico($conn, $databaseName, $matricula, $valor);
 
 voltarPedidoTecnico('Pedido realizado com sucesso e enviado para análise.', 'success');

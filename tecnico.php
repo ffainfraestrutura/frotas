@@ -189,12 +189,11 @@ $pedidosRecentes = consultaPreparada(
                 <div class="card-body">
                     <form class="row g-3" action="control/tecnico.php" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="form_token" value="<?= escTecnico($formToken) ?>">
-                        <input type="hidden" name="placa" value="<?= escTecnico($placa) ?>">
-                        <div class="col-12 col-md-4"><label class="form-label" for="placa_view">Placa</label><input id="placa_view" class="form-control" value="<?= escTecnico($placa !== '' ? $placa : 'Sem veículo vinculado') ?>" readonly></div>
-                        <div class="col-12 col-md-4"><label class="form-label" for="kmhodometro">Hodômetro atual</label><input id="kmhodometro" name="kmhodometro" type="number" min="0" step="1" class="form-control" placeholder="Digite o valor do hodômetro" required></div>
-                        <div class="col-12 col-md-4"><label class="form-label" for="valor">Valor solicitado</label><div class="input-group"><span class="input-group-text">R$</span><input id="valor" name="valor" class="form-control" placeholder="0,00" maxlength="10" required></div></div>
-                        <div class="col-12"><label class="form-label" for="justificativa">Justificativa</label><textarea id="justificativa" name="justificativa" class="form-control" rows="3" placeholder="Informe uma justificativa para solicitação" required></textarea></div>
-                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro</label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*,.pdf" capture="environment" required></div>
+                        <div class="col-12 col-md-4"><label class="form-label" for="placa">Placa <span class="text-danger">*</span></label><input id="placa" name="placa" class="form-control" value="<?= escTecnico($placa) ?>" readonly required></div>
+                        <div class="col-12 col-md-4"><label class="form-label" for="kmhodometro">Hodômetro atual <span class="text-danger">*</span></label><input id="kmhodometro" name="kmhodometro" type="number" min="0" step="1" class="form-control" placeholder="Digite o valor do hodômetro" required></div>
+                        <div class="col-12 col-md-4"><label class="form-label" for="valor">Valor solicitado <span class="text-danger">*</span></label><div class="input-group"><span class="input-group-text">R$</span><input id="valor" name="valor" class="form-control" placeholder="0,00" maxlength="10" required></div></div>
+                        <div class="col-12"><label class="form-label" for="justificativa">Justificativa <span class="text-danger">*</span></label><textarea id="justificativa" name="justificativa" class="form-control" rows="3" placeholder="Informe uma justificativa para solicitação" required></textarea></div>
+                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro <span class="text-danger">*</span></label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*" capture="environment" required></div>
                         <div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary" <?= $podeSolicitar ? '' : 'disabled' ?>><i class="fas fa-paper-plane me-2"></i>Enviar solicitação</button></div>
                     </form>
                 </div>
@@ -233,3 +232,5 @@ $pedidosRecentes = consultaPreparada(
     </script>
 </body>
 </html>
+
+<!--  -->
