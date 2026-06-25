@@ -66,7 +66,10 @@ $_SESSION['logado'] = true;
 registrarLogAcessoAutofrota($conn, (string) $row['usuario']);
 
 mysqli_close($conn);
-if($row['perfil'] == 12) {
+if ((string) $row['perfil'] === '0') {
+    redirecionarAutofrota('tecnico.php');
+}
+if((string) $row['perfil'] === '12') {
     header('Location: ../multa/multasdp.php');
     exit;
 }
