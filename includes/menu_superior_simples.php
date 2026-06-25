@@ -115,6 +115,15 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                     </a>
                 </li>
 
+                <?php if ($perfilMenu === '2'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('coordenador/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas
+                        </a>
+                    </li>
+                <?php endif; ?>
+
                 <?php if ($perfilMenu === '4'): ?>
 
                     <li class="nav-item dropdown">
