@@ -167,11 +167,23 @@ if ($mimeArquivo !== '' && strpos($mimeArquivo, 'image/') !== 0) {
 }
 
 $docsDir = dirname(__DIR__) . '/docs';
+
 if (!is_dir($docsDir)) {
-    if (!@mkdir($docsDir, 0755, true)) {
-        voltarPedidoTecnico('Não foi possível preparar a pasta de documentos. Contate o administrador.');
+    if (!mkdir($docsDir, 0777, true)) {
+        $erroDir = error_get_last();
+        $mensagemErro = 'Não foi possível preparar a pasta de documentos.';
+        if ($erroDir !== null) {
+            $mensagemErro .= ' Erro: ' . $erroDir['message'];
+        }
+        voltarPedidoTecnico($mensagemErro);
     }
-    @chmod($docsDir, 0755);
+}
+
+if (!is_writable($docsDir)) {
+    @chmod($docsDir, 0777);
+    if (!is_writable($docsDir)) {
+        voltarPedidoTecnico('Pasta de documentos não tem permissão de escrita. Contate o administrador.');
+    }
 }
 
 $nomeArquivo = preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $extensao;
