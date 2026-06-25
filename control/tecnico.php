@@ -101,17 +101,7 @@ if ($placa === '') {
     voltarPedidoTecnico('Pedido não concluído: colaborador sem veículo vinculado.');
 }
 
-$duplicado = buscarUmaLinha(
-    $conn,
-    "SELECT 1 AS existe FROM `{$databaseName}`.`tbpedidostec`
-      WHERE matricula = ? AND DATE(data) = CURDATE() AND flag = 0 AND escalonado = 0 AND desctec IS NULL
-      LIMIT 1",
-    's',
-    [$matricula]
-);
-if ($duplicado !== []) {
-    voltarPedidoTecnico('Já existe pedido em aberto para sua matrícula hoje.');
-}
+// Removida verificação que bloqueava mais de um pedido por dia.
 
 $inicioSemana = date('Y-m-d', strtotime(date('N') === '1' ? 'today' : 'last monday'));
 $fimSemana = date('Y-m-d', strtotime($inicioSemana . ' +6 days'));
