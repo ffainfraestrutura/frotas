@@ -95,14 +95,14 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem geral de condutores com veículos</a></li>
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/importarcnh.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Importar CNH</a></li>
-                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/funcionarios-semcnh.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Condutores sem CNH</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagemcnh.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Condutores com CNH</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/importarcnh.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Importar CNH</a></li>
                         </ul>
                     </li>
 
