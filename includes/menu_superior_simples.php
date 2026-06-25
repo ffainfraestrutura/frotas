@@ -87,7 +87,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         <ul class="dropdown-menu" aria-labelledby="afMenuCondutores">
                               <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cadastrar condutores PJ</a></li>
+                                    target="_self">Cadastrar condutores</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem de condutores Cadastrados</a></li>
