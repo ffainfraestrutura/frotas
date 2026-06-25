@@ -114,7 +114,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
 <div class="container-fluid">
     <div class="mb-3 d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
-            <h1 class="h3 mb-1">Cadastrar Funcionário</h1>
+            <h1 class="h3 mb-1">Cadastrar Condutor</h1>
             <p class="text-muted mb-0">Preencha as informações pessoais, documentos, endereço e dados contratuais do condutor.</p>
         </div>
         <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
