@@ -166,24 +166,28 @@ if ($mimeArquivo !== '' && strpos($mimeArquivo, 'image/') !== 0) {
     voltarPedidoTecnico('Envie uma foto do hodômetro.');
 }
 
-$docsDir = dirname(__DIR__) . '/docs';
+// Tentar usar pasta /docs primeiro, depois /tmp como fallback
+$pastasPossiveis = [
+    dirname(__DIR__) . '/docs',
+    '/tmp/frotas_docs',
+    sys_get_temp_dir() . '/frotas_docs'
+];
 
-if (!is_dir($docsDir)) {
-    if (!mkdir($docsDir, 0777, true)) {
-        $erroDir = error_get_last();
-        $mensagemErro = 'Não foi possível preparar a pasta de documentos.';
-        if ($erroDir !== null) {
-            $mensagemErro .= ' Erro: ' . $erroDir['message'];
+$docsDir = '';
+foreach ($pastasPossiveis as $pasta) {
+    if (!is_dir($pasta)) {
+        if (!mkdir($pasta, 0777, true)) {
+            continue;
         }
-        voltarPedidoTecnico($mensagemErro);
+    }
+    if (is_writable($pasta)) {
+        $docsDir = $pasta;
+        break;
     }
 }
 
-if (!is_writable($docsDir)) {
-    @chmod($docsDir, 0777);
-    if (!is_writable($docsDir)) {
-        voltarPedidoTecnico('Pasta de documentos não tem permissão de escrita. Contate o administrador.');
-    }
+if ($docsDir === '') {
+    voltarPedidoTecnico('Não foi possível acessar nenhuma pasta para salvar documentos. Contate o administrador.');
 }
 
 $nomeArquivo = preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $extensao;
