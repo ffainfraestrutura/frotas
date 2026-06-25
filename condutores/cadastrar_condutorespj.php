@@ -48,7 +48,7 @@ function renderizarOpcoesCondutor(array $linhas, string $campo): void
     }
 }
 
-renderCabecalhoAutofrota('Cadastrar Funcionário');
+renderCabecalhoAutofrota('Cadastrar Condutor');
 ?>
 <style>
     .btn-collapse {
