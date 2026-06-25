@@ -181,19 +181,19 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
     ], 'info', 'Histórico Placa');
 
     if ($matCond !== '') {
-        $infoCondutor = montarBotaoPost('/../autofrota/condutores/dados-condutor.php', [
+        $infoCondutor = montarBotaoPost('/../condutores/dados-condutor.php', [
             'matcond' => $matCond,
         ], 'info', 'Histórico Condutor');
     }
 
     if ($podeExibirAcoes) {
         if ($emManutencao) {
-            $manutencaoHtml = montarBotaoPost('/../autofrota/manutencoes/editar-manutencao.php?idtbmanprev=' . rawurlencode($idManutencao) . '&placa=' . rawurlencode($placa), $camposAutor + [
+            $manutencaoHtml = montarBotaoPost('/../manutencoes/editar-manutencao.php?idtbmanprev=' . rawurlencode($idManutencao) . '&placa=' . rawurlencode($placa), $camposAutor + [
                 'idtbmanprev' => $idManutencao,
                 'placa' => $placa,
             ], 'edit_note', 'Editar manutenção cadastrada');
         } else {
-            $manutencaoHtml = montarBotaoPost('/../autofrota/manutencoes/cadastrar-manutencao-preventiva.php?placa=' . rawurlencode($placa), $camposAutor + [
+            $manutencaoHtml = montarBotaoPost('/../manutencoes/cadastrar-manutencao-preventiva.php?placa=' . rawurlencode($placa), $camposAutor + [
                 'placa' => $placa,
             ], 'add_circle', 'Cadastrar nova manutenção');
         }
