@@ -102,6 +102,22 @@ $limite = (float) ($saldo['limite'] ?? 0);
 $temSaldo = $saldo !== [];
 $podeSolicitar = $matriculaTecnico !== '' && $temSupervisor && $temVeiculo && $temSaldo;
 
+$uploadDestinationPath = '';
+$uploadDirectories = [
+    __DIR__ . '/docs',
+    '/tmp/frotas_docs',
+    sys_get_temp_dir() . '/frotas_docs',
+];
+foreach ($uploadDirectories as $dir) {
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0777, true);
+    }
+    if (is_dir($dir) && is_writable($dir)) {
+        $uploadDestinationPath = $dir;
+        break;
+    }
+}
+
 function statusPedidoTecnico(array $pedido): string
 {
     if (($pedido['desctec'] ?? null) !== null && (string) $pedido['desctec'] !== '') {
@@ -222,6 +238,14 @@ $pedidosRecentes = consultaPreparada(
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('sidebarToggle')?.addEventListener('click', e => { e.preventDefault(); document.body.classList.toggle('sb-sidenav-toggled'); });
+        (function() {
+            var uploadPath = <?= json_encode($uploadDestinationPath, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            if (uploadPath) {
+                alert('Arquivo será enviado para:\n' + uploadPath);
+            } else {
+                alert('Nenhum caminho de upload detectado.');
+            }
+        })();
         document.getElementById('valor')?.addEventListener('input', function () {
             let valor = this.value.replace(/\D/g, '');
             if (valor === '') { this.value = ''; return; }
