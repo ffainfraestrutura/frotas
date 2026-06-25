@@ -532,7 +532,7 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
             <section class="d-flex justify-content-start actions flex-wrap align-items-center">
                 <a class="btn btn-success" href="cadastroveiculo.php">Cadastrar Veículo</a>
                 <a class="btn btn-secondary" href="inventario-veiculo.php">Inventário de Veículos</a>
-                <a class="btn btn-secondary" href="/../autofrota/manutencoes/manutencao-listagem.php">Veículos em Manutenção</a>
+                <a class="btn btn-secondary" href="manutencoes/listagem-manutencao.php">Veículos em Manutenção</a>
                 <a class="btn btn-primary" href="importar-hodometro.php">Atualização de Hodômetro em Lote</a>
                 <form action="excel/exportar-veiculo-completo.php" 
                  method="post" target="_blank" class="d-inline">
