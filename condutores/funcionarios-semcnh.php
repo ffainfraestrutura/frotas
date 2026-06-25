@@ -6,7 +6,7 @@ $autofrotaSessao = autofrotaInit();
 header('Content-Type: text/html; charset=utf-8');
 
 $matriculaLogada = $autofrotaSessao['matricula'];
-$unidades = ['RJ', 'PR', 'SP', 'TODOS'];
+$unidades = ['RJ', 'PR', 'SP', 'ES', 'TODOS'];
 $funcionarios = [];
 
 function buscarEstadoFuncionario(mysqli $conn, string $databaseName, string $matricula): string
@@ -127,7 +127,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <h1 class="mt-2">Colaboradores sem CNH</h1>
 
                 <section class="filter-area col-6">
-                    <form action="./funcionarios.php" method="post">
+                    <form action="funcionarios-semcnh.php" method="post">
                         <div class="d-flex justify-content-start align-items-end">
                             <div>
                                 <label class="form-label fw-bold" for="unidade">Selecione unidade do colaborador:</label>

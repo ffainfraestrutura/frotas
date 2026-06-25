@@ -123,21 +123,24 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                             <i class="fas fa-id-card me-1"></i>Condutores
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCondutores">
+                              <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Cadastrar condutores</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Listagem de condutores</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem geral de condutores</a></li>
+                                    target="_self">Listagem geral de condutores com veículos</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/funcionarios-semcnh.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Condutores sem CNH</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/listagemcnh.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Condutores com CNH</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/importarcnh.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Importar CNH</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/funcionarios-semcnh.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Funcionários sem CNH</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/listagemcnh.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem de CNH</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cadastrar condutores PJ</a></li>
                         </ul>
                     </li>
 

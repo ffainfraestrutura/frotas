@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $matriculaLogada = $autofrotaSessao['matricula'];
 $perfilLogado = $autofrotaSessao['perfil'];
-$unidades = ['RJ', 'PR', 'SP', 'TODOS'];
+$unidades = ['RJ', 'PR', 'SP', 'ES', 'TODOS'];
 $colaboradores = [];
 
 function buscarEstadoFuncionarioCnh(mysqli $conn, string $databaseName, string $matricula): string
@@ -98,7 +98,7 @@ if (isset($conn) && $conn instanceof mysqli) {
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="description" content="AutoFrota" />
     <meta name="author" content="FFA" />
-    <title>AutoFrota - Listagem decolaboradores com CNH cadastrada</title>
+    <title>AutoFrota - Listagem de colaboradores com CNH cadastrada</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
@@ -157,6 +157,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
+                                    <th>Associar Veículo</th> <!-- NOVO -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -184,6 +185,17 @@ if (isset($conn) && $conn instanceof mysqli) {
                                                 </button>
                                             </form>
                                         </td>
+                                        <!-- NOVA COLUNA: Associar Veículo -->
+                                        <td class="text-center">
+                                            <form method="post" action="cadastro-veiculo-condutor.php">
+                                                <input type="hidden" name="matricula" value="<?= htmlspecialchars($colaborador['matricula']) ?>">
+                                                <input type="hidden" name="matr_autor" value="<?= htmlspecialchars($matriculaLogada) ?>">
+                                                <input type="hidden" name="perfil" value="<?= htmlspecialchars($perfilLogado) ?>">
+                                                <button class="btn-icon" type="submit" title="Associar Veículo">
+                                                    <span class="material-symbols-outlined">directions_car</span>
+                                                </button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -194,6 +206,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
+                                    <th>Associar Veículo</th> <!-- NOVO -->
                                 </tr>
                             </tfoot>
                         </table>
