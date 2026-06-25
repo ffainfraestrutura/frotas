@@ -31,9 +31,11 @@ if ($connMenu instanceof mysqli && $matriculaMenu !== '') {
 
 $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && (string)$_SERVER['SERVER_PORT'] === '443') ? 'https' : 'http';
 $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '');
-$baseAutofrotaUrl = rtrim($scheme . '://' . $host, '/') . '/';
+$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+$baseAutofrotaUrl = rtrim($scheme . '://' . $host . ($scriptDir === '/' ? '' : $scriptDir), '/') . '/';
 $paginaAtual = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
+$paginaAtual = str_starts_with($paginaAtual, '/autofrota/') ? $paginaAtual : '/autofrota/' . ltrim($paginaAtual, '/');
 $paginaAtual = rtrim($baseAutofrotaUrl, '/') . $paginaAtual;
 
 function menuSuperiorLink(string $caminho, string $baseAutofrotaUrl): string
@@ -109,14 +111,12 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
         <div class="collapse navbar-collapse" id="afMenuSuperior">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                <?php if ($perfilMenu !== '2'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo($homeMenu, $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink($homeMenu, $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="nav-item">
+                    <a class="nav-link<?= menuSuperiorAtivo($homeMenu, $paginaAtual, $baseAutofrotaUrl) ?>"
+                        href="<?= menuSuperiorLink($homeMenu, $baseAutofrotaUrl) ?>" target="_self">
+                        <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
+                    </a>
+                </li>
 
                 <?php if ($perfilMenu === '2'): ?>
                     <li class="nav-item">
@@ -243,7 +243,7 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                         </li>
                         <li>
                             <a class="dropdown-item"
-                                href="<?= menuSuperiorLink('control/logout.php', $baseAutofrotaRootUrl) ?>" target="_self">
+                                href="<?= menuSuperiorLink('control/logout.php', $baseAutofrotaUrl) ?>" target="_self">
                                 <i class="fas fa-right-from-bracket me-2"></i>Sair
                             </a>
                         </li>
