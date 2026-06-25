@@ -29,10 +29,7 @@ if ($connMenu instanceof mysqli && $matriculaMenu !== '') {
     }
 }
 
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && (string)$_SERVER['SERVER_PORT'] === '443') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '');
-$scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
-$baseAutofrotaUrl = rtrim($scheme . '://' . $host . ($scriptDir === '/' ? '' : $scriptDir), '/') . '/';
+$baseAutofrotaUrl = 'https://frotas.painel-telecom.com/';
 $paginaAtual = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
 $paginaAtual = str_starts_with($paginaAtual, '/autofrota/') ? $paginaAtual : '/autofrota/' . ltrim($paginaAtual, '/');
