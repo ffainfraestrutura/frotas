@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $matriculaLogada = $autofrotaSessao['matricula'];
 $perfilLogado = $autofrotaSessao['perfil'];
-$unidades = ['RJ', 'PR', 'SP', 'TODOS'];
+$unidades = ['RJ', 'PR', 'SP', 'ES', 'TODOS'];
 $colaboradores = [];
 
 function buscarEstadoFuncionarioCnh(mysqli $conn, string $databaseName, string $matricula): string
