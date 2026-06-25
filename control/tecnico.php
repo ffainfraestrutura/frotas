@@ -167,15 +167,21 @@ if ($mimeArquivo !== '' && strpos($mimeArquivo, 'image/') !== 0) {
 }
 
 $docsDir = dirname(__DIR__) . '/docs';
-if (!is_dir($docsDir) && !mkdir($docsDir, 0775, true)) {
-    voltarPedidoTecnico('Não foi possível preparar a pasta de documentos.');
+if (!is_dir($docsDir)) {
+    if (!@mkdir($docsDir, 0755, true)) {
+        voltarPedidoTecnico('Não foi possível preparar a pasta de documentos. Contate o administrador.');
+    }
+    @chmod($docsDir, 0755);
 }
+
 $nomeArquivo = preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $extensao;
 $caminhoFisico = $docsDir . '/' . $nomeArquivo;
 $caminhoBanco = '/docs/' . $nomeArquivo;
+
 if (!move_uploaded_file($_FILES['arquivo']['tmp_name'], $caminhoFisico)) {
-    voltarPedidoTecnico('Erro no envio da foto, tente novamente.');
+    voltarPedidoTecnico('Erro no envio da foto. Verifique as permissões da pasta. Contate o administrador.');
 }
+@chmod($caminhoFisico, 0644);
 
 $dataPedido = date('Y-m-d H:i:s');
 $flag = 0;
