@@ -98,6 +98,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('condutores/listagemcnh.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem de CNH</a></li>
                             <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Listagem de condutores PJ</a></li>
+                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar condutores PJ</a></li>
                         </ul>

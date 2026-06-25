@@ -75,7 +75,7 @@ $linksPortal = [
     [
         'titulo' => 'Condutores',
         'descricao' => 'Consulte e filtre a listagem de condutores.',
-        'url' => 'condutores/listagem-condutor.php',
+        'url' => 'condutores/listar_condutorespj.php',
         'icone' => 'fa-id-card',
     ],
     [
