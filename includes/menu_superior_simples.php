@@ -29,7 +29,7 @@ if ($connMenu instanceof mysqli && $matriculaMenu !== '') {
     }
 }
 
-$baseAutofrotaUrl = 'https://ffasip.ddns.net:4747/autofrota/';
+$baseAutofrotaUrl = 'https://frotas.painel-telecom.com/';
 $paginaAtual = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
 $paginaAtual = str_starts_with($paginaAtual, '/autofrota/') ? $paginaAtual : '/autofrota/' . ltrim($paginaAtual, '/');

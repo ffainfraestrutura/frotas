@@ -617,4 +617,4 @@ if ($tipoPosseSelecionado !== '') {
     </script>
 </body>
 </html>
-<!--  Baseado em https://ffasip.ddns.net:4545/frotas/gestao/relinventario.php -->
+<!--  Baseado em https://frotas.painel-telecom.com/gestao/relinventario.php -->
