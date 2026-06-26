@@ -38,6 +38,13 @@ if (!function_exists('autofrotaInit')) {
             $resolvedDatabaseName = $GLOBALS['database'];
         }
 
+        $resolvedDatabaseCorp = '';
+        if (isset($databaseCorp) && is_string($databaseCorp) && $databaseCorp !== '') {
+            $resolvedDatabaseCorp = $databaseCorp;
+        } elseif (isset($GLOBALS['databaseCorp']) && is_string($GLOBALS['databaseCorp']) && $GLOBALS['databaseCorp'] !== '') {
+            $resolvedDatabaseCorp = $GLOBALS['databaseCorp'];
+        }
+
         if ($resolvedConn instanceof mysqli) {
             $GLOBALS['conn'] = $resolvedConn;
             $GLOBALS['con'] = $resolvedConn;
@@ -48,6 +55,10 @@ if (!function_exists('autofrotaInit')) {
             $GLOBALS['database'] = $resolvedDatabaseName;
         }
 
+        if ($resolvedDatabaseCorp !== '') {
+            $GLOBALS['databaseCorp'] = $resolvedDatabaseCorp;
+        }
+
         exigirLogin();
 
         return [
@@ -56,6 +67,7 @@ if (!function_exists('autofrotaInit')) {
             'perfil' => (string) ($_SESSION['perfil'] ?? ''),
             'conn' => $resolvedConn,
             'databaseName' => $resolvedDatabaseName,
+            'databaseCorp' => $resolvedDatabaseCorp,
         ];
     }
 }

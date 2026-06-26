@@ -4,6 +4,7 @@ require_once __DIR__ . '/includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? ''));
 $matriculaTecnico = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 
 if (!$conn instanceof mysqli) {
@@ -45,9 +46,9 @@ $fimSemana = date('Y-m-d', strtotime($inicioSemana . ' +6 days'));
 $supervisor = buscarUmaLinha(
     $conn,
     "SELECT u2.matricula AS matricula_supervisor, u2.nome AS nome_supervisor
-       FROM `{$databaseName}`.`tbusuario` u1
-       LEFT JOIN `{$databaseName}`.`tbequipe_supervisor` s ON u1.idtbsupervisor = s.idtbsupervisor
-       LEFT JOIN `{$databaseName}`.`tbusuario` u2 ON s.matricula = u2.matricula
+             FROM `{$databaseCorp}`.`tbusuario` u1
+             LEFT JOIN `{$databaseCorp}`.`tbsupervisor` s ON u1.idtbsupervisor = s.idtbsupervisor
+             LEFT JOIN `{$databaseCorp}`.`tbusuario` u2 ON s.matricula = u2.matricula
       WHERE u1.matricula = ?
       LIMIT 1",
     's',
@@ -56,6 +57,10 @@ $supervisor = buscarUmaLinha(
 $nomeSupervisor = trim((string) ($supervisor['nome_supervisor'] ?? ''));
 $matriculaSupervisor = trim((string) ($supervisor['matricula_supervisor'] ?? ''));
 $temSupervisor = $nomeSupervisor !== '' && $matriculaSupervisor !== '';
+
+if ($databaseCorp === '') {
+    $temSupervisor = false;
+}
 
 $veiculo = buscarUmaLinha(
     $conn,
@@ -174,6 +179,7 @@ $pedidosRecentes = consultaPreparada(
                 <div class="alert alert-warning">
                     <strong>Atenção:</strong><br> complete os dados obrigatórios para realizar pedido.
                     <?php if (!$temSupervisor): ?><div>Supervisor não encontrado para sua matrícula.</div><?php endif; ?>
+                    <?php if ($databaseCorp === ''): ?><div>Banco corporativo não configurado no ambiente.</div><?php endif; ?>
                     <?php if (!$temVeiculo): ?><div>Veículo não encontrado para sua matrícula.</div><?php endif; ?>
                     <?php if (!$temSaldo): ?><div>Saldo não encontrado para sua matrícula.</div><?php endif; ?>
                 </div>

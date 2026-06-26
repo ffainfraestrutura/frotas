@@ -3,10 +3,7 @@ require_once __DIR__ . '/includes/autofrota_common.php';
 
 $autofrotaSessao = autofrotaInit();
 $usuarioLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['usuario'] ?? 'Usuário');
-$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
-if ($databaseName === '') {
-    $databaseName = 'bdautofrotas';
-}
+$databaseCorp = trim((string) (($GLOBALS['databaseCorp'] ?? '') !== '' ? $GLOBALS['databaseCorp'] : ($autofrotaSessao['databaseCorp'] ?? '')));
 
 /** @var mysqli|null $conn */
 $conn = $autofrotaSessao['conn'] ?? null;
@@ -43,48 +40,52 @@ $tecnicos = [];
 $erroConsulta = '';
 
 if ($conn instanceof mysqli) {
-    $sqlGerentes = "
-        SELECT DISTINCT g.idtbgerente, u.matricula, u.nome, '' AS ccusto
-        FROM {$databaseName}.tbequipe_gerente g
-        INNER JOIN {$databaseName}.tbusuario u ON u.matricula = g.matricula
-        ORDER BY u.nome
-    ";
-    $gerentes = consultaAssoc($conn, $sqlGerentes, $erroConsulta);
-
-    if ($gerenteSelecionado > 0) {
-        $sqlCoordenadores = "
-            SELECT c.idtbcoordenador, u.matricula, u.nome, 'Coordenador' AS cargo, ug.nome AS lider
-            FROM {$databaseName}.tbequipe_coordenador c
-            INNER JOIN {$databaseName}.tbusuario u ON u.matricula = c.matricula
-            LEFT JOIN {$databaseName}.tbequipe_gerente g ON g.idtbgerente = c.idtbgerente
-            LEFT JOIN {$databaseName}.tbusuario ug ON ug.matricula = g.matricula
-            WHERE c.idtbgerente = {$gerenteSelecionado}
+    if ($databaseCorp === '') {
+        $erroConsulta = 'Banco corporativo não configurado.';
+    } else {
+        $sqlGerentes = "
+            SELECT DISTINCT g.idtbgerente, u.matricula, u.nome, '' AS ccusto
+            FROM {$databaseCorp}.tbgerente g
+            INNER JOIN {$databaseCorp}.tbusuario u ON u.matricula = g.matricula
             ORDER BY u.nome
         ";
-        $coordenadores = consultaAssoc($conn, $sqlCoordenadores, $erroConsulta);
+        $gerentes = consultaAssoc($conn, $sqlGerentes, $erroConsulta);
 
-        $sqlSupervisores = "
-            SELECT s.idtbsupervisor, u.matricula, u.nome, 'Supervisor' AS cargo, uc.nome AS lider
-            FROM {$databaseName}.tbequipe_supervisor s
-            INNER JOIN {$databaseName}.tbusuario u ON u.matricula = s.matricula
-            INNER JOIN {$databaseName}.tbequipe_coordenador c ON c.idtbcoordenador = s.idtbcoordenador
-            LEFT JOIN {$databaseName}.tbusuario uc ON uc.matricula = c.matricula
-            WHERE c.idtbgerente = {$gerenteSelecionado}
-            ORDER BY u.nome
-        ";
-        $supervisores = consultaAssoc($conn, $sqlSupervisores, $erroConsulta);
+        if ($gerenteSelecionado > 0) {
+            $sqlCoordenadores = "
+                SELECT c.idtbcoordenador AS idtbcoordenador, u.matricula, u.nome, 'Coordenador' AS cargo, ug.nome AS lider
+                FROM {$databaseCorp}.tbcoord c
+                INNER JOIN {$databaseCorp}.tbusuario u ON u.matricula = c.matricula
+                LEFT JOIN {$databaseCorp}.tbgerente g ON g.idtbgerente = c.idtbgerente
+                LEFT JOIN {$databaseCorp}.tbusuario ug ON ug.matricula = g.matricula
+                WHERE c.idtbgerente = {$gerenteSelecionado}
+                ORDER BY u.nome
+            ";
+            $coordenadores = consultaAssoc($conn, $sqlCoordenadores, $erroConsulta);
 
-        $sqlTecnicos = "
-            SELECT DISTINCT t.matricula, t.nome, 'Técnico' AS cargo, us.nome AS lider
-                                                FROM {$databaseName}.tbusuario t
-                                                INNER JOIN {$databaseName}.tbequipe_supervisor s ON s.idtbsupervisor = t.idtbsupervisor
-                                                INNER JOIN {$databaseName}.tbequipe_coordenador c ON c.idtbcoordenador = s.idtbcoordenador
-                                                LEFT JOIN {$databaseName}.tbusuario us ON us.matricula = s.matricula
-            WHERE c.idtbgerente = {$gerenteSelecionado}
-              AND t.perfil = 0
-            ORDER BY t.nome
-        ";
-        $tecnicos = consultaAssoc($conn, $sqlTecnicos, $erroConsulta);
+            $sqlSupervisores = "
+                SELECT s.idtbsupervisor AS idtbsupervisor, u.matricula, u.nome, 'Supervisor' AS cargo, uc.nome AS lider
+                FROM {$databaseCorp}.tbsupervisor s
+                INNER JOIN {$databaseCorp}.tbusuario u ON u.matricula = s.matricula
+                INNER JOIN {$databaseCorp}.tbcoord c ON c.idtbcoordenador = s.idtbcoordenador
+                LEFT JOIN {$databaseCorp}.tbusuario uc ON uc.matricula = c.matricula
+                WHERE c.idtbgerente = {$gerenteSelecionado}
+                ORDER BY u.nome
+            ";
+            $supervisores = consultaAssoc($conn, $sqlSupervisores, $erroConsulta);
+
+            $sqlTecnicos = "
+                SELECT DISTINCT t.matricula, t.nome, 'Técnico' AS cargo, us.nome AS lider
+                FROM {$databaseCorp}.tbusuario t
+                INNER JOIN {$databaseCorp}.tbsupervisor s ON s.idtbsupervisor = t.idtbsupervisor
+                INNER JOIN {$databaseCorp}.tbcoord c ON c.idtbcoordenador = s.idtbcoordenador
+                LEFT JOIN {$databaseCorp}.tbusuario us ON us.matricula = s.matricula
+                WHERE c.idtbgerente = {$gerenteSelecionado}
+                  AND t.perfil = 0
+                ORDER BY t.nome
+            ";
+            $tecnicos = consultaAssoc($conn, $sqlTecnicos, $erroConsulta);
+        }
     }
 } else {
     $erroConsulta = 'Conexão com banco não disponível.';
@@ -192,7 +193,12 @@ $mostrarHierarquia = ($gerenteSelecionado > 0);
                                 <thead><tr><th>Matrícula</th><th>Nome</th><th>Cargo</th><th><?= escEquipe($liderTitulo) ?></th></tr></thead>
                                 <tbody>
                                 <?php if (empty($linhas)): ?>
-                                    <tr><td colspan="4" class="text-center text-muted">Nenhum registro encontrado.</td></tr>
+                                    <tr>
+                                        <td></td>
+                                        <td class="text-center text-muted">Nenhum registro encontrado.</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
                                 <?php else: ?>
                                     <?php foreach ($linhas as $linha): ?>
                                         <tr>

@@ -18,6 +18,13 @@ $banco = 'bdautofrotas';
 $databaseName = $banco;
 
 /**
+ * Nome do schema corporativo usado nas consultas de hierarquia.
+ *
+ * @var string $databaseCorp
+ */
+$databaseCorp = 'bdcorp';
+
+/**
  * Conexão MySQLi compartilhada entre as telas do portal.
  *
  * @var mysqli|false $conn
