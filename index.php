@@ -5,6 +5,16 @@ $autofrotaSessao = autofrotaInit();
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '0');
 $matriculaLogada = trim((string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? ''));
 
+if ($perfilLogado === '0') {
+    header('Location: tecnico.php');
+    exit;
+}
+
+if ($perfilLogado === '2') {
+    header('Location: aprovacao-cotas.php');
+    exit;
+}
+
 if (!function_exists('autofrotaNomePorMatricula')) {
     function autofrotaNomePorMatricula($matricula)
     {

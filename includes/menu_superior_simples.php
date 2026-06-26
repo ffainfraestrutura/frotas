@@ -5,9 +5,19 @@ $matriculaMenu = (string) ($_SESSION['matricula'] ?? '');
 $databaseNameMenu = (string) ($GLOBALS['databaseName'] ?? $GLOBALS['database'] ?? 'bdautofrotas');
 $connMenu = $GLOBALS['conn'] ?? $GLOBALS['con'] ?? null;
 
-$homeMenu = $perfilMenu === '0' ? 'tecnico.php' : 'index.php';
-$homeMenuTitulo = $perfilMenu === '0' ? 'Solicitar combustível' : 'Início';
-$homeMenuIcone = $perfilMenu === '0' ? 'fa-gas-pump' : 'fa-house';
+$homeMenu = 'index.php';
+$homeMenuTitulo = 'Início';
+$homeMenuIcone = 'fa-house';
+if ($perfilMenu === '0') {
+    $homeMenu = 'tecnico.php';
+    $homeMenuTitulo = 'Solicitar combustível';
+    $homeMenuIcone = 'fa-gas-pump';
+} elseif ($perfilMenu === '2') {
+    $homeMenu = 'coordenador/aprovacao-cotas.php';
+    $homeMenuTitulo = 'Aprovação de cotas';
+    $homeMenuIcone = 'fa-check-double';
+}
+
 
 if ($connMenu instanceof mysqli && $matriculaMenu !== '') {
     $sqlUsuarioMenu = "SELECT nome FROM `{$databaseNameMenu}`.`tbusuario` WHERE matricula = ? LIMIT 1";
@@ -108,18 +118,20 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
         <div class="collapse navbar-collapse" id="afMenuSuperior">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                <li class="nav-item">
-                    <a class="nav-link<?= menuSuperiorAtivo($homeMenu, $paginaAtual, $baseAutofrotaUrl) ?>"
-                        href="<?= menuSuperiorLink($homeMenu, $baseAutofrotaUrl) ?>" target="_self">
-                        <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
-                    </a>
-                </li>
+                <?php if ($perfilMenu !== '2'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo($homeMenu, $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink($homeMenu, $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
+                        </a>
+                    </li>
+                <?php endif; ?>
 
                 <?php if ($perfilMenu === '2'): ?>
                     <li class="nav-item">
                         <a class="nav-link<?= menuSuperiorAtivo('coordenador/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
                             href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas
+                            <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
                         </a>
                     </li>
                 <?php endif; ?>

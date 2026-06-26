@@ -2,6 +2,13 @@
 require_once __DIR__ . '/auth.php';
 
 if (usuarioLogado()) {
+    $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
+    if ($perfilLogado === '0') {
+        redirecionarAutofrota('tecnico.php');
+    }
+    if ($perfilLogado === '2') {
+        redirecionarAutofrota('aprovacao-cotas.php');
+    }
     redirecionarAutofrota('index.php');
 }
 ?>
