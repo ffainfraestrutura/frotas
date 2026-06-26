@@ -207,7 +207,7 @@ if ($supervisorTabela === '') {
                                 <td>R$ <?= escCota(moedaCota($pedido['valor'])) ?></td>
                                 <td class="justificativa"><?= escCota($pedido['justificativa']) ?></td>
                                 <td>
-                                    <a href="historico_combustivel.php?matricula=<?= $pedido['matricula'] ?>">
+                                    <a href="../combustivel/historico_combustivel.php?matricula=<?= $pedido['matricula'] ?>">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
                                 </td>
