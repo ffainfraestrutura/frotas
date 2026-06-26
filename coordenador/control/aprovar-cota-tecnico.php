@@ -47,6 +47,26 @@ function primeiraTabelaAprovacao(mysqli $conn, string $databaseName, array $tabe
     return '';
 }
 
+function parametroAprovacaoCota(mysqli $conn, string $databaseName, string $chave, float $padrao): float
+{
+    if (!tabelaAprovacaoExiste($conn, $databaseName, 'tbparametros_aprovacao_cotas')) {
+        return $padrao;
+    }
+
+    $linha = buscarUmaLinha(
+        $conn,
+        "SELECT valor_decimal FROM `{$databaseName}`.`tbparametros_aprovacao_cotas` WHERE chave = ? AND ativo = 1 LIMIT 1",
+        's',
+        [$chave]
+    );
+
+    if ($linha === [] || !is_numeric($linha['valor_decimal'] ?? null)) {
+        return $padrao;
+    }
+
+    return (float) $linha['valor_decimal'];
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     voltarAprovacaoCota('Método inválido.');
 }
@@ -61,7 +81,7 @@ $idPedido = (int) ($_POST['idtbpedidostec'] ?? 0);
 $decisao = (int) ($_POST['decisao'] ?? 0);
 $valorInserido = normalizarMoedaAprovacao((string) ($_POST['valorinserido'] ?? '0'));
 
-if ($idPedido <= 0 || !in_array($decisao, [1, 2], true)) {
+if ($idPedido <= 0 || !in_array($decisao, [1, 2, 3], true)) {
     voltarAprovacaoCota('Pedido ou decisão inválida.');
 }
 if ($decisao === 2 && $valorInserido <= 0) {
@@ -111,6 +131,10 @@ if ($pedido === []) {
     voltarAprovacaoCota('Pedido não encontrado, sem permissão ou já processado.');
 }
 
+$limiteSaldoEscalonamento = parametroAprovacaoCota($conn, $databaseName, 'saldo_cartao_limite_escalonamento', 30.0);
+$percentualKmMinimo = parametroAprovacaoCota($conn, $databaseName, 'km_os_percentual_minimo', 80.0);
+$percentualKmMaximo = parametroAprovacaoCota($conn, $databaseName, 'km_os_percentual_maximo', 120.0);
+
 $agora = date('Y-m-d H:i:s');
 $tipocota = (string) ($pedido['tipocota'] ?? 'extra');
 if ($tipocota === '') {
@@ -125,6 +149,41 @@ if ($decisao === 1) {
         [$tipocota, $idPedido]
     );
     voltarAprovacaoCota('Pedido reprovado com sucesso.', 'success');
+}
+
+if ($decisao === 3) {
+    $valorEscalonado = $valorInserido > 0 ? $valorInserido : (float) ($pedido['valor'] ?? 0);
+    consultaPreparada(
+        $conn,
+        "UPDATE `{$databaseName}`.`tbpedidostec` SET escalonado = 1, tipocota = ?, dataplantao = NULL, valorinserido = ? WHERE idtbpedidostec = ? AND flag = 0",
+        'sdi',
+        [$tipocota, $valorEscalonado, $idPedido]
+    );
+    voltarAprovacaoCota('Pedido escalonado para o gerente com sucesso.', 'warning');
+}
+
+$escalonamentoObrigatorio = false;
+$motivosEscalonamento = [];
+if ($perfilLogado !== '3' && (int) ($pedido['escalonado'] ?? 0) === 0) {
+    if ((float) ($pedido['sldcartao'] ?? 0) > $limiteSaldoEscalonamento) {
+        $escalonamentoObrigatorio = true;
+        $motivosEscalonamento[] = 'saldo do cartão acima do limite configurado';
+    }
+
+    $kmProjeto = (float) ($pedido['kmproj'] ?? 0);
+    $kmOs = (float) ($pedido['kmos'] ?? 0);
+    if ($kmProjeto > 0) {
+        $kmMinimo = $kmProjeto * ($percentualKmMinimo / 100);
+        $kmMaximo = $kmProjeto * ($percentualKmMaximo / 100);
+        if ($kmOs < $kmMinimo || $kmOs > $kmMaximo) {
+            $escalonamentoObrigatorio = true;
+            $motivosEscalonamento[] = 'KM OS fora da faixa configurada';
+        }
+    }
+}
+
+if ($escalonamentoObrigatorio && $decisao === 2) {
+    voltarAprovacaoCota('Escalonamento obrigatório: ' . implode('; ', $motivosEscalonamento) . '. Use o botão Escalonar.', 'warning');
 }
 
 consultaPreparada(

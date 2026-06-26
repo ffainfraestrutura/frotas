@@ -11,6 +11,11 @@ if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
 
+if ($perfilLogado !== '3') {
+    http_response_code(403);
+    exit('Acesso permitido apenas para perfil gerente.');
+}
+
 function escCota($valor): string
 {
     return htmlspecialchars((string) ($valor ?? ''), ENT_QUOTES, 'UTF-8');
@@ -42,26 +47,6 @@ function primeiraTabelaAutofrota(mysqli $conn, string $databaseName, array $tabe
     return '';
 }
 
-function parametroAprovacaoTela(mysqli $conn, string $databaseName, string $chave, float $padrao): float
-{
-    if (!tabelaAutofrotaExiste($conn, $databaseName, 'tbparametros_aprovacao_cotas')) {
-        return $padrao;
-    }
-
-    $linha = buscarUmaLinha(
-        $conn,
-        "SELECT valor_decimal FROM `{$databaseName}`.`tbparametros_aprovacao_cotas` WHERE chave = ? AND ativo = 1 LIMIT 1",
-        's',
-        [$chave]
-    );
-
-    if ($linha === [] || !is_numeric($linha['valor_decimal'] ?? null)) {
-        return $padrao;
-    }
-
-    return (float) $linha['valor_decimal'];
-}
-
 $supervisorTabela = primeiraTabelaAutofrota($conn, $databaseName, ['tbequipe_supervisor', 'tbsupervisor']);
 $coordenadorTabela = primeiraTabelaAutofrota($conn, $databaseName, ['tbequipe_coordenador', 'tbcoordenador']);
 $mensagem = (string) ($_SESSION['aprovacao_cota_mensagem'] ?? '');
@@ -81,18 +66,6 @@ if ($supervisorTabela === '') {
     $whereEscopo = '';
     $tipos = '';
     $params = [];
-
-    if ($perfilLogado === '1') {
-        $whereEscopo = ' AND s.matricula = ?';
-        $tipos = 's';
-        $params[] = $matriculaLogada;
-    } elseif ($perfilLogado === '2' && $coordenadorTabela !== '') {
-        $whereEscopo = ' AND c.matricula = ?';
-        $tipos = 's';
-        $params[] = $matriculaLogada;
-    } elseif (!in_array($perfilLogado, ['3', '4', '5'], true)) {
-        $whereEscopo = ' AND 1 = 0';
-    }
 
     $consulta = consultaPreparada(
         $conn,
@@ -114,7 +87,6 @@ if ($supervisorTabela === '') {
                 p.valordescontado,
                 p.sldcartao,
                 p.totalextra,
-                                p.escalonado,
                 us.nome AS nome_supervisor,
                 uc.nome AS nome_coordenador
            FROM `{$databaseName}`.`tbpedidostec` p
@@ -123,7 +95,7 @@ if ($supervisorTabela === '') {
            LEFT JOIN `{$databaseName}`.`tbusuario` us ON us.matricula = s.matricula
            {$joinCoordenador}
           WHERE p.flag = 0
-                        AND p.escalonado = 0
+            AND p.escalonado = 1
             AND p.desctec IS NULL
             {$whereEscopo}
           ORDER BY p.data DESC",
@@ -135,50 +107,6 @@ if ($supervisorTabela === '') {
         $erroTela = $consulta['erro'];
     } else {
         $pedidos = $consulta['linhas'] ?? [];
-
-        if ($perfilLogado !== '3' && $pedidos !== []) {
-            $limiteSaldoEscalonamento = parametroAprovacaoTela($conn, $databaseName, 'saldo_cartao_limite_escalonamento', 30.0);
-            $percentualKmMinimo = parametroAprovacaoTela($conn, $databaseName, 'km_os_percentual_minimo', 80.0);
-            $percentualKmMaximo = parametroAprovacaoTela($conn, $databaseName, 'km_os_percentual_maximo', 120.0);
-
-            foreach ($pedidos as $indice => $pedido) {
-                $deveEscalonar = false;
-                if ((float) ($pedido['sldcartao'] ?? 0) > $limiteSaldoEscalonamento) {
-                    $deveEscalonar = true;
-                }
-
-                $kmProjeto = (float) ($pedido['kmproj'] ?? 0);
-                $kmOs = (float) ($pedido['kmos'] ?? 0);
-                if ($kmProjeto > 0) {
-                    $kmMinimo = $kmProjeto * ($percentualKmMinimo / 100);
-                    $kmMaximo = $kmProjeto * ($percentualKmMaximo / 100);
-                    if ($kmOs < $kmMinimo || $kmOs > $kmMaximo) {
-                        $deveEscalonar = true;
-                    }
-                }
-
-                if ($deveEscalonar) {
-                    $idPedido = (int) ($pedido['idtbpedidostec'] ?? 0);
-                    if ($idPedido > 0) {
-                        consultaPreparada(
-                            $conn,
-                            "UPDATE `{$databaseName}`.`tbpedidostec`
-                                SET escalonado = 1,
-                                    dataplantao = NULL,
-                                    valorinserido = CASE WHEN COALESCE(valorinserido, 0) <= 0 THEN valor ELSE valorinserido END
-                              WHERE idtbpedidostec = ?
-                                AND flag = 0
-                                AND escalonado = 0",
-                            'i',
-                            [$idPedido]
-                        );
-                        $pedidos[$indice]['escalonado'] = 1;
-                    }
-                } else {
-                    $pedidos[$indice]['escalonado'] = 0;
-                }
-            }
-        }
     }
 }
 ?>
@@ -187,7 +115,7 @@ if ($supervisorTabela === '') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AutoFrota - Aprovação de Cotas</title>
+    <title>AutoFrota - Aprovação de Cotas Escalonadas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <style>
@@ -219,7 +147,7 @@ if ($supervisorTabela === '') {
         <section class="card panel-card mb-4">
             <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
                 <div>
-                    <h1 class="h3 mb-1">Aprovação de pedidos de cota</h1>
+                    <h1 class="h3 mb-1">Aprovação de pedidos de cota escalonados</h1>
                 </div>
                 </div>
             </div>
@@ -237,7 +165,7 @@ if ($supervisorTabela === '') {
         <?php endif; ?>
 
         <section class="card panel-card">
-            <div class="card-header bg-white fw-semibold"><i class="fas fa-check-double me-2"></i>Pedidos pendentes</div>
+            <div class="card-header bg-white fw-semibold"><i class="fas fa-check-double me-2"></i>Pedidos escalonados pendentes</div>
             <div class="card-body table-responsive">
                 <table class="table table-hover align-middle pedidos-table">
                     <thead>
@@ -260,7 +188,7 @@ if ($supervisorTabela === '') {
                     </thead>
                     <tbody>
                     <?php if ($pedidos === []): ?>
-                        <tr><td colspan="14" class="text-muted">Nenhum pedido pendente encontrado.</td></tr>
+                        <tr><td colspan="14" class="text-muted">Nenhum pedido escalonado pendente encontrado.</td></tr>
                     <?php else: ?>
                         <?php foreach ($pedidos as $pedido): ?>
                             <tr>
@@ -278,21 +206,17 @@ if ($supervisorTabela === '') {
                                 <td>R$ <?= escCota(moedaCota($pedido['valor'])) ?></td>
                                 <td class="justificativa"><?= escCota($pedido['justificativa']) ?></td>
                                 <td>
-                                    <?php if ((int) ($pedido['escalonado'] ?? 0) === 1): ?>
-                                        <span class="badge text-bg-warning">Pedido escalonado para o gerente</span>
-                                    <?php else: ?>
-                                        <div class="d-flex flex-column gap-2" style="min-width:180px">
-                                            <form action="control/aprovar-cota-tecnico.php" method="post" class="d-flex flex-column gap-2">
-                                                <input type="hidden" name="token" value="<?= escCota($token) ?>">
-                                                <input type="hidden" name="idtbpedidostec" value="<?= escCota($pedido['idtbpedidostec']) ?>">
-                                                <input type="text" name="valorinserido" class="form-control form-control-sm" value="<?= escCota(moedaCota($pedido['valor'])) ?>" aria-label="Valor aprovado">
-                                                <div class="d-flex gap-1">
-                                                    <button type="submit" name="decisao" value="2" class="btn btn-success btn-sm flex-fill" title="Aprovar" aria-label="Aprovar"><i class="fas fa-check me-1"></i>Aprovar</button>
-                                                    <button type="submit" name="decisao" value="1" class="btn btn-outline-danger btn-sm flex-fill" title="Reprovar" aria-label="Reprovar"><i class="fas fa-times me-1"></i>Reprovar</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    <?php endif; ?>
+                                    <div class="d-flex flex-column gap-2" style="min-width:180px">
+                                        <form action="control/aprovar-cota-tecnico.php" method="post" class="d-flex flex-column gap-2">
+                                            <input type="hidden" name="token" value="<?= escCota($token) ?>">
+                                            <input type="hidden" name="idtbpedidostec" value="<?= escCota($pedido['idtbpedidostec']) ?>">
+                                            <input type="text" name="valorinserido" class="form-control form-control-sm" value="<?= escCota(moedaCota($pedido['valor'])) ?>" aria-label="Valor aprovado">
+                                            <div class="d-flex gap-1">
+                                                <button type="submit" name="decisao" value="2" class="btn btn-success btn-sm flex-fill" title="Aprovar" aria-label="Aprovar"><i class="fas fa-check"></i></button>
+                                                <button type="submit" name="decisao" value="1" class="btn btn-outline-danger btn-sm flex-fill" title="Reprovar" aria-label="Reprovar"><i class="fas fa-times"></i></button>
+                                            </div>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
