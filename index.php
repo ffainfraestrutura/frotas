@@ -11,7 +11,7 @@ if ($perfilLogado === '0') {
 }
 
 if ($perfilLogado === '2') {
-    header('Location: aprovacao-cotas.php');
+    header('Location: coordenador/aprovacao-cotas.php');
     exit;
 }
 
