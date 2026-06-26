@@ -123,6 +123,15 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                         </a>
                     </li>
                 <?php endif; ?>
+                
+                <?php if ($perfilMenu === '3'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
+                        </a>
+                    </li>
+                <?php endif; ?>
 
                 <?php if ($perfilMenu === '4'): ?>
 
@@ -200,6 +209,13 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                                     target="_self" onclick="window.location.href=this.href; return false;">Adicionar
                                     manutenção</a></li>
                         </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('gerenciar-equipe.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('gerenciar-equipe.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-sitemap me-1"></i>Gerenciar equipe
+                        </a>
                     </li>
                 <?php endif; ?>
 
@@ -293,4 +309,5 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
         nav.addEventListener('click', forcarMesmaAba, true);
     })();
 </script>
+<!--  -->
 <!--  -->
