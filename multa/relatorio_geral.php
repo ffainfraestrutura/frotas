@@ -232,7 +232,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
             LEFT JOIN `{$databaseName}`.tbmovidatramite t
                 ON t.placa = m.placa
                AND t.autoinfra = m.autoinfracao
-            JOIN tbfuncionario f ON f.matricula = t.matricula
+            JOIN bdaniel.tbfuncionario f ON f.matricula = t.matricula
             WHERE m.datahoracadastro BETWEEN ? AND ?
         ";
 

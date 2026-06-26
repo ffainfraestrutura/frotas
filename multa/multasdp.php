@@ -66,7 +66,7 @@ function buscarStatusFuncionario(?mysqli $conn, string $matricula): string
         return '';
     }
 
-    $sql = 'SELECT status FROM tbfuncionario WHERE matricula = ? LIMIT 1';
+    $sql = 'SELECT status FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1';
     $stmt = mysqli_prepare($conn, $sql);
     if (!$stmt) {
         return '';

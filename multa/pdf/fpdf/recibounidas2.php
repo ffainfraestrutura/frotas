@@ -54,9 +54,9 @@ $sql = "
     LEFT JOIN bdfrota.tbmulta m ON 
         (t.idmulta = m.idtbmulta OR (t.idmulta IS NULL AND m.placa = t.placa AND m.autoinfracao = t.autoinfra))
     LEFT JOIN bdfrota.tbveiculo v ON v.placa = t.placa
-    LEFT JOIN tbfuncionario f ON f.nome = t.nome
+    LEFT JOIN bdaniel.tbfuncionario f ON f.nome = t.nome
     LEFT JOIN bdfrota.tbcnh c ON c.matricula = f.matricula
-    LEFT JOIN tbfilial fi ON fi.idtbfilial = f.codfilial
+    LEFT JOIN BdPonto.tbfilial fi ON fi.idtbfilial = f.codfilial
     WHERE t.idtbmovidatramite = '".mysqli_real_escape_string($conexao, $id)."'
     LIMIT 1;
 ";

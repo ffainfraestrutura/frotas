@@ -177,11 +177,9 @@ if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arqui
     $doc = $pastaRelativa . $nomeFinal;
 }
 
-$dataCadastro = date('Y-m-d H:i:s');
-
-if ($isCreate) {
+    if ($isCreate) {
         $columns = [
-            'placa','data','tipo','hodometro','solicitante','status','etapa','dataocorrencia','modelo','fornman','descricao',
+            'placa','tipo','hodometro','solicitante','status','etapa','dataocorrencia','modelo','fornman','descricao',
             'ccusto','oficina','dataagendamento','prevsaida','dataentrada','dataretirada','tipopagamento','reembolsoaprov',
             'valorreembolso','valoroficina','valordesconto','valormaoobra','valormaterial','valortransp','outrosvalor',
             'descontarcond','datavencimento','datapagamento','formapagam','condicaopag','numparc','valorparcela','dataprimparc',
@@ -193,7 +191,6 @@ if ($isCreate) {
 
         $values = [
             $placa,
-            $dataCadastro,
             $tipo,
             $hodometro,
             $solicitante,

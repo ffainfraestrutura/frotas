@@ -123,7 +123,7 @@ if ($conn instanceof mysqli && $id > 0) {
 
       // Buscar status do funcionário
       if (!empty($dadosMulta['matricula'])) {
-        $sqlStatus = "SELECT status FROM tbfuncionario WHERE matricula = ? LIMIT 1";
+        $sqlStatus = "SELECT status FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1";
         $stmtStatus = mysqli_prepare($conn, $sqlStatus);
         if ($stmtStatus) {
           mysqli_stmt_bind_param($stmtStatus, 's', $dadosMulta['matricula']);

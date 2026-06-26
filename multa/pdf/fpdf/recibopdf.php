@@ -1,34 +1,14 @@
 <?php
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
-require '../181/fpdf.php';
-require('../../../control/conecta.php');
+require 'fpdf.php';
+require('../../conecta.php');
 header("Content-type: text/html; charset=utf-8");
-
-// Verifica se a conexão mysqli está disponível
-if (!isset($conn) || !$conn) {
-    die("Erro: Conexão com o banco de dados não estabelecida.");
-}
 
 $link = "$_SERVER[REQUEST_URI]";
 $idaux = explode("=", $link);
 $id = $idaux[1];
-
-// Proteção contra SQL Injection
-$id = mysqli_real_escape_string($conn, $id);
-
-// ============================================
-// 1. CONSULTA PRINCIPAL - tbsmultas
-// ============================================
-$sql = "SELECT * FROM tbmulta WHERE idmovidatramite = '$id'";
-$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
-$row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
-
-// ============================================
-// 2. DADOS DA CONSULTA (compatíveis com o código original)
-// ============================================
-// Nota: $row[1], $row[4] - índice numérico ainda funciona com MYSQLI_BOTH
+$sql = "SELECT * FROM bdfrota.tbsmultas where id=" . $id . "";
+$resultado = mysql_query($sql) or die(mysql_error());
+$row = mysql_fetch_array($resultado);
 $valordescaux = $row[6] * 8 / 10;
 $valordesc = sprintf('%0.2f', round($valordescaux, 2));
 $valortotal2 = $valordesc + 80;
@@ -38,8 +18,6 @@ $datah = explode("-", $hoje);
 $ano = $datah[0];
 $mes = $datah[1];
 $taxaadm1 = $row['taxaadm'];
-
-// Mês por extenso
 if ($mes == 1) {
 	$mesd = 'janeiro';
 } elseif ($mes == 2) {
@@ -67,45 +45,38 @@ if ($mes == 1) {
 }
 $dia = $datah[2];
 
-// ============================================
-// 3. CÁLCULO DA TAXA ADM (depende das variáveis $locadora, $placa, $valor1)
-// ============================================
-// OBS: As variáveis $locadora, $placa e $valor1 NÃO estão definidas neste arquivo.
-// Elas provavelmente vêm do include 'conecta.php' ou de outra consulta.
-// Se não existirem, o código abaixo pode dar erro.
 
 if ($taxaadm1 == '' || $taxaadm1 == '0') {
-    if (isset($locadora) && ($locadora == '2' || $locadora == '9' || $locadora == '16' || $locadora == '17' || $locadora == '19')) {
-        // movida
+    if ($locadora == '2' || $locadora == '9' || $locadora == '16' || $locadora == '17' || $locadora == '19') {//movida
         $taxaadm1 = round((0.15 * $valor1), 2);
-    } elseif (isset($locadora) && ($locadora == '3' || $locadora == '4' || $locadora == '14' || $locadora == '15')) {
-        // localiza
+    } elseif ($locadora == '3' || $locadora == '4' || $locadora == '14' || $locadora == '15') {//localiza
         $taxaadm1 = '25.00';
-    } elseif (isset($locadora) && ($locadora == '6' || $locadora == '8')) {
+    } elseif ($locadora == '6' || $locadora == '8') {
         $taxaadm1 = round((0.2 * $valor1), 2);
-    } elseif (isset($locadora) && $locadora == '1') {
+
+    } elseif ($locadora == '1') {
         $taxaadm1 = '20.70';
+
     }
 }
 
-// Se taxaadm ainda estiver vazia, busca do veículo
-if ($taxaadm1 == '' && isset($placa) && !empty($placa)) {
-    $sql4 = "SELECT tipoposse FROM tbveiculo WHERE placa='$placa'";
-    $resultado4 = mysqli_query($conn, $sql4) or die(mysqli_error($conn));
-    $row4 = mysqli_fetch_array($resultado4, MYSQLI_ASSOC);
-    
-    if ($row4 && isset($row4['tipoposse']) && $row4['tipoposse'] == 'PROPRIO') {
+if ($taxaadm1 == '') {
+    $sql4 = "SELECT tipoposse FROM bdfrota.tbveiculo WHERE placa='$placa';";
+    $resultado4 = mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
+    $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
+    $tipoposse = $row4['tipoposse'];
+
+    if ($tipoposse == 'PROPRIO') {
         $taxaadm1 = '20.70';
     } else {
         $taxaadm1 = '0.00';
     }
+
 }
 
 $taxaadmf = str_replace('.', ',', $taxaadm1);
 
-// ============================================
-// 4. CLASSE PDF
-// ============================================
+// Instanciation of inherited class
 class PDF extends FPDF
 {
 	// Page header
@@ -126,11 +97,10 @@ class PDF extends FPDF
 		// Line break
 		$this->Ln(2);
 	}
+
 }
 
-// ============================================
-// 5. GERAÇÃO DO PDF
-// ============================================
+// Instanciation of inherited class
 $pdf = new PDF();
 $pdf->AliasNbPages();
 $pdf->AddPage();
@@ -142,13 +112,12 @@ $pdf->Ln(2);
 $pdf->Cell(5);
 $pdf->MultiCell(177, 5, utf8_decode("Nome do Empregado: $nome\nCPF: $cpf\n"), 1, 1);
 $pdf->Ln(2);
-$pdf->Cell(5);
+$pdf->Cell(5);//R$ 15,62
 $pdf->MultiCell(177, 5, utf8_decode("Adiantamento Salarial para pagamento de MULTA DO VEÍCULO $row[1]\n\nAuto de infração: $row[4]\nValor da multa: R$ $valordesc\nValor Taxa Administração Locadora: R$ $taxaadmf\n\nTotal: R$ $valortotal\nQuantidade de Parcelas: $row[26]\nValor das Parcelas: R$ $row[27]\n\nDeclaro, para os devidos fins, que recebi da empresa, a título de Adiantamento Salarial para pagamento de multa, a importância de R$ $valortotal, em espécie.\nEm conformidade com o disposto no artigo 462, caput, da Consolidação das Leis do Trabalho (CLT), estou ciente de que o referido valor será integralmente descontado da minha remuneração mensal, por meio de $row[26] parcelas de R$ $row[27], a serem abatidas diretamente na folha de pagamento, até a quitação total do valor antecipado..\n\nRio de Janeiro, $dia de $mesd de $ano. \n\n\n\n\n______________________________________________________\n     Assinatura do Empregado\n\n\n\n\n\n"), 1, 1);
-
-// Imagem da assinatura
-if (isset($matricula) && !empty($matricula) && file_exists("../../../assinaturas/docs/colass/$matricula.png")) {
-    $pdf->Image("../../../assinaturas/docs/colass/$matricula.png", 20, 160, 80);
-}
+//$pdf->Image('../../src/images/logo.png',10,6,20);
+$pdf->Image("../../../assinaturas/docs/colass/$matricula.png", 20, 160, 80);
 
 $pdf->Output();
+
+/* \n\nValor desconto: $valdesconto1*/
 ?>

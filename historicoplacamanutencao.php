@@ -51,7 +51,7 @@ renderCabecalhoAutofrota('Histórico de Manutenção da Placa');
                 <td><?= esc(descreverTipoManutencao((string) ($linha['tipo'] ?? ''))) ?></td>
                 <td><?= esc($linha['status'] ?? '') ?></td>
                 <td>
-                    <form method="post" action="https://frotas.painel-telecom.com/pdf/fpdf/ordemdeservico.php" target="_blank" class="d-inline">
+                    <form method="post" action="http://ffasip.ddns.net:4242/frotas/pdf/fpdf/ordemdeservico.php" target="_blank" class="d-inline">
                         <input type="hidden" name="idtbmanprev" value="<?= esc($linha['idtbmanprev'] ?? '') ?>">
                         <button style="border: none; background-color: transparent;" type="submit" title="Ordem de Serviço">
                             <span class="material-symbols-outlined">visibility</span>

@@ -140,46 +140,19 @@ if ($editando) {
     }
 
     $usuarioExistente = buscarUmaLinha($conn, "SELECT id FROM `{$databaseName}`.`tbusuario` WHERE usuario = ? OR matricula = ? LIMIT 1", 'ss', [$matricula, $matricula]);
-    $userCols = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbusuario'", 's', [$databaseName]);
-    $userExistentes = array_column($userCols['linhas'], 'COLUMN_NAME');
-    $usuarioDados = ['usuario' => $matricula, 'matricula' => $matricula, 'senha' => $matricula];
-    if (in_array('nome', $userExistentes, true) && $nome !== '') {
-        $usuarioDados['nome'] = mb_strtoupper($nome, 'UTF-8');
-    }
-
     if ($usuarioExistente !== []) {
-        $fields = ['usuario = ?', 'matricula = ?', 'senha = ?'];
-        $params = [$matricula, $matricula, $matricula];
-        if (isset($usuarioDados['nome'])) {
-            $fields[] = 'nome = ?';
-            $params[] = $usuarioDados['nome'];
-        }
-        $fields[] = "perfil = '0'";
-        $params[] = (int) $usuarioExistente['id'];
-
         $consultaUsuario = consultaPreparada(
             $conn,
-            "UPDATE `{$databaseName}`.`tbusuario` SET " . implode(', ', $fields) . " WHERE id = ?",
-            str_repeat('s', count($params) - 1) . 'i',
-            $params
+            "UPDATE `{$databaseName}`.`tbusuario` SET usuario = ?, matricula = ?, senha = ?, perfil = '1' WHERE id = ?",
+            'sssi',
+            [$matricula, $matricula, $matricula, (int) $usuarioExistente['id']]
         );
     } else {
-        $columns = ['usuario', 'matricula', 'senha'];
-        $placeholders = ['?', '?', '?'];
-        $params = [$matricula, $matricula, $matricula];
-        if (isset($usuarioDados['nome'])) {
-            $columns[] = 'nome';
-            $placeholders[] = '?';
-            $params[] = $usuarioDados['nome'];
-        }
-        $columns[] = 'perfil';
-        $placeholders[] = "'0'";
-
         $consultaUsuario = consultaPreparada(
             $conn,
-            "INSERT INTO `{$databaseName}`.`tbusuario` (`" . implode('`,`', $columns) . "`) VALUES (" . implode(', ', $placeholders) . ")",
-            str_repeat('s', count($params)),
-            $params
+            "INSERT INTO `{$databaseName}`.`tbusuario` (usuario, matricula, senha, perfil) VALUES (?, ?, ?, '1')",
+            'sss',
+            [$matricula, $matricula, $matricula]
         );
     }
 
@@ -197,7 +170,6 @@ if ($email !== '' || $telefone !== '') {
     $userDados = ['matricula' => $matriculaContato];
     if (in_array('email', $userExistentes, true)) { $userDados['email'] = $email; }
     if (in_array('telefone', $userExistentes, true)) { $userDados['telefone'] = $telefone; }
-    if (in_array('nome', $userExistentes, true) && $nome !== '') { $userDados['nome'] = mb_strtoupper($nome, 'UTF-8'); }
     if (count($userDados) > 1 && in_array('matricula', $userExistentes, true)) {
         $usuarioExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbusuario` WHERE matricula = ? LIMIT 1", 's', [$editando ? $matriculaOriginal : $matriculaContato]);
         if ($usuarioExistente !== []) {
@@ -205,7 +177,6 @@ if ($email !== '' || $telefone !== '') {
             $parametrosUsuario = [];
             if (isset($userDados['email'])) { $atualizacoesUsuario[] = '`email` = ?'; $parametrosUsuario[] = $email; }
             if (isset($userDados['telefone'])) { $atualizacoesUsuario[] = '`telefone` = ?'; $parametrosUsuario[] = $telefone; }
-            if (isset($userDados['nome'])) { $atualizacoesUsuario[] = '`nome` = ?'; $parametrosUsuario[] = $userDados['nome']; }
             if ($editando && $matricula !== $matriculaOriginal) { $atualizacoesUsuario[] = '`matricula` = ?'; $parametrosUsuario[] = $matricula; }
             $parametrosUsuario[] = $editando ? $matriculaOriginal : $matriculaContato;
             consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbusuario` SET " . implode(', ', $atualizacoesUsuario) . " WHERE matricula = ?", str_repeat('s', count($parametrosUsuario)), $parametrosUsuario);

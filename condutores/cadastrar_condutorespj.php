@@ -118,7 +118,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
             <p class="text-muted mb-0">Preencha as informações pessoais, documentos, endereço e dados contratuais do condutor.</p>
         </div>
         <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
-            <i class="fa-solid fa-list me-1"></i>Listar Condutores PJ
+            <i class="fa-solid fa-list me-1"></i>Editar Condutores
         </a>
     </div>
 

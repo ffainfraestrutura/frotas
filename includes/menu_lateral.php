@@ -1,6 +1,6 @@
 <?php
 $usuarioMenu = $_SESSION['nome'] ?? $_SESSION['usuario'] ?? 'Usuário';
-$baseAutofrotaUrl = 'https://frotas.painel-telecom.com/';
+$baseAutofrotaUrl = 'https://ffasip.ddns.net:4747/autofrota/';
 $paginaAtual = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
 $paginaAtual = str_starts_with($paginaAtual, '/autofrota/') ? $paginaAtual : '/autofrota/' . ltrim($paginaAtual, '/');

@@ -74,7 +74,7 @@ $mapaTabelas = [
     'tbstatusveic' => 'tbveiculostatus',
     'tbaplicacaoveic' => 'tbveiculoaplicacao',
     'tbmodeloveic' => 'tbveiculomodelo',
-    'tbfuncionario' => 'bdautofrotas.tbfuncionario',
+    'bdaniel.tbfuncionario' => 'bdautofrotas.tbfuncionario',
     'tbatipovel' => 'tbveltipo',
     'tbastatusvel' => 'tbvelstatus',
 ];

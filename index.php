@@ -91,12 +91,6 @@ $linksPortal = [
         'icone' => 'fa-screwdriver-wrench',
     ],
     [
-        'titulo' => 'Checklist de Vistoria',
-        'descricao' => 'Inicie uma vistoria de um carro ou continue um checklist de vistoria.',
-        'url' => '#',
-        'icone' => 'fa-clipboard-check',
-    ],
-    [
         'titulo' => 'Multas da Frota',
         'descricao' => 'Acompanhe, consulte e filtre as multas registradas para a frota.',
         'url' => 'multa/multasfrota.php',

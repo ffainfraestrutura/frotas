@@ -18,7 +18,7 @@ try {
                 m.etapa,
                 m.orgao,
                 m.datalimitecond,
-                m.valor,
+                m.valtotal,
                 m.datahoracadastro,
                 t.nome,
                 t.matricula,
@@ -39,7 +39,6 @@ try {
                 t.tdp,
                 t.tfin,
                 t.status,
-                t.dtdesconto,
                 f.status as func_status,
                 f.ccusto,
                 f.rg,
@@ -65,16 +64,9 @@ try {
 
 
     // Calcular parcelas
-    $valorTotal = floatval($dados['valor']);
+    $valorTotal = floatval($dados['valtotal']);
     $quantidadeParcelas = 1;
-    $maxParcelas = 12;
-
-    while ($valorTotal / $quantidadeParcelas >= 200 && $quantidadeParcelas < $maxParcelas) {
-        $quantidadeParcelas++;
-    }
-
-    $valorParcela = $valorTotal / $quantidadeParcelas;
-
+    $valorParcela = $quantidadeParcelas > 0 ? $valorTotal / $quantidadeParcelas : $valorTotal;
 
 } catch (Exception $e) {
     error_log($e->getMessage());
@@ -375,7 +367,7 @@ function getStatusBadge($status)
                                     <td><?php echo htmlspecialchars($dados['autoinfracao']); ?></td>
                                     <td><?php echo formatarDataSimples($dados['dtinfra']); ?></td>
                                     <td><?php echo formatarDataSimples($dados['datalimitecond']); ?></td>
-                                    <td class="fw-bold"><?php echo formatarValor($dados['valor']); ?></td>
+                                    <td class="fw-bold"><?php echo formatarValor($dados['valtotal']); ?></td>
                                     <td><?php echo $quantidadeParcelas; ?></td>
                                     <td><?php echo formatarValor($valorParcela); ?></td>
                                 </tr>
@@ -411,10 +403,10 @@ function getStatusBadge($status)
                                             </span>
                                         </div>
                                         <div class="ms-4">
-                                            <!-- <p class="mb-0 small">
+                                            <p class="mb-0 small">
                                                 <strong>Criado por:</strong>
                                                 <?php echo htmlspecialchars($dados['parecerpor'] ?? 'Sistema'); ?>
-                                            </p> -->
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
@@ -472,23 +464,13 @@ function getStatusBadge($status)
                                                         style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
                                                         <i class="fa-regular fa-file-pdf me-1"></i> Ver Recibo
                                                     </a>
-                                                    <?php if (!empty($dados['dtdesconto']) && $dados['dtdesconto'] != '0000-00-00 00:00:00'): ?>
-                                                        <button type="button" class="btn btn-sm btn-warning btn-substituir-recibo"
-                                                            disabled style="font-size: 0.7rem; padding: 0.2rem 0.5rem;"
-                                                            data-id="<?php echo $id; ?>"
-                                                            data-placa="<?php echo htmlspecialchars($dados['placa']); ?>"
-                                                            data-autoinfra="<?php echo htmlspecialchars($dados['autoinfracao']); ?>">
-                                                            <i class="fa-solid fa-arrows-rotate me-1"></i> Substituir Recibo
-                                                        </button>
-                                                    <?php else: ?>
-                                                        <button type="button" class="btn btn-sm btn-warning btn-substituir-recibo"
-                                                            disabled style="font-size: 0.7rem; padding: 0.2rem 0.5rem;"
-                                                            data-id="<?php echo $id; ?>"
-                                                            data-placa="<?php echo htmlspecialchars($dados['placa']); ?>"
-                                                            data-autoinfra="<?php echo htmlspecialchars($dados['autoinfracao']); ?>">
-                                                            <i class="fa-solid fa-arrows-rotate me-1"></i> Substituir Recibo
-                                                        </button>
-                                                    <?php endif; ?>
+                                                    <button type="button" class="btn btn-sm btn-warning btn-substituir-recibo"
+                                                        style="font-size: 0.7rem; padding: 0.2rem 0.5rem;"
+                                                        data-id="<?php echo $id; ?>"
+                                                        data-placa="<?php echo htmlspecialchars($dados['placa']); ?>"
+                                                        data-autoinfra="<?php echo htmlspecialchars($dados['autoinfracao']); ?>">
+                                                        <i class="fa-solid fa-arrows-rotate me-1"></i> Substituir Recibo
+                                                    </button>
                                                 </div>
                                             <?php else: ?>
                                                 <button type="button" class="btn btn-sm btn-primary btn-substituir-recibo"
@@ -499,32 +481,6 @@ function getStatusBadge($status)
                                                 </button>
                                             <?php endif; ?>
                                         </div>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if (!empty($dados['dtdesconto']) && $dados['dtdesconto'] != '0000-00-00 00:00:00'): ?>
-                                <div class="timeline-item info">
-                                    <div class="border rounded p-2 mb-2 bg-light">
-                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                            <div>
-                                                <i class="fa-solid fa-paper-plane text-info me-1"></i>
-                                                <strong class="text-info">FINALIZADO PELO DP</strong>
-                                            </div>
-                                            <span class="text-muted small">
-                                                <i class="fa-regular fa-calendar me-1"></i>
-                                                <?php echo formatarData($dados['dtdesconto']); ?>
-                                            </span>
-                                        </div>
-                                        <!-- <div class="ms-4">
-                                            <?php if (!empty($dados['recibo'])): ?>
-                                                <a href="<?php echo $dados['recibo']; ?>" target="_blank"
-                                                    class="btn btn-sm btn-success"
-                                                    style="font-size: 0.7rem; padding: 0.2rem 0.5rem;">
-                                                    <i class="fa-regular fa-file-pdf me-1"></i> Ver Recibo
-                                                </a>
-                                            <?php endif; ?>
-                                        </div> -->
                                     </div>
                                 </div>
                             <?php endif; ?>

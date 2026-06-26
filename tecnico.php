@@ -34,8 +34,7 @@ function numeroTecnico($valor, int $casas = 2): string
 
 $mensagem = (string) ($_SESSION['tecnico_pedido_mensagem'] ?? '');
 $tipoMensagem = (string) ($_SESSION['tecnico_pedido_tipo'] ?? 'info');
-$avisoImagem = (string) ($_SESSION['tecnico_pedido_aviso'] ?? '');
-unset($_SESSION['tecnico_pedido_mensagem'], $_SESSION['tecnico_pedido_tipo'], $_SESSION['tecnico_pedido_aviso']);
+unset($_SESSION['tecnico_pedido_mensagem'], $_SESSION['tecnico_pedido_tipo']);
 
 $_SESSION['form_token_tecnico'] = bin2hex(random_bytes(32));
 $formToken = $_SESSION['form_token_tecnico'];
@@ -170,12 +169,6 @@ $pedidosRecentes = consultaPreparada(
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
                 </div>
             <?php endif; ?>
-            <?php if ($avisoImagem !== ''): ?>
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <?= escTecnico($avisoImagem) ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-                </div>
-            <?php endif; ?>
 
             <?php if (!$podeSolicitar): ?>
                 <div class="alert alert-warning">
@@ -200,8 +193,7 @@ $pedidosRecentes = consultaPreparada(
                         <div class="col-12 col-md-4"><label class="form-label" for="kmhodometro">Hodômetro atual <span class="text-danger">*</span></label><input id="kmhodometro" name="kmhodometro" type="number" min="0" step="1" class="form-control" placeholder="Digite o valor do hodômetro" required></div>
                         <div class="col-12 col-md-4"><label class="form-label" for="valor">Valor solicitado <span class="text-danger">*</span></label><div class="input-group"><span class="input-group-text">R$</span><input id="valor" name="valor" class="form-control" placeholder="0,00" maxlength="10" required></div></div>
                         <div class="col-12"><label class="form-label" for="justificativa">Justificativa <span class="text-danger">*</span></label><textarea id="justificativa" name="justificativa" class="form-control" rows="3" placeholder="Informe uma justificativa para solicitação" required></textarea></div>
-                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro <span class="text-muted">(Opcional)</span></label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*" capture="environment"></div>
-                        <div class="col-12"><div class="form-text">A foto é opcional. O pedido será processado mesmo sem imagem.</div></div>
+                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro <span class="text-danger">*</span></label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*" capture="environment" required></div>
                         <div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary" <?= $podeSolicitar ? '' : 'disabled' ?>><i class="fas fa-paper-plane me-2"></i>Enviar solicitação</button></div>
                     </form>
                 </div>
@@ -241,4 +233,4 @@ $pedidosRecentes = consultaPreparada(
 </body>
 </html>
 
-<!--  -->
+<!--Versão do commit de remove o bloqueio-->

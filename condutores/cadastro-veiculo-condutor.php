@@ -49,11 +49,11 @@ if ($matricula !== '' && isset($conn) && $conn instanceof mysqli) {
 // Busca lista de todos os condutores para o select (apenas matrícula e nome)
 $listaCondutores = [];
 if (isset($conn) && $conn instanceof mysqli) {
-    $sqlLista = "SELECT matricula, nome 
-                 FROM `{$databaseName}`.`tbcondutor` 
-                 WHERE matricula NOT IN ('003535', '004115')
-                 GROUP BY matricula 
-                 ORDER BY nome ASC";
+    $sqlLista = "SELECT a.matricula, b.nome 
+             FROM `{$databaseName}`.`tbcnh` AS a
+             INNER JOIN `{$databaseName}`.`tbfuncionario` AS b ON a.matricula = b.matricula 
+             GROUP BY a.matricula 
+             ORDER BY b.nome ASC";
     $res = mysqli_query($conn, $sqlLista);
     if ($res) {
         while ($row = mysqli_fetch_assoc($res)) {
@@ -109,7 +109,7 @@ if (isset($_SESSION['msg_veiculo_condutor'])) {
                 <div class="mb-3">
                     <label for="matricula" class="form-label fw-bold">Condutor *</label>
                     <select class="form-select" name="matricula" id="matricula" required>
-                        <option value="">Selecione um condutor</option>
+                        <option value="">Selecione o condutor</option>
                         <?php foreach ($listaCondutores as $c): ?>
                             <option value="<?= esc($c['matricula']) ?>" <?= $c['matricula'] === $matricula ? 'selected' : '' ?>>
                                 <?= esc($c['matricula'] . ' - ' . $c['nome']) ?>

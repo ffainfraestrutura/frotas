@@ -367,7 +367,7 @@ function validarHora($value, $label)
 
 function buscarFuncionarioPorMatricula($db, $matricula)
 {
-    $stmt = executarPrepared($db, 'SELECT nome, cpf FROM tbfuncionario WHERE matricula = ? LIMIT 1', array($matricula));
+    $stmt = executarPrepared($db, 'SELECT nome, cpf FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1', array($matricula));
     mysqli_stmt_bind_result($stmt, $nome, $cpf);
     $found = mysqli_stmt_fetch($stmt);
     mysqli_stmt_close($stmt);
