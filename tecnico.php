@@ -198,8 +198,8 @@ $pedidosRecentes = consultaPreparada(
                     </form>
                 </div>
             </section>
-
-            <section class="panel-card card mb-4">
+                            <!--Rever depois, ajustar tempo  -->
+            <!-- <section class="panel-card card mb-4">
                 <div class="card-header bg-white fw-semibold"><i class="fas fa-clock-rotate-left me-2"></i>Últimos pedidos</div>
                 <div class="card-body table-responsive">
                     <table class="table table-sm align-middle mb-0">
@@ -215,7 +215,7 @@ $pedidosRecentes = consultaPreparada(
                         </tbody>
                     </table>
                 </div>
-            </section>
+            </section> -->
         </main>
     </div>
     </div>
