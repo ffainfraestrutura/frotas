@@ -183,6 +183,7 @@ if ($supervisorTabela === '') {
                         <th>Total extra</th>
                         <th>Valor pedido</th>
                         <th>Justificativa</th>
+                        <th>Histórico</th>
                         <th>Ação</th>
                     </tr>
                     </thead>
@@ -205,6 +206,11 @@ if ($supervisorTabela === '') {
                                 <td>R$ <?= escCota(moedaCota($pedido['totalextra'])) ?></td>
                                 <td>R$ <?= escCota(moedaCota($pedido['valor'])) ?></td>
                                 <td class="justificativa"><?= escCota($pedido['justificativa']) ?></td>
+                                <td>
+                                    <a href="historico_combustivel.php?matricula=<?= $pedido['matricula'] ?>">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
                                 <td>
                                     <div class="d-flex flex-column gap-2" style="min-width:180px">
                                         <form action="control/aprovar-cota-tecnico.php" method="post" class="d-flex flex-column gap-2">

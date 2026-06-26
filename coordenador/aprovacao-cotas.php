@@ -255,6 +255,7 @@ if ($supervisorTabela === '') {
                         <th>Total extra</th>
                         <th>Valor pedido</th>
                         <th>Justificativa</th>
+                        <th>Histórico</th>
                         <th>Ação</th>
                     </tr>
                     </thead>
@@ -277,6 +278,11 @@ if ($supervisorTabela === '') {
                                 <td>R$ <?= escCota(moedaCota($pedido['totalextra'])) ?></td>
                                 <td>R$ <?= escCota(moedaCota($pedido['valor'])) ?></td>
                                 <td class="justificativa"><?= escCota($pedido['justificativa']) ?></td>
+                                <td>
+                                    <a href="historico_combustivel.php?matricula=<?= $pedido['matricula'] ?>">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                </td>
                                 <td>
                                     <?php if ((int) ($pedido['escalonado'] ?? 0) === 1): ?>
                                         <span class="badge text-bg-warning">Pedido escalonado para o gerente</span>

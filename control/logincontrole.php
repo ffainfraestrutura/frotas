@@ -69,6 +69,10 @@ mysqli_close($conn);
 if ((string) $row['perfil'] === '0') {
     redirecionarAutofrota('tecnico.php');
 }
+if($row['perfil'] == 2) {
+    header('Location: ../combustivel/coordenador/aprovacao-cotas.php.php');
+    exit;
+}
 if((string) $row['perfil'] === '12') {
     header('Location: ../multa/multasdp.php');
     exit;
