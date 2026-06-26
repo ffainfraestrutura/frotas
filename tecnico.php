@@ -233,4 +233,4 @@ $pedidosRecentes = consultaPreparada(
 </body>
 </html>
 
-<!--Versão do commit de remove o bloqueio-->
+<!--  -->

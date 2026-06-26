@@ -261,4 +261,3 @@ mysqli_stmt_close($stmt);
 registrarLogPedidoTecnico($conn, $databaseName, $matricula, $valor);
 
 voltarPedidoTecnico('Pedido realizado com sucesso e enviado para análise.', 'success');
-// versão do commit do remove bloqueio
