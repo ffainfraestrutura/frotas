@@ -1,65 +1,17 @@
 <?php
-$usuarioMenu = $_SESSION['usuario'] ?? $_SESSION['nome'] ?? 'Usuário';
-$perfilMenu = (string) ($_SESSION['perfil'] ?? '');
-$matriculaMenu = (string) ($_SESSION['matricula'] ?? '');
-$databaseNameMenu = (string) ($GLOBALS['databaseName'] ?? $GLOBALS['database'] ?? 'bdautofrotas');
-$connMenu = $GLOBALS['conn'] ?? $GLOBALS['con'] ?? null;
-
-$homeMenu = 'index.php';
-$homeMenuTitulo = 'Início';
-$homeMenuIcone = 'fa-house';
-if ($perfilMenu === '0') {
-    $homeMenu = 'tecnico.php';
-    $homeMenuTitulo = 'Solicitar combustível';
-    $homeMenuIcone = 'fa-gas-pump';
-} elseif ($perfilMenu === '2') {
-    $homeMenu = 'coordenador/aprovacao-cotas.php';
-    $homeMenuTitulo = 'Aprovação de cotas';
-    $homeMenuIcone = 'fa-check-double';
-}
-
-
-if ($connMenu instanceof mysqli && $matriculaMenu !== '') {
-    $sqlUsuarioMenu = "SELECT nome FROM `{$databaseNameMenu}`.`tbusuario` WHERE matricula = ? LIMIT 1";
-    $stmtUsuarioMenu = mysqli_prepare($connMenu, $sqlUsuarioMenu);
-    if ($stmtUsuarioMenu) {
-        mysqli_stmt_bind_param($stmtUsuarioMenu, 's', $matriculaMenu);
-        if (mysqli_stmt_execute($stmtUsuarioMenu)) {
-            $resultadoUsuarioMenu = mysqli_stmt_get_result($stmtUsuarioMenu);
-            if ($resultadoUsuarioMenu instanceof mysqli_result) {
-                $linhaUsuarioMenu = mysqli_fetch_assoc($resultadoUsuarioMenu) ?: [];
-                $nomeBancoMenu = trim((string) ($linhaUsuarioMenu['nome'] ?? ''));
-                if ($nomeBancoMenu !== '') {
-                    $usuarioMenu = $nomeBancoMenu;
-                }
-                mysqli_free_result($resultadoUsuarioMenu);
-            }
-        }
-        mysqli_stmt_close($stmtUsuarioMenu);
-    }
-}
-
-$baseAutofrotaUrl = 'https://frotas.painel-telecom.com/';
-$paginaAtual = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
+$usuarioMenu = $_SESSION['nome'] ?? $_SESSION['usuario'] ?? 'Usuário';
+$baseAutofrotaUrl = '';
+$paginaAtual = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
-$paginaAtual = str_starts_with($paginaAtual, '/autofrota/') ? $paginaAtual : '/autofrota/' . ltrim($paginaAtual, '/');
-$paginaAtual = rtrim($baseAutofrotaUrl, '/') . $paginaAtual;
 
 function menuSuperiorLink(string $caminho, string $baseAutofrotaUrl): string
 {
-    return rtrim($baseAutofrotaUrl, '/') . '/' . ltrim($caminho, '/');
+    return '/' . ltrim($caminho, '/');
 }
 
 function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAutofrotaUrl): string
 {
     return menuSuperiorLink($caminho, $baseAutofrotaUrl) === $paginaAtual ? ' active' : '';
-}
-
-function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $baseAutofrotaUrl): string
-{
-    $urlPrefixo = rtrim(menuSuperiorLink($prefixo, $baseAutofrotaUrl), '/') . '/';
-
-    return str_starts_with($paginaAtual, $urlPrefixo) ? ' active' : '';
 }
 ?>
 <style>
@@ -107,7 +59,7 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top af-top-simple" aria-label="Menu superior AutoFrota">
     <div class="container-fluid px-3">
-        <a class="navbar-brand" href="<?= menuSuperiorLink($homeMenu, $baseAutofrotaUrl) ?>"
+        <a class="navbar-brand" href="<?= menuSuperiorLink('index.php', $baseAutofrotaUrl) ?>"
             target="_self">AutoFrota</a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#afMenuSuperior"
@@ -118,34 +70,14 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
         <div class="collapse navbar-collapse" id="afMenuSuperior">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                <?php if ($perfilMenu !== '2'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo($homeMenu, $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink($homeMenu, $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <?php if ($_SESSION['perfil'] == 4): ?>
 
-                <?php if ($perfilMenu === '2'): ?>
                     <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('coordenador/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas <?= $homeMenuIcone ?> me-1"></i><?= htmlspecialchars($homeMenuTitulo) ?>
+                        <a class="nav-link<?= menuSuperiorAtivo('index.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('index.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-house me-1"></i>Início
                         </a>
                     </li>
-                <?php endif; ?>
-                
-                <?php if ($perfilMenu === '3'): ?>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                <?php if ($perfilMenu === '4'): ?>
 
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCondutores" role="button"
@@ -153,7 +85,7 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                             <i class="fas fa-id-card me-1"></i>Condutores
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCondutores">
-                              <li><a class="dropdown-item"
+                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar condutores</a></li>
                             <li><a class="dropdown-item"
@@ -195,13 +127,6 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                         </ul>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivoSecao('checklist', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('#', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-clipboard-check me-1"></i>Checklist
-                        </a>
-                    </li>
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuManutencoes" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -222,33 +147,71 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
                                     manutenção</a></li>
                         </ul>
                     </li>
+                <?php endif; ?>
 
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('gerenciar-equipe.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('gerenciar-equipe.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-sitemap me-1"></i>Gerenciar equipe
+                <?php if ($_SESSION['perfil'] == 4 || $_SESSION['perfil'] == 12): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuMultas" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-file-circle-exclamation me-1"></i>Multas
                         </a>
+                        <?php if ($_SESSION['perfil'] == 4): ?>
+                            <ul class="dropdown-menu" aria-labelledby="afMenuMultas">
+                                <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/multasfrota.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Listar Multas</a></li>
+                                <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/cadastromulta.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Lançamento e consulta de multas</a></li>
+                                <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/importarmultasnovas.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Importar multas novas</a></li>
+                            </ul>
+                        <?php elseif ($_SESSION['perfil'] == 12): ?>
+                            <ul class="dropdown-menu" aria-labelledby="afMenuMultas">
+                                <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/multasdp.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Listar Multas</a></li>
+                                <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/relatorio_geral.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Relatorio Geral de Multas</a></li>
+                            </ul>
+                        <?php endif; ?>
                     </li>
                 <?php endif; ?>
 
-                <?php if ($perfilMenu === '4'): ?>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="afMenuMultas" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-file-circle-exclamation me-1"></i>Multas
-                    </a>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuMultas">
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('multa/multasfrota.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listar Multas</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('multa/cadastromulta.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Lançamento e consulta de multas</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('multa/importarmultasnovas.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Importar multas novas</a></li>
+                <?php if ($_SESSION['perfil'] == 2): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejamento
+                                </a>
+                            </li>
                         </ul>
-                </li>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Cotas
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+                
+                <?php if ($_SESSION['perfil'] == 3): ?>
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
+                        </a>
+                    </li>
                 <?php endif; ?>
             </ul>
 
@@ -321,5 +284,3 @@ function menuSuperiorAtivoSecao(string $prefixo, string $paginaAtual, string $ba
         nav.addEventListener('click', forcarMesmaAba, true);
     })();
 </script>
-<!--  -->
-<!--  -->
