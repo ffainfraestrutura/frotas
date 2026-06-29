@@ -7,7 +7,10 @@ if (usuarioLogado()) {
         redirecionarAutofrota('tecnico.php');
     }
     if ($perfilLogado === '2') {
-        redirecionarAutofrota('aprovacao-cotas.php');
+        redirecionarAutofrota('coordenador/aprovacao-cotas.php');
+    }
+    if ($perfilLogado === '3') {
+        redirecionarAutofrota('gerente/aprovacao-cotas.php');
     }
     redirecionarAutofrota('index.php');
 }
