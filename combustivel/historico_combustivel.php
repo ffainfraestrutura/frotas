@@ -256,12 +256,19 @@ if (!empty($filtro_matricula)) {
     <div id="layoutSidenav_content">
         <main>
             <div class="container-fluid px-4">
-                <h1 class="mt-4">
-                    <i class="fas fa-history me-2"></i>Histórico de Combustível
-                </h1>
-                <ol class="breadcrumb mb-4">
-                    <li class="breadcrumb-item active">Acompanhe todas as transferências de saldo</li>
-                </ol>
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <h1 class="mt-4 mb-1">
+                            <i class="fas fa-history me-2"></i>Histórico de Combustível
+                        </h1>
+                        <ol class="breadcrumb mb-4">
+                            <li class="breadcrumb-item active">Acompanhe todas as transferências de saldo</li>
+                        </ol>
+                    </div>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary mt-4">
+                        <i class="fas fa-arrow-left me-2"></i>Voltar
+                    </a>
+                </div>
 
                 <?php if (isset($_GET['success'])): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
