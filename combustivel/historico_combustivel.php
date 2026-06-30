@@ -16,20 +16,101 @@ require_once '../includes/autofrota_common.php';
 // Pega o filtro de colaborador (se tiver)
 $filtro_matricula = isset($_GET['matricula']) ? $_GET['matricula'] : '';
 
-// Busca lista de colaboradores que já fizeram remanejamento
-$sql_colaboradores = "SELECT DISTINCT 
-                        h.matricula,
-                        u.nome
-                      FROM 
-                        historico_combustivel h
-                      LEFT JOIN tbusuario u ON h.matricula = u.matricula
-                      WHERE 
-                        h.acao = 'remanejamento'
-                      ORDER BY 
-                        u.nome ASC";
+// Busca lista de colaboradores baseado no perfil do usuário
+$colaboradores = [];
 
-$result_colaboradores = mysqli_query($conn, $sql_colaboradores);
-$colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
+if ($perfil == 4) {
+    // Perfil 4 - Visualiza todos os colaboradores
+    $sql_colaboradores = "SELECT DISTINCT 
+                            f.matricula,
+                            f.nome
+                        FROM 
+                            bdcorp.tbusuario u
+                            JOIN bdcorp.tbfuncionario f ON u.matricula = f.matricula
+                        WHERE 
+                            u.perfil = 0
+                            AND f.status != 'demitido'
+                        ORDER BY 
+                            f.nome ASC";
+    
+    $result_colaboradores = mysqli_query($conn, $sql_colaboradores);
+    $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
+} 
+elseif ($perfil == 2) {
+    // Perfil 2 - Coordenador - Busca apenas técnicos vinculados a ele
+    $sql_colaboradores = "SELECT DISTINCT 
+                            u.matricula,
+                            u.nome
+                        FROM 
+                            bdcorp.tbcoord coord
+                            JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
+                            JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
+                            JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
+                        WHERE 
+                            coord.matricula = ?
+                            AND tec.status != 'demitido'
+                            AND u.perfil = 0
+                        ORDER BY 
+                            u.nome ASC";
+    
+    $stmt = mysqli_prepare($conn, $sql_colaboradores);
+    mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
+    mysqli_stmt_execute($stmt);
+    $result_colaboradores = mysqli_stmt_get_result($stmt);
+    $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+} 
+elseif ($perfil == 3) {
+    // Perfil 3 - Gerente - Busca técnicos de todos os coordenadores abaixo dele
+    $sql_colaboradores = "SELECT DISTINCT 
+                            u.matricula,
+                            u.nome
+                        FROM 
+                            bdcorp.tbgerente ger
+                            JOIN bdcorp.tbcoord coord ON coord.idtbgerente = ger.idtbgerente
+                            JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
+                            JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
+                            JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
+                        WHERE 
+                            ger.matricula = ?
+                            AND tec.status != 'demitido'
+                            AND u.perfil = 0
+                        ORDER BY 
+                            u.nome ASC";
+    
+    $stmt = mysqli_prepare($conn, $sql_colaboradores);
+    mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
+    mysqli_stmt_execute($stmt);
+    $result_colaboradores = mysqli_stmt_get_result($stmt);
+    $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+} 
+elseif ($perfil == 10) {
+    // Perfil 10 - Diretor - Busca todos os técnicos (visão completa)
+    $sql_colaboradores = "SELECT DISTINCT 
+                            u.matricula,
+                            u.nome
+                        FROM 
+                            bdcorp.tbdiretor dir
+                            JOIN bdcorp.tbgerente ger ON ger.idtbdiretor = dir.id
+                            JOIN bdcorp.tbcoord coord ON coord.idtbgerente = ger.idtbgerente
+                            JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
+                            JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
+                            JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
+                        WHERE 
+                            dir.matricula = ?
+                            AND tec.status != 'demitido'
+                            AND u.perfil = 0
+                        ORDER BY 
+                            u.nome ASC";
+    
+    $stmt = mysqli_prepare($conn, $sql_colaboradores);
+    mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
+    mysqli_stmt_execute($stmt);
+    $result_colaboradores = mysqli_stmt_get_result($stmt);
+    $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+}
 
 // Busca o histórico completo (sem filtro de acao) - ORDENADO DO MAIS ANTIGO PARA O MAIS NOVO
 $sql_historico = "SELECT 
@@ -47,13 +128,22 @@ $sql_historico = "SELECT
                   FROM 
                     historico_combustivel h
                   LEFT JOIN tbusuario u ON h.matricula = u.matricula
-                  LEFT JOIN tbusuario ua ON h.matricula_autor = ua.matricula";
+                  LEFT JOIN tbusuario ua ON h.matricula_autor = ua.matricula
+                  WHERE h.data >= DATE_SUB(CURDATE(), INTERVAL (WEEKDAY(CURDATE()) + 1) DAY)";
 
 // Adiciona filtro de colaborador se selecionado
 if (!empty($filtro_matricula)) {
-    $sql_historico .= " WHERE h.matricula = '$filtro_matricula'";
-} else {
-    $sql_historico .= " WHERE h.acao = 'remanejamento'";
+    $sql_historico .= " AND h.matricula = '$filtro_matricula'";
+} elseif ($perfil != 4 && $perfil != 10) {
+    // Se não tem filtro e o usuário não é admin/diretor, filtra pela hierarquia
+    $matriculas_autorizadas = array_column($colaboradores, 'matricula');
+    if (!empty($matriculas_autorizadas)) {
+        $matriculas_list = implode("','", $matriculas_autorizadas);
+        $sql_historico .= " AND h.matricula IN ('$matriculas_list')";
+    } else {
+        // Se não tem técnicos vinculados, não mostra nada
+        $sql_historico .= " AND 1=0";
+    }
 }
 
 // ORDENA DO MAIS ANTIGO PARA O MAIS NOVO
@@ -284,7 +374,7 @@ if (!empty($filtro_matricula)) {
                     </div>
                 <?php endif; ?>
 
-                <?php if ($perfil == 4): ?>
+                <?php if ($perfil == 4 || $perfil == 2 || $perfil == 3 || $perfil == 10): ?>
                     <div class="card mb-4">
                         <div class="card-header">
                             <i class="fas fa-filter me-1"></i>

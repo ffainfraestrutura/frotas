@@ -147,6 +147,21 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     manutenção</a></li>
                         </ul>
                     </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejamento
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
                 <?php endif; ?>
 
                 <?php if ($_SESSION['perfil'] == 4 || $_SESSION['perfil'] == 12): ?>
@@ -206,11 +221,44 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                 <?php endif; ?>
                 
                 <?php if ($_SESSION['perfil'] == 3): ?>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejamento
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li class="nav-item">
+                                <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
+                                    <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+
+                <?php if ($_SESSION['perfil'] == 10): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejamento
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 <?php endif; ?>
             </ul>
