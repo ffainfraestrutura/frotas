@@ -24,7 +24,7 @@ $sql_colaboradores = "SELECT DISTINCT
                         historico_combustivel h
                       LEFT JOIN tbusuario u ON h.matricula = u.matricula
                       WHERE 
-                        h.acao = 'remanejamento'
+                        h.acao IN ('remanejamento', 'cota_extra')
                       ORDER BY 
                         u.nome ASC";
 
@@ -51,9 +51,9 @@ $sql_historico = "SELECT
 
 // Adiciona filtro de colaborador se selecionado
 if (!empty($filtro_matricula)) {
-    $sql_historico .= " WHERE h.matricula = '$filtro_matricula'";
+    $sql_historico .= " WHERE h.matricula = '$filtro_matricula' AND h.acao IN ('remanejamento', 'cota_extra')";
 } else {
-    $sql_historico .= " WHERE h.acao = 'remanejamento'";
+    $sql_historico .= " WHERE h.acao IN ('remanejamento', 'cota_extra')";
 }
 
 // ORDENA DO MAIS ANTIGO PARA O MAIS NOVO
@@ -417,7 +417,7 @@ if (!empty($filtro_matricula)) {
                                                     <?= ucfirst($h['operacao']) ?>
                                                 </span>
                                                 <span class="badge <?= $h['acao'] == 'remanejamento' ? 'badge-remanejamento' : 'badge-outro' ?> ms-1">
-                                                    <?= ucfirst($h['acao']) ?>
+                                                    <?= $h['acao'] == 'cota_extra' ? 'Cota Extra' : ucfirst($h['acao']) ?>
                                                 </span>
                                             </div>
                                             <div class="col-md-2">

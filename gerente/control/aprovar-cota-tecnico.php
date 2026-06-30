@@ -4,7 +4,6 @@ require_once __DIR__ . '/../../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
-$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
 
@@ -29,40 +28,6 @@ function normalizarMoedaAprovacao(string $valor): float
     $valor = str_replace('.', '', trim($valor));
     $valor = str_replace(',', '.', $valor);
     return is_numeric($valor) ? (float) $valor : 0.0;
-}
-
-
-function saldoAprovadorCota(mysqli $conn, string $databaseCorp, string $tabela, string $matricula): ?float
-{
-    $linha = buscarUmaLinha(
-        $conn,
-        "SELECT valor FROM `{$databaseCorp}`.`{$tabela}` WHERE matricula = ? LIMIT 1",
-        's',
-        [$matricula]
-    );
-
-    if ($linha === [] || !is_numeric($linha['valor'] ?? null)) {
-        return null;
-    }
-
-    return (float) $linha['valor'];
-}
-
-
-function registrarLogAprovacaoCota(mysqli $conn, string $databaseName, int $idPedido, int $decisao, string $matriculaTecnico, string $matriculaAutor, float $valorAnterior, float $valorNovo): void
-{
-    $acoes = [
-        1 => 'Reprovou pedido de cota',
-        2 => 'Aprovou pedido de cota',
-        3 => 'Escalonou pedido de cota',
-    ];
-    $acao = ($acoes[$decisao] ?? 'Processou pedido de cota') . ' #' . $idPedido;
-    consultaPreparada(
-        $conn,
-        "INSERT INTO `{$databaseName}`.`tblog` (data_e_hora, acao, flag, matricula, mat_autor, valor_ant, valor_novo) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        'ssissdd',
-        [date('Y-m-d H:i:s'), $acao, $decisao, $matriculaTecnico, $matriculaAutor, $valorAnterior, $valorNovo]
-    );
 }
 
 function tabelaAprovacaoExiste(mysqli $conn, string $databaseName, string $tabela): bool
@@ -98,23 +63,22 @@ if ($tokenPost === '' || $tokenSessao === '' || !hash_equals($tokenSessao, $toke
 
 $idPedido = (int) ($_POST['idtbpedidostec'] ?? 0);
 $decisao = (int) ($_POST['decisao'] ?? 0);
-$valorInseridoRaw = trim((string) ($_POST['valorinserido'] ?? ''));
-$valorInserido = normalizarMoedaAprovacao($valorInseridoRaw);
+$valorInserido = normalizarMoedaAprovacao((string) ($_POST['valorinserido'] ?? '0'));
 
 if ($idPedido <= 0 || !in_array($decisao, [1, 2], true)) {
     voltarAprovacaoCotaGerente('Pedido ou decisão inválida.');
 }
-if ($decisao === 2 && $valorInseridoRaw !== '' && $valorInserido <= 0) {
+if ($decisao === 2 && $valorInserido <= 0) {
     voltarAprovacaoCotaGerente('Informe um valor aprovado válido.');
 }
 
-$supervisorTabela = 'tbsupervisor';
-$coordenadorTabela = 'tbcoord';
+$supervisorTabela = primeiraTabelaAprovacao($conn, $databaseName, ['tbequipe_supervisor', 'tbsupervisor']);
+$coordenadorTabela = primeiraTabelaAprovacao($conn, $databaseName, ['tbequipe_coordenador', 'tbcoordenador']);
 if ($supervisorTabela === '') {
     voltarAprovacaoCotaGerente('Tabela de supervisor não encontrada.');
 }
 
-$joinCoordenador = $coordenadorTabela !== '' ? "LEFT JOIN `{$databaseCorp}`.`{$coordenadorTabela}` c ON c.idtbcoordenador = s.idtbcoordenador" : '';
+$joinCoordenador = $coordenadorTabela !== '' ? "LEFT JOIN `{$databaseName}`.`{$coordenadorTabela}` c ON c.idtbcoordenador = s.idtbcoordenador" : '';
 $whereEscopo = '';
 $tipos = 'ii';
 $params = [$idPedido, 1];
@@ -123,8 +87,8 @@ $pedido = buscarUmaLinha(
     $conn,
     "SELECT p.*
        FROM `{$databaseName}`.`tbpedidostec` p
-       INNER JOIN `{$databaseCorp}`.`tbusuario` u ON u.matricula = p.matricula
-       LEFT JOIN `{$databaseCorp}`.`{$supervisorTabela}` s ON s.idtbsupervisor = u.idtbsupervisor
+       INNER JOIN `{$databaseName}`.`tbusuario` u ON u.matricula = p.matricula
+       LEFT JOIN `{$databaseName}`.`{$supervisorTabela}` s ON s.idtbsupervisor = u.idtbsupervisor
        {$joinCoordenador}
       WHERE p.idtbpedidostec = ?
         AND p.flag = 0
@@ -140,18 +104,6 @@ if ($pedido === []) {
     voltarAprovacaoCotaGerente('Pedido não encontrado, sem permissão ou já processado.');
 }
 
-if ($valorInseridoRaw === '') {
-    $valorInserido = (float) ($pedido['valor'] ?? 0);
-}
-if ($decisao === 2 && $valorInserido <= 0) {
-    voltarAprovacaoCotaGerente('Informe um valor aprovado válido.');
-}
-
-$saldoAprovador = saldoAprovadorCota($conn, $databaseCorp, 'tbgerente', $matriculaLogada);
-if ($decisao === 2 && $valorInserido > ($saldoAprovador ?? 0.0)) {
-    voltarAprovacaoCotaGerente('Saldo insuficiente.', 'warning');
-}
-
 $agora = date('Y-m-d H:i:s');
 $tipocota = (string) ($pedido['tipocota'] ?? 'extra');
 if ($tipocota === '') {
@@ -165,7 +117,6 @@ if ($decisao === 1) {
         'si',
         [$tipocota, $idPedido]
     );
-    registrarLogAprovacaoCota($conn, $databaseName, $idPedido, $decisao, (string) $pedido['matricula'], $matriculaLogada, (float) ($pedido['valor'] ?? 0), 0.0);
     voltarAprovacaoCotaGerente('Pedido reprovado com sucesso.', 'success');
 }
 
@@ -221,6 +172,32 @@ consultaPreparada(
     [$valorInserido, $valorInserido, $valorInserido, (string) $pedido['matricula']]
 );
 
+$matriculaTecnico = (string) $pedido['matricula'];
+$saldoTecnico = buscarUmaLinha(
+    $conn,
+    "SELECT COALESCE(saldo, saldo_real_calculado, 0) AS saldo_anterior
+       FROM `{$databaseName}`.`tbsaldo`
+      WHERE matricula = ?
+      ORDER BY data DESC
+      LIMIT 1",
+    's',
+    [$matriculaTecnico]
+);
+$saldoAnteriorTecnico = is_numeric($saldoTecnico['saldo_anterior'] ?? null) ? (float) $saldoTecnico['saldo_anterior'] : 0.0;
+
+consultaPreparada(
+    $conn,
+    "UPDATE `{$databaseName}`.`tbsaldo`
+        SET saldo = COALESCE(saldo, 0) + ?,
+            valoraplicado = COALESCE(valoraplicado, 0) + ?,
+            totalextra = COALESCE(totalextra, 0) + ?
+      WHERE matricula = ?
+      ORDER BY data DESC
+      LIMIT 1",
+    'ddds',
+    [$valorInserido, $valorInserido, $valorInserido, $matriculaTecnico]
+);
+
 if (colunaAprovacaoExiste($conn, $databaseName, 'tbsaldo', 'kmorcsem')) {
     consultaPreparada(
         $conn,
@@ -230,25 +207,20 @@ if (colunaAprovacaoExiste($conn, $databaseName, 'tbsaldo', 'kmorcsem')) {
           ORDER BY data DESC
           LIMIT 1",
         's',
-        [(string) $pedido['matricula']]
+        [$matriculaTecnico]
     );
 }
 
-
-$atualizaSaldoGerente = consultaPreparada(
+$historicoCota = consultaPreparada(
     $conn,
-    "UPDATE `{$databaseCorp}`.`tbgerente`
-        SET valor = valor - ?
-      WHERE matricula = ?
-      LIMIT 1",
-    'ds',
-    [$valorInserido, $matriculaLogada]
+    "INSERT INTO `{$databaseName}`.`historico_combustivel`
+        (matricula, valor, operacao, matricula_autor, valor_anterior, valor_atual, acao, data)
+     VALUES (?, ?, 'adicao', ?, ?, ?, 'cota_extra', ?)",
+    'sdsdds',
+    [$matriculaTecnico, $valorInserido, $matriculaLogada, $saldoAnteriorTecnico, $saldoAnteriorTecnico + $valorInserido, $agora]
 );
-
-if (($atualizaSaldoGerente['erro'] ?? '') !== '') {
-    voltarAprovacaoCotaGerente('Erro ao atualizar saldo do gerente: ' . $atualizaSaldoGerente['erro']);
+if (($historicoCota['erro'] ?? '') !== '') {
+    voltarAprovacaoCotaGerente('Erro ao registrar histórico da cota aprovada: ' . $historicoCota['erro']);
 }
-
-registrarLogAprovacaoCota($conn, $databaseName, $idPedido, $decisao, (string) $pedido['matricula'], $matriculaLogada, (float) ($pedido['valor'] ?? 0), $valorInserido);
 
 voltarAprovacaoCotaGerente('Pedido aprovado com sucesso.', 'success');

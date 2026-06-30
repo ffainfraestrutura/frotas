@@ -275,6 +275,19 @@ if (($insertCota['erro'] ?? '') !== '') {
     voltarAprovacaoCota('Erro ao registrar cota aprovada: ' . $insertCota['erro']);
 }
 
+$matriculaTecnico = (string) $pedido['matricula'];
+$saldoTecnico = buscarUmaLinha(
+    $conn,
+    "SELECT COALESCE(saldo, saldo_real_calculado, 0) AS saldo_anterior
+       FROM `{$databaseName}`.`tbsaldo`
+      WHERE matricula = ?
+      ORDER BY data DESC
+      LIMIT 1",
+    's',
+    [$matriculaTecnico]
+);
+$saldoAnteriorTecnico = is_numeric($saldoTecnico['saldo_anterior'] ?? null) ? (float) $saldoTecnico['saldo_anterior'] : 0.0;
+
 consultaPreparada(
     $conn,
     "UPDATE `{$databaseName}`.`tbsaldo`
@@ -285,7 +298,7 @@ consultaPreparada(
       ORDER BY data DESC
       LIMIT 1",
     'ddds',
-    [$valorInserido, $valorInserido, $valorInserido, (string) $pedido['matricula']]
+    [$valorInserido, $valorInserido, $valorInserido, $matriculaTecnico]
 );
 
 if (colunaAprovacaoExiste($conn, $databaseName, 'tbsaldo', 'kmorcsem')) {
@@ -297,8 +310,20 @@ if (colunaAprovacaoExiste($conn, $databaseName, 'tbsaldo', 'kmorcsem')) {
           ORDER BY data DESC
           LIMIT 1",
         's',
-        [(string) $pedido['matricula']]
+        [$matriculaTecnico]
     );
+}
+
+$historicoCota = consultaPreparada(
+    $conn,
+    "INSERT INTO `{$databaseName}`.`historico_combustivel`
+        (matricula, valor, operacao, matricula_autor, valor_anterior, valor_atual, acao, data)
+     VALUES (?, ?, 'adicao', ?, ?, ?, 'cota_extra', ?)",
+    'sdsdds',
+    [$matriculaTecnico, $valorInserido, $matriculaLogada, $saldoAnteriorTecnico, $saldoAnteriorTecnico + $valorInserido, $agora]
+);
+if (($historicoCota['erro'] ?? '') !== '') {
+    voltarAprovacaoCota('Erro ao registrar histórico da cota aprovada: ' . $historicoCota['erro']);
 }
 
 

@@ -215,7 +215,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     <li class="nav-item">
                         <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
                             href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
+                            <i class="fas fa-check-double me-1"></i>Aprovar Cotar Escalonada
                         </a>
                     </li>
                 <?php endif; ?>
