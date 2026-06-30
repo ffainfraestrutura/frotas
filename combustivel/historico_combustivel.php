@@ -409,7 +409,7 @@ if (!empty($filtro_matricula)) {
                                     <div class="timeline-item <?= $classe_operacao ?>">
                                         <div class="row">
                                             <div class="col-md-2">
-                                                <strong><?= date('d/m/Y H:i', strtotime($h['data'])) ?></strong>
+                                                <strong><?= $h['acao'] === 'cota_extra' ? date('d/m/Y', strtotime($h['data'])) : date('d/m/Y H:i', strtotime($h['data'])) ?></strong>
                                             </div>
                                             <div class="col-md-3">
                                                 <span class="badge <?= $h['operacao'] == 'adicao' ? 'badge-adicao' : 'badge-retirada' ?>">
