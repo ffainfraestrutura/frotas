@@ -108,13 +108,13 @@ if ($decisao === 2 && $valorInseridoRaw !== '' && $valorInserido <= 0) {
     voltarAprovacaoCotaGerente('Informe um valor aprovado válido.');
 }
 
-$supervisorTabela = primeiraTabelaAprovacao($conn, $databaseName, ['tbequipe_supervisor', 'tbsupervisor']);
-$coordenadorTabela = primeiraTabelaAprovacao($conn, $databaseName, ['tbequipe_coordenador', 'tbcoordenador']);
+$supervisorTabela = 'tbsupervisor';
+$coordenadorTabela = 'tbcoord';
 if ($supervisorTabela === '') {
     voltarAprovacaoCotaGerente('Tabela de supervisor não encontrada.');
 }
 
-$joinCoordenador = $coordenadorTabela !== '' ? "LEFT JOIN `{$databaseName}`.`{$coordenadorTabela}` c ON c.idtbcoordenador = s.idtbcoordenador" : '';
+$joinCoordenador = $coordenadorTabela !== '' ? "LEFT JOIN `{$databaseCorp}`.`{$coordenadorTabela}` c ON c.idtbcoordenador = s.idtbcoordenador" : '';
 $whereEscopo = '';
 $tipos = 'ii';
 $params = [$idPedido, 1];
@@ -123,8 +123,8 @@ $pedido = buscarUmaLinha(
     $conn,
     "SELECT p.*
        FROM `{$databaseName}`.`tbpedidostec` p
-       INNER JOIN `{$databaseName}`.`tbusuario` u ON u.matricula = p.matricula
-       LEFT JOIN `{$databaseName}`.`{$supervisorTabela}` s ON s.idtbsupervisor = u.idtbsupervisor
+       INNER JOIN `{$databaseCorp}`.`tbusuario` u ON u.matricula = p.matricula
+       LEFT JOIN `{$databaseCorp}`.`{$supervisorTabela}` s ON s.idtbsupervisor = u.idtbsupervisor
        {$joinCoordenador}
       WHERE p.idtbpedidostec = ?
         AND p.flag = 0
