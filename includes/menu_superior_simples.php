@@ -219,6 +219,15 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                     </li>
                 <?php endif; ?>
+
+                <?php if ((int)($_SESSION['perfil'] ?? 0) !== 0): ?>
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('gerenciar-equipe.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('gerenciar-equipe.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-users-gear me-1"></i>Gerenciar equipe
+                        </a>
+                    </li>
+                <?php endif; ?>
             </ul>
 
             <div class="d-flex align-items-center gap-3 text-white small af-user-dropdown">

@@ -45,7 +45,7 @@ function excelEquipeConsulta(mysqli $conn, string $sql): array
     return $dados;
 }
 
-$arquivo = 'Hierarquia-AutoFrota-' . date('Y-m-d_H-i-s') . '.xls';
+$arquivo = 'Hierarquia-Portal-' . date('Y-m-d_H-i-s') . '.xls';
 $linhas = [];
 
 $sqlGerentes = "
