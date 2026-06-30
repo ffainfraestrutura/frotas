@@ -186,7 +186,7 @@ if ($supervisorTabela === '') {
 
         <section class="card panel-card mb-4">
             <div class="card-body py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                <div class="fw-semibold"><i class="fas fa-wallet me-2"></i>Saldo do gerente</div>
+                <div class="fw-semibold"><i class="fas fa-wallet me-2"></i>Saldo</div>
                 <div class="fs-5 fw-bold text-primary">
                     <?php if ($saldoAprovador === null): ?>
                         Não encontrado

@@ -206,7 +206,7 @@ if ($supervisorTabela === '') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AutoFrota - Aprovação de Cotas</title>
+    <title>Aprovação de Cotas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <style>
@@ -258,7 +258,7 @@ if ($supervisorTabela === '') {
 
         <section class="card panel-card mb-4">
             <div class="card-body py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
-                <div class="fw-semibold"><i class="fas fa-wallet me-2"></i>Saldo do coordenador</div>
+                <div class="fw-semibold"><i class="fas fa-wallet me-2"></i>Saldo</div>
                 <div class="fs-5 fw-bold text-primary">
                     <?php if ($saldoAprovador === null): ?>
                         Não encontrado
