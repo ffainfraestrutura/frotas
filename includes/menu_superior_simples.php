@@ -208,6 +208,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Remanejamento
                                 </a>
                             </li>
+                                        <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Cotas
+                                </a>
+                            </li>
                         </ul>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
                             <li>

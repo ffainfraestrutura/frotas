@@ -4,6 +4,7 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
 
@@ -62,6 +63,23 @@ function parametroAprovacaoTela(mysqli $conn, string $databaseName, string $chav
     return (float) $linha['valor_decimal'];
 }
 
+
+function saldoAprovadorCota(mysqli $conn, string $databaseCorp, string $tabela, string $matricula): ?float
+{
+    $linha = buscarUmaLinha(
+        $conn,
+        "SELECT valor FROM `{$databaseCorp}`.`{$tabela}` WHERE matricula = ? LIMIT 1",
+        's',
+        [$matricula]
+    );
+
+    if ($linha === [] || !is_numeric($linha['valor'] ?? null)) {
+        return null;
+    }
+
+    return (float) $linha['valor'];
+}
+
 $supervisorTabela = primeiraTabelaAutofrota($conn, $databaseName, ['tbequipe_supervisor', 'tbsupervisor']);
 $coordenadorTabela = primeiraTabelaAutofrota($conn, $databaseName, ['tbequipe_coordenador', 'tbcoordenador']);
 $mensagem = (string) ($_SESSION['aprovacao_cota_mensagem'] ?? '');
@@ -70,6 +88,7 @@ unset($_SESSION['aprovacao_cota_mensagem'], $_SESSION['aprovacao_cota_tipo']);
 
 $_SESSION['aprovacao_cota_token'] = bin2hex(random_bytes(32));
 $token = $_SESSION['aprovacao_cota_token'];
+$saldoAprovador = saldoAprovadorCota($conn, $databaseCorp, 'tbcoord', $matriculaLogada);
 
 $pedidos = [];
 $erroTela = '';
@@ -187,7 +206,7 @@ if ($supervisorTabela === '') {
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AutoFrota - Aprovação de Cotas</title>
+    <title>Aprovação de Cotas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <style>
@@ -235,6 +254,20 @@ if ($supervisorTabela === '') {
         <?php if ($erroTela !== ''): ?>
             <div class="alert alert-danger"><?= escCota($erroTela) ?></div>
         <?php endif; ?>
+
+
+        <section class="card panel-card mb-4">
+            <div class="card-body py-3 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                <div class="fw-semibold"><i class="fas fa-wallet me-2"></i>Saldo</div>
+                <div class="fs-5 fw-bold text-primary">
+                    <?php if ($saldoAprovador === null): ?>
+                        Não encontrado
+                    <?php else: ?>
+                        R$ <?= escCota(moedaCota($saldoAprovador)) ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </section>
 
         <section class="card panel-card">
             <div class="card-header bg-white fw-semibold"><i class="fas fa-check-double me-2"></i>Pedidos pendentes</div>
