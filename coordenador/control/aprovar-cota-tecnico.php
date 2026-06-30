@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
 
@@ -24,6 +25,40 @@ function normalizarMoedaAprovacao(string $valor): float
     $valor = str_replace('.', '', trim($valor));
     $valor = str_replace(',', '.', $valor);
     return is_numeric($valor) ? (float) $valor : 0.0;
+}
+
+
+function saldoAprovadorCota(mysqli $conn, string $databaseCorp, string $tabela, string $matricula): ?float
+{
+    $linha = buscarUmaLinha(
+        $conn,
+        "SELECT valor FROM `{$databaseCorp}`.`{$tabela}` WHERE matricula = ? LIMIT 1",
+        's',
+        [$matricula]
+    );
+
+    if ($linha === [] || !is_numeric($linha['valor'] ?? null)) {
+        return null;
+    }
+
+    return (float) $linha['valor'];
+}
+
+
+function registrarLogAprovacaoCota(mysqli $conn, string $databaseName, int $idPedido, int $decisao, string $matriculaTecnico, string $matriculaAutor, float $valorAnterior, float $valorNovo): void
+{
+    $acoes = [
+        1 => 'Reprovou pedido de cota',
+        2 => 'Aprovou pedido de cota',
+        3 => 'Escalonou pedido de cota',
+    ];
+    $acao = ($acoes[$decisao] ?? 'Processou pedido de cota') . ' #' . $idPedido;
+    consultaPreparada(
+        $conn,
+        "INSERT INTO `{$databaseName}`.`tblog` (data_e_hora, acao, flag, matricula, mat_autor, valor_ant, valor_novo) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        'ssissdd',
+        [date('Y-m-d H:i:s'), $acao, $decisao, $matriculaTecnico, $matriculaAutor, $valorAnterior, $valorNovo]
+    );
 }
 
 function tabelaAprovacaoExiste(mysqli $conn, string $databaseName, string $tabela): bool
@@ -79,12 +114,13 @@ if ($tokenPost === '' || $tokenSessao === '' || !hash_equals($tokenSessao, $toke
 
 $idPedido = (int) ($_POST['idtbpedidostec'] ?? 0);
 $decisao = (int) ($_POST['decisao'] ?? 0);
-$valorInserido = normalizarMoedaAprovacao((string) ($_POST['valorinserido'] ?? '0'));
+$valorInseridoRaw = trim((string) ($_POST['valorinserido'] ?? ''));
+$valorInserido = normalizarMoedaAprovacao($valorInseridoRaw);
 
 if ($idPedido <= 0 || !in_array($decisao, [1, 2, 3], true)) {
     voltarAprovacaoCota('Pedido ou decisão inválida.');
 }
-if ($decisao === 2 && $valorInserido <= 0) {
+if ($decisao === 2 && $valorInseridoRaw !== '' && $valorInserido <= 0) {
     voltarAprovacaoCota('Informe um valor aprovado válido.');
 }
 
@@ -131,6 +167,13 @@ if ($pedido === []) {
     voltarAprovacaoCota('Pedido não encontrado, sem permissão ou já processado.');
 }
 
+if ($valorInseridoRaw === '') {
+    $valorInserido = (float) ($pedido['valor'] ?? 0);
+}
+if ($decisao === 2 && $valorInserido <= 0) {
+    voltarAprovacaoCota('Informe um valor aprovado válido.');
+}
+
 $limiteSaldoEscalonamento = parametroAprovacaoCota($conn, $databaseName, 'saldo_cartao_limite_escalonamento', 30.0);
 $percentualKmMinimo = parametroAprovacaoCota($conn, $databaseName, 'km_os_percentual_minimo', 80.0);
 $percentualKmMaximo = parametroAprovacaoCota($conn, $databaseName, 'km_os_percentual_maximo', 120.0);
@@ -148,6 +191,7 @@ if ($decisao === 1) {
         'si',
         [$tipocota, $idPedido]
     );
+    registrarLogAprovacaoCota($conn, $databaseName, $idPedido, $decisao, (string) $pedido['matricula'], $matriculaLogada, (float) ($pedido['valor'] ?? 0), 0.0);
     voltarAprovacaoCota('Pedido reprovado com sucesso.', 'success');
 }
 
@@ -159,6 +203,7 @@ if ($decisao === 3) {
         'sdi',
         [$tipocota, $valorEscalonado, $idPedido]
     );
+    registrarLogAprovacaoCota($conn, $databaseName, $idPedido, $decisao, (string) $pedido['matricula'], $matriculaLogada, (float) ($pedido['valor'] ?? 0), $valorEscalonado);
     voltarAprovacaoCota('Pedido escalonado para o gerente com sucesso.', 'warning');
 }
 
@@ -184,6 +229,11 @@ if ($perfilLogado !== '3' && (int) ($pedido['escalonado'] ?? 0) === 0) {
 
 if ($escalonamentoObrigatorio && $decisao === 2) {
     voltarAprovacaoCota('Escalonamento obrigatório: ' . implode('; ', $motivosEscalonamento) . '. Use o botão Escalonar.', 'warning');
+}
+
+$saldoAprovador = saldoAprovadorCota($conn, $databaseCorp, 'tbcoord', $matriculaLogada);
+if ($decisao === 2 && $valorInserido > ($saldoAprovador ?? 0.0)) {
+    voltarAprovacaoCota('Saldo insuficiente.', 'warning');
 }
 
 consultaPreparada(
@@ -250,5 +300,18 @@ if (colunaAprovacaoExiste($conn, $databaseName, 'tbsaldo', 'kmorcsem')) {
         [(string) $pedido['matricula']]
     );
 }
+
+
+consultaPreparada(
+    $conn,
+    "UPDATE `{$databaseCorp}`.`tbcoord`
+        SET valor = valor - ?
+      WHERE matricula = ?
+      LIMIT 1",
+    'ds',
+    [$valorInserido, $matriculaLogada]
+);
+
+registrarLogAprovacaoCota($conn, $databaseName, $idPedido, $decisao, (string) $pedido['matricula'], $matriculaLogada, (float) ($pedido['valor'] ?? 0), $valorInserido);
 
 voltarAprovacaoCota('Pedido aprovado com sucesso.', 'success');
