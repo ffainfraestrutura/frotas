@@ -98,7 +98,17 @@ renderCabecalhoAutofrota('Aprovação de Cotas de Supervisores');
                 <thead><tr><th>Supervisor</th><th>Matrícula</th><th>Placa</th><th>Data</th><th>Saldo supervisor</th><th>Total extra</th><th>Valor pedido</th><th>Justificativa</th><th>Ação</th></tr></thead>
                 <tbody>
                 <?php if ($pedidos === []): ?>
-                    <tr><td colspan="9" class="text-muted">Nenhum pedido pendente encontrado.</td></tr>
+                    <tr>
+                        <td class="text-muted">Nenhum pedido pendente encontrado.</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
                 <?php else: foreach ($pedidos as $pedido): ?>
                     <tr>
                         <td><strong><?= esc($pedido['nome_supervisor']) ?></strong></td>
