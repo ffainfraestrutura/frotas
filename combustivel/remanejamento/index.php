@@ -179,7 +179,6 @@ if ($_SESSION['perfil'] == 4) {
     <link href="../src/css/styles.css" rel="stylesheet" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="http://plentz.github.io/jquery-maskmoney/javascripts/jquery.maskMoney.min.js"></script>
-
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -230,7 +229,7 @@ if ($_SESSION['perfil'] == 4) {
     <div id="layoutSidenav_content">
         <main>
             <div class="container-fluid px-4">
-                <h1 class="mt-4">Remanejamento de Saldo</h1>
+                <h1 class="mt-4">Remanejar Saldo</h1>
                 <ol class="breadcrumb mb-4">
                     <li class="breadcrumb-item active">Transfira saldo entre colaboradores</li>
                 </ol>
@@ -309,9 +308,6 @@ if ($_SESSION['perfil'] == 4) {
                                                         data-codempresa="<?= htmlspecialchars($tecnico['codempresa'] ?? '') ?>">
                                                         <?php echo htmlspecialchars($tecnico['nome']); ?>
                                                         (<?php echo htmlspecialchars($tecnico['matricula']); ?>)
-                                                        <?php if (!empty($tecnico['placa'])): ?>
-                                                            - Placa: <?php echo htmlspecialchars($tecnico['placa']); ?>
-                                                        <?php endif; ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
@@ -343,9 +339,6 @@ if ($_SESSION['perfil'] == 4) {
                                                         data-codempresa="<?= htmlspecialchars($tecnico['codempresa'] ?? '') ?>">
                                                         <?php echo htmlspecialchars($tecnico['nome']); ?>
                                                         (<?php echo htmlspecialchars($tecnico['matricula']); ?>)
-                                                        <?php if (!empty($tecnico['placa'])): ?>
-                                                            - Placa: <?php echo htmlspecialchars($tecnico['placa']); ?>
-                                                        <?php endif; ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>

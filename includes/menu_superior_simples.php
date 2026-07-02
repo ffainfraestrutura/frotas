@@ -204,12 +204,6 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
                             <li>
                                 <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remanejamento
-                                </a>
-                            </li>
-                                        <li>
-                                <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Aprovar Cotas
                                 </a>
@@ -218,14 +212,22 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
                             <li>
                                 <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Aprovar Cotas
+                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remover Saldo
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejar Saldo
                                 </a>
                             </li>
                         </ul>
                     </li>
                 <?php endif; ?>
-                
+
                 <?php if ($_SESSION['perfil'] == 3): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
@@ -233,18 +235,27 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             <i class="fa-solid fa-gas-pump"></i> Combustível
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
-                            <li>
-                                <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remanejamento
+                            <li class="nav-item">
+                                <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">
+                                    <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
                                 </a>
                             </li>
                         </ul>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
-                            <li class="nav-item">
-                                <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                                    href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                                    <i class="fas fa-check-double me-1"></i>Aprovação de cotas escalonadas
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejar Saldo
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remover Saldo
                                 </a>
                             </li>
                         </ul>
@@ -261,7 +272,15 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remanejamento
+                                    target="_self">Remanejar Saldo
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remover Saldo
                                 </a>
                             </li>
                         </ul>

@@ -120,21 +120,19 @@ $saldo_inicial_data = null;
 $historico = [];
 
 if (!empty($filtro_matricula)) {
-
+    // Busca dados do colaborador (saldo atual)
     $sql_colab = "SELECT 
                     u.matricula,
                     u.nome,
-                    u.perfil,
-                    s.saldo_real_calculado as saldo_atual,
-                    s.kmorcsem as kmproj,
-                    s.data as ultima_atualizacao
+                    s.valor as saldo_atual,
+                    s.ultimaatualizacao as ultima_atualizacao
                   FROM 
                     bdcorp.tbusuario u
-                  LEFT JOIN tbsaldo s ON u.matricula = s.matricula
+                  LEFT JOIN bdcorp.tbgerente s ON u.matricula = s.matricula
                   WHERE 
                     u.matricula = ?
                   ORDER BY 
-                    s.data DESC
+                    s.ultimaatualizacao DESC
                   LIMIT 1";
 
     $stmt = mysqli_prepare($conn, $sql_colab);
@@ -146,14 +144,14 @@ if (!empty($filtro_matricula)) {
 
     // Busca o saldo inicial do colaborador (primeiro registro da tbsaldo)
     $sql_saldo_inicial = "SELECT 
-                            s.saldo_real_calculado as saldo_inicial,
-                            s.data as data_saldo
+                            s.orcrecebido as saldo_inicial,
+                            s.ultimaatualizacao as data_saldo
                           FROM 
-                            tbsaldo s
+                            bdcorp.tbgerente s
                           WHERE 
                             s.matricula = ?
                           ORDER BY 
-                            s.data DESC
+                            s.ultimaatualizacao DESC
                           LIMIT 1";
 
     $stmt = mysqli_prepare($conn, $sql_saldo_inicial);
@@ -179,14 +177,15 @@ if (!empty($filtro_matricula)) {
                       FROM 
                         historico_combustivel h
                       LEFT JOIN bdcorp.tbusuario u ON h.matricula = u.matricula
-                      LEFT JOIN bdcorp.tbusuario ua ON h.matricula_autor = ua.matricula
+                      LEFT JOIN bdcorp.tbusuario ua ON h.matricula = ua.matricula
                       WHERE 
-                        h.matricula = ?
+                        h.matricula_autor = ?
+                        AND h.matricula = ?
                       ORDER BY 
                         h.data ASC, h.id ASC";
 
     $stmt = mysqli_prepare($conn, $sql_historico);
-    mysqli_stmt_bind_param($stmt, 's', $filtro_matricula);
+    mysqli_stmt_bind_param($stmt, 'ss', $filtro_matricula, $filtro_matricula);
     mysqli_stmt_execute($stmt);
     $result_historico = mysqli_stmt_get_result($stmt);
     $historico = mysqli_fetch_all($result_historico, MYSQLI_ASSOC);
@@ -198,32 +197,10 @@ if (!empty($filtro_matricula)) {
 // ==============================================
 $saldo_acumulado = 0;
 if ($saldo_inicial_data) {
-
     $saldo_acumulado = floatval($saldo_inicial_data['saldo_inicial'] ?? 0);
-} else {
-
-    $dados_tabela = match ($dados_colaborador['perfil']) {
-        2       => 'tbcoord',
-        3       => 'tbgerente',
-        10      => 'tbdiretor',
-        default => 'tbusuario'
-    };
-
-    $sql = "SELECT * FROM bdcorp.$dados_tabela WHERE matricula = ?";
-
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, 's', $filtro_matricula);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $dados = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
-
-
-    $saldo_acumulado = floatval($dados['saldoinicial'] ?? 0);
-    $saldo_inicial_data['saldo_inicial'] = $dados['saldoinicial'];
 }
 
-
+// Processa o histórico para calcular o saldo final (se houver)
 if (count($historico) > 0) {
     foreach ($historico as $h) {
         if ($h['operacao'] == 'adicao') {
@@ -231,9 +208,11 @@ if (count($historico) > 0) {
         } else {
             $saldo_acumulado -= floatval($h['valor']);
         }
-
     }
 }
+
+// Se não tem histórico, o saldo acumulado é o saldo inicial
+// Se tem histórico, já foi calculado no loop acima
 ?>
 
 <!DOCTYPE html>
@@ -543,16 +522,11 @@ if (count($historico) > 0) {
                                             class="fas fa-user me-2"></i><?= htmlspecialchars($dados_colaborador['nome'] ?? $filtro_matricula) ?>
                                     </h4>
                                     <p class="mb-0"><i class="fas fa-id-card me-2"></i>Matrícula:
-                                        <?= $dados_colaborador['matricula'] ?>
-                                    </p>
+                                        <?= $dados_colaborador['matricula'] ?></p>
                                 </div>
                                 <div class="col-md-4">
                                     <h5><i class="fas fa-wallet me-2"></i>Saldo Atual</h5>
-                                    <p class="h3">R$ <?= number_format($saldo_acumulado, 2, ',', '.') ?></p>
-                                    <?php if ($dados_colaborador['kmproj']): ?>
-                                        <small><i class="fas fa-road me-1"></i>KM Projetado:
-                                            <?= number_format($dados_colaborador['kmproj'], 0, ',', '.') ?></small>
-                                    <?php endif; ?>
+                                    <p class="h3">R$ <?= number_format($dados_colaborador['saldo_atual'], 2, ',', '.') ?></p>
                                 </div>
                                 <div class="col-md-4">
                                     <h5><i class="fas fa-calendar me-2"></i>Última Atualização</h5>
@@ -616,9 +590,11 @@ if (count($historico) > 0) {
                         <div class="card-header">
                             <i class="fas fa-clock me-1"></i>
                             Linha do Tempo
+                            <span class="badge bg-primary ms-2">Individual</span>
                         </div>
                         <div class="card-body">
                             <div class="timeline">
+                                <!-- Item: Saldo Inicial - SEMPRE APARECE -->
                                 <?php if ($saldo_inicial_data): ?>
                                     <div class="timeline-item inicial">
                                         <div class="row align-items-center">
@@ -719,7 +695,7 @@ if (count($historico) > 0) {
                                             </div>
                                             <div class="col-md-4">
                                                 <span class="text-primary fw-bold h5">
-                                                    R$ <?= number_format($saldo_timeline, 2, ',', '.') ?>
+                                                    R$ <?= number_format($dados_colaborador['saldo_atual'], 2, ',', '.') ?>
                                                 </span>
                                             </div>
                                         </div>

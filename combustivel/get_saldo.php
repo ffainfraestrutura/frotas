@@ -8,7 +8,9 @@ $matricula_tec = $_POST['matricula'];
 $sql = "SELECT 
             COALESCE(
                 h.valor_atual,
-                s.saldo_real_calculado
+                s.saldo_real_calculado,
+                s.kmorcsem,
+                s.orcsemanal
             ) as saldo_atual,
             h.operacao as ultima_operacao,
             h.data as data_ultima_operacao,
