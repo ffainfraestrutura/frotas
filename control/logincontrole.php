@@ -21,7 +21,7 @@ if (!preg_match('/^[0-9]+$/', $usuario)) {
 
 $usuarioEsc = mysqli_real_escape_string($conn, $usuario);
 
-$sql = "SELECT usuario, senha, perfil FROM `{$databaseCorp}`.`tbusuario` WHERE usuario = '$usuarioEsc' LIMIT 1";
+$sql = "SELECT usuario, senha, perfil FROM tbusuario WHERE usuario = '$usuarioEsc' LIMIT 1";
 $resultado = mysqli_query($conn, $sql);
 
 if (!$resultado) {
@@ -42,7 +42,7 @@ if (($row['senha'] ?? '') !== $senha) {
 }
 
 $nomeFuncionario = '';
-$sqlNome = "SELECT nome FROM `{$databaseCorp}`.`tbfuncionario` WHERE matricula = ? LIMIT 1";
+$sqlNome = "SELECT nome FROM `{$banco}`.`tbfuncionario` WHERE matricula = ? LIMIT 1";
 $stmtNome = mysqli_prepare($conn, $sqlNome);
 
 if ($stmtNome) {
@@ -68,10 +68,6 @@ registrarLogAcessoAutofrota($conn, (string) $row['usuario']);
 mysqli_close($conn);
 if ((string) $row['perfil'] === '0') {
     redirecionarAutofrota('tecnico.php');
-}
-if ((string) $row['perfil'] === '1') {
-    header('Location: ../supervisor/solicitar-cota-extra.php');
-    exit;
 }
 if ((string) $row['perfil'] === '2') {
     header('Location: ../coordenador/aprovacao-cotas.php');

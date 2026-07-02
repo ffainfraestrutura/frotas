@@ -6,9 +6,6 @@ if (usuarioLogado()) {
     if ($perfilLogado === '0') {
         redirecionarAutofrota('tecnico.php');
     }
-    if ($perfilLogado === '1') {
-        redirecionarAutofrota('supervisor/solicitar-cota-extra.php');
-    }
     if ($perfilLogado === '2') {
         redirecionarAutofrota('coordenador/aprovacao-cotas.php');
     }
