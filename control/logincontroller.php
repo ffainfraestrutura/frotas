@@ -81,6 +81,9 @@ if ((string) $row['perfil'] === '3') {
     header('Location: ../gerente/aprovacao-cotas.php');
     exit;
 }
+if ($perfilLogado === '10') {
+    redirecionarAutofrota('diretor/aprovar-orcamento-complementar.php');
+}
 if ((string) $row['perfil'] === '12') {
     header('Location: ../multa/multasdp.php');
     exit;

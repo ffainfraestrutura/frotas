@@ -15,6 +15,16 @@ if ($perfilLogado === '2') {
     exit;
 }
 
+if ($perfilLogado === '3') {
+    header('Location: gerente/aprovacao-cotas.php');
+    exit;
+}
+
+if ($perfilLogado === '10') {
+    header('Location: diretor/aprovar-orcamento-complementar.php');
+    exit;
+}
+
 if (!function_exists('autofrotaNomePorMatricula')) {
     function autofrotaNomePorMatricula($matricula)
     {

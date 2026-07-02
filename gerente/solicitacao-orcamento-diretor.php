@@ -1,0 +1,118 @@
+<?php
+require_once __DIR__ . '/../includes/autofrota_common.php';
+
+$autofrotaSessao = autofrotaInit();
+$conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
+$matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
+$nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
+$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
+
+if (!$conn instanceof mysqli) {
+    exit('Conexão indisponível.');
+}
+if ($perfilLogado !== '3') {
+    http_response_code(403);
+    exit('Acesso permitido apenas para perfil gerente.');
+}
+
+function moedaSolicitacaoOrcamentoDiretor($valor): string
+{
+    return number_format((float) ($valor ?? 0), 2, ',', '.');
+}
+
+$mensagem = (string) ($_SESSION['solicitacao_orcamento_diretor_mensagem'] ?? '');
+$tipoMensagem = (string) ($_SESSION['solicitacao_orcamento_diretor_tipo'] ?? 'info');
+unset($_SESSION['solicitacao_orcamento_diretor_mensagem'], $_SESSION['solicitacao_orcamento_diretor_tipo']);
+
+$tokensSolicitacaoDiretor = $_SESSION['solicitacao_orcamento_diretor_tokens'] ?? [];
+if (!is_array($tokensSolicitacaoDiretor)) {
+    $tokensSolicitacaoDiretor = [];
+}
+$token = bin2hex(random_bytes(32));
+$tokensSolicitacaoDiretor[] = $token;
+$tokensSolicitacaoDiretor = array_slice(array_values(array_unique($tokensSolicitacaoDiretor)), -5);
+$_SESSION['solicitacao_orcamento_diretor_tokens'] = $tokensSolicitacaoDiretor;
+$_SESSION['solicitacao_orcamento_diretor_token'] = $token;
+
+$erroTela = '';
+$saldoGerente = 0.0;
+$orcamentoRecebido = 0.0;
+$gerente = buscarUmaLinha(
+    $conn,
+    "SELECT valor, orcrecebido, idtbdiretor FROM `{$databaseCorp}`.`tbgerente` WHERE matricula = ? LIMIT 1",
+    's',
+    [$matriculaLogada]
+);
+if ($gerente === []) {
+    $erroTela = 'Cadastro do gerente não encontrado.';
+} else {
+    $saldoGerente = is_numeric($gerente['valor'] ?? null) ? (float) $gerente['valor'] : 0.0;
+    $orcamentoRecebido = is_numeric($gerente['orcrecebido'] ?? null) ? (float) $gerente['orcrecebido'] : 0.0;
+    if ((int) ($gerente['idtbdiretor'] ?? 0) <= 0) {
+        $erroTela = 'Gerente sem diretor vinculado.';
+    }
+}
+
+renderCabecalhoAutofrota('Solicitar Orçamento para Diretor');
+?>
+<div class="container-fluid px-4">
+    <section class="card shadow-sm border-0 mb-4">
+        <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
+            <div>
+                <h1 class="h3 mb-1">Solicitação de orçamento para o diretor</h1>
+                <p class="text-muted mb-0">Gerente: <strong><?= esc($nomeLogado) ?></strong> (<?= esc($matriculaLogada) ?>)</p>
+            </div>
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <!-- <div class="border rounded-3 px-3 py-2 bg-light">
+                    <div class="text-muted small">Valor orçamento</div>
+                    <div class="fw-bold">R$ <?= esc(moedaSolicitacaoOrcamentoDiretor($orcamentoRecebido)) ?></div> -->
+                </div>
+                <div class="border rounded-3 px-3 py-2 bg-light">
+                    <div class="text-muted small">Saldo atual</div>
+                    <div class="fw-bold text-primary">R$ <?= esc(moedaSolicitacaoOrcamentoDiretor($saldoGerente)) ?></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <?php if ($mensagem !== ''): ?>
+        <div class="alert alert-<?= esc($tipoMensagem) ?> alert-dismissible fade show" role="alert">
+            <?= esc($mensagem) ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+    <?php endif; ?>
+    <?php if ($erroTela !== ''): ?><div class="alert alert-danger"><?= esc($erroTela) ?></div><?php endif; ?>
+
+    <section class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-semibold"><i class="fas fa-file-invoice-dollar me-2"></i>Solicitação:</div>
+        <div class="card-body">
+            <form action="control\solicitacao-orcamento-diretor.php" method="post" class="row g-3">
+                <input type="hidden" name="token" value="<?= esc($token) ?>">
+                <div class="col-12 col-md-4">
+                    <label class="form-label" for="valor">Valor solicitado</label>
+                    <div class="input-group">
+                        <span class="input-group-text">R$</span>
+                        <input class="form-control" type="text" name="valor" id="valor" required placeholder="0,00" inputmode="decimal">
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label" for="justificativa">Justificativa</label>
+                    <textarea rows="8" class="form-control" name="justificativa" id="justificativa" placeholder="Escreva a justificativa" required></textarea>
+                </div>
+                <div class="col-12 d-flex justify-content-end gap-2">
+                    <button class="btn btn-success" type="submit" <?= $erroTela !== '' ? 'disabled' : '' ?>><i class="fas fa-check me-1"></i>Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+<script>
+document.getElementById('valor').addEventListener('input', function () {
+    let v = this.value.replace(/\D/g, '');
+    if (v === '') { this.value = ''; return; }
+    v = (parseInt(v, 10) / 100).toFixed(2).replace('.', ',');
+    this.value = v.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+});
+</script>
+<?php renderRodapeAutofrota(); ?>
