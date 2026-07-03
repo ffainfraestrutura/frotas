@@ -21,7 +21,10 @@ if ($perfilLogado === '3') {
     header('Location: gerente/aprovacao-cotas.php');
     exit;
 }
-
+if ($perfilLogado === '4') {
+    header('Location: aprovar-pedidos-orcamento-frota.php');
+    exit;
+}
 if ($perfilLogado === '10') {
     header('Location: diretor/aprovar-orcamento-complementar.php');
     exit;

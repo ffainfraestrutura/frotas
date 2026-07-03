@@ -35,6 +35,14 @@ if (mysqli_num_rows($resultado) === 0) {
 }
 
 $row = mysqli_fetch_assoc($resultado);
+$perfilLogado = '';
+
+if (!is_array($row)) {
+    mysqli_close($conn);
+    redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Erro ao validar credenciais.'));
+}
+
+$perfilLogado = (string) ($row['perfil'] ?? '');
 
 if (($row['senha'] ?? '') !== $senha) {
     mysqli_close($conn);
@@ -60,7 +68,7 @@ if ($stmtNome) {
 $_SESSION['usuario'] = $row['usuario'];
 $_SESSION['nome'] = $nomeFuncionario !== '' ? $nomeFuncionario : $row['usuario'];
 $_SESSION['matricula'] = $row['usuario'];
-$_SESSION['perfil'] = $row['perfil'];
+$_SESSION['perfil'] = $perfilLogado;
 $_SESSION['logado'] = true;
 
 registrarLogAcessoAutofrota($conn, (string) $row['usuario']);
