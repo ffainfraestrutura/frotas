@@ -116,12 +116,26 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                 <?php endif; ?>
                 
-                <?php if ($_SESSION['perfil'] == 3): ?>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('gerente/aprovacao-cotas.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-check-double me-1"></i>Aprovar Cotar Escalonada
+       <?php if ($_SESSION['perfil'] == 3): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuGerenteCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
                         </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuGerenteCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gerente/solicitacao-orcamento-diretor.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Pedir Orçamento ao Diretor
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Cota Escalonada
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                 <?php endif; ?>
 
