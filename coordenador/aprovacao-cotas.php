@@ -80,8 +80,8 @@ function saldoAprovadorCota(mysqli $conn, string $databaseCorp, string $tabela, 
     return (float) $linha['valor'];
 }
 
-$supervisorTabela = primeiraTabelaAutofrota($conn, $databaseName, ['tbequipe_supervisor', 'tbsupervisor']);
-$coordenadorTabela = primeiraTabelaAutofrota($conn, $databaseName, ['tbequipe_coordenador', 'tbcoordenador']);
+$supervisorTabela = 'tbsupervisor';
+$coordenadorTabela = 'tbcoord';
 $mensagem = (string) ($_SESSION['aprovacao_cota_mensagem'] ?? '');
 $tipoMensagem = (string) ($_SESSION['aprovacao_cota_tipo'] ?? 'info');
 unset($_SESSION['aprovacao_cota_mensagem'], $_SESSION['aprovacao_cota_tipo']);
@@ -96,7 +96,7 @@ $erroTela = '';
 if ($supervisorTabela === '') {
     $erroTela = 'Tabela de supervisor não encontrada.';
 } else {
-    $joinCoordenador = $coordenadorTabela !== '' ? "LEFT JOIN `{$databaseName}`.`{$coordenadorTabela}` c ON c.idtbcoordenador = s.idtbcoordenador LEFT JOIN `{$databaseName}`.`tbusuario` uc ON uc.matricula = c.matricula" : "LEFT JOIN `{$databaseName}`.`tbusuario` uc ON 1 = 0";
+    $joinCoordenador = $coordenadorTabela !== '' ? "LEFT JOIN `{$databaseCorp}`.`{$coordenadorTabela}` c ON c.idtbcoordenador = s.idtbcoordenador LEFT JOIN `{$databaseCorp}`.`tbusuario` uc ON uc.matricula = c.matricula" : "LEFT JOIN `{$databaseCorp}`.`tbusuario` uc ON 1 = 0";
     $whereEscopo = '';
     $tipos = '';
     $params = [];
@@ -137,9 +137,9 @@ if ($supervisorTabela === '') {
                 us.nome AS nome_supervisor,
                 uc.nome AS nome_coordenador
            FROM `{$databaseName}`.`tbpedidostec` p
-           INNER JOIN `{$databaseName}`.`tbusuario` u ON u.matricula = p.matricula
-           LEFT JOIN `{$databaseName}`.`{$supervisorTabela}` s ON s.idtbsupervisor = u.idtbsupervisor
-           LEFT JOIN `{$databaseName}`.`tbusuario` us ON us.matricula = s.matricula
+           INNER JOIN `{$databaseCorp}`.`tbusuario` u ON u.matricula = p.matricula
+           LEFT JOIN `{$databaseCorp}`.`{$supervisorTabela}` s ON s.idtbsupervisor = u.idtbsupervisor
+           LEFT JOIN `{$databaseCorp}`.`tbusuario` us ON us.matricula = s.matricula
            {$joinCoordenador}
           WHERE p.flag = 0
                         AND p.escalonado = 0

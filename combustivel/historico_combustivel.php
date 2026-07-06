@@ -16,8 +16,22 @@ require_once '../includes/autofrota_common.php';
 // Pega o filtro de colaborador (se tiver)
 $filtro_matricula = isset($_GET['matricula']) ? $_GET['matricula'] : '';
 
+<<<<<<< HEAD
 // Busca lista de colaboradores baseado no perfil do usuário
 $colaboradores = [];
+=======
+// Busca lista de colaboradores que já fizeram remanejamento
+$sql_colaboradores = "SELECT DISTINCT 
+                        h.matricula,
+                        u.nome
+                      FROM 
+                        historico_combustivel h
+                      LEFT JOIN tbusuario u ON h.matricula = u.matricula
+                      WHERE 
+                        h.acao IN ('remanejamento', 'cota_extra')
+                      ORDER BY 
+                        u.nome ASC";
+>>>>>>> d420eb678f962afa76239ee99a9003e4e9352772
 
 if ($perfil == 4) {
     // Perfil 4 - Visualiza todos os colaboradores
@@ -53,6 +67,7 @@ if ($perfil == 4) {
                         ORDER BY 
                             u.nome ASC";
 
+<<<<<<< HEAD
     $stmt = mysqli_prepare($conn, $sql_colaboradores);
     mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
     mysqli_stmt_execute($stmt);
@@ -110,6 +125,13 @@ if ($perfil == 4) {
     $result_colaboradores = mysqli_stmt_get_result($stmt);
     $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
     mysqli_stmt_close($stmt);
+=======
+// Adiciona filtro de colaborador se selecionado
+if (!empty($filtro_matricula)) {
+    $sql_historico .= " WHERE h.matricula = '$filtro_matricula' AND h.acao IN ('remanejamento', 'cota_extra')";
+} else {
+    $sql_historico .= " WHERE h.acao IN ('remanejamento', 'cota_extra')";
+>>>>>>> d420eb678f962afa76239ee99a9003e4e9352772
 }
 
 // ==============================================
@@ -652,6 +674,7 @@ if (count($historico) > 0) {
                                     if ($saldo_inicial_data) {
                                         $saldo_timeline = floatval($saldo_inicial_data['saldo_inicial'] ?? 0);
                                     }
+<<<<<<< HEAD
                                     ?>
 
                                     <!-- Itens do histórico -->
@@ -697,6 +720,47 @@ if (count($historico) > 0) {
                                                     </small>
                                                 </div>
                                                 <div class="col-md-2">
+=======
+                                    
+                                    $classe_operacao = $h['operacao'] == 'adicao' ? 'adicao' : 'retirada';
+                                    $icone = $h['operacao'] == 'adicao' ? 'fa-arrow-down' : 'fa-arrow-up';
+                                    $classe_valor = $h['operacao'] == 'adicao' ? 'valor-positivo' : 'valor-negativo';
+                                    $sinal = $h['operacao'] == 'adicao' ? '+' : '-';
+                                ?>
+                                    <div class="timeline-item <?= $classe_operacao ?>">
+                                        <div class="row">
+                                            <div class="col-md-2">
+                                                <strong><?= $h['acao'] === 'cota_extra' ? date('d/m/Y', strtotime($h['data'])) : date('d/m/Y H:i', strtotime($h['data'])) ?></strong>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <span class="badge <?= $h['operacao'] == 'adicao' ? 'badge-adicao' : 'badge-retirada' ?>">
+                                                    <i class="fas <?= $icone ?>"></i> 
+                                                    <?= ucfirst($h['operacao']) ?>
+                                                </span>
+                                                <span class="badge <?= $h['acao'] == 'remanejamento' ? 'badge-remanejamento' : 'badge-outro' ?> ms-1">
+                                                    <?= $h['acao'] == 'cota_extra' ? 'Cota Extra' : ucfirst($h['acao']) ?>
+                                                </span>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <span class="<?= $classe_valor ?>">
+                                                    <?= $sinal ?> R$ <?= number_format($h['valor'], 2, ',', '.') ?>
+                                                </span>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <small>
+                                                    <span class="text-muted"></span> R$ <?= number_format($h['valor_anterior'], 2, ',', '.') ?>
+                                                    <i class="fas fa-arrow-right mx-1"></i>
+                                                    <span class="text-primary">R$ <?= number_format($h['valor_atual'], 2, ',', '.') ?></span>
+                                                </small>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-user me-1"></i>
+                                                    <?= htmlspecialchars($h['nome_autor'] ?? $h['matricula_autor']) ?>
+                                                </small>
+                                                <?php if (empty($filtro_matricula)): ?>
+                                                    <br>
+>>>>>>> d420eb678f962afa76239ee99a9003e4e9352772
                                                     <small class="text-muted">
                                                         <i class="fas fa-user me-1"></i>
                                                         <?= htmlspecialchars($h['nome_autor'] ?? $h['matricula_autor']) ?>

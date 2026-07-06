@@ -9,17 +9,22 @@ if ($perfilLogado === '0') {
     header('Location: tecnico.php');
     exit;
 }
-
+if ($perfilLogado === '1') {
+    header('Location: supervisor/solicitar-cota-extra.php');
+    exit;
+}
 if ($perfilLogado === '2') {
     header('Location: coordenador/aprovacao-cotas.php');
     exit;
 }
-
 if ($perfilLogado === '3') {
     header('Location: gerente/aprovacao-cotas.php');
     exit;
 }
-
+if ($perfilLogado === '4') {
+    header('Location: aprovar-pedidos-orcamento-frota.php');
+    exit;
+}
 if ($perfilLogado === '10') {
     header('Location: diretor/aprovar-orcamento-complementar.php');
     exit;
@@ -42,7 +47,9 @@ if (!function_exists('autofrotaNomePorMatricula')) {
         );
 
         $bancoAtual = '';
-        if (isset($GLOBALS['databaseName']) && is_string($GLOBALS['databaseName']) && $GLOBALS['databaseName'] !== '') {
+        if (isset($GLOBALS['databaseCorp']) && is_string($GLOBALS['databaseCorp']) && $GLOBALS['databaseCorp'] !== '') {
+            $bancoAtual = $GLOBALS['databaseCorp'];
+        } elseif (isset($GLOBALS['databaseName']) && is_string($GLOBALS['databaseName']) && $GLOBALS['databaseName'] !== '') {
             $bancoAtual = $GLOBALS['databaseName'];
         } elseif (isset($GLOBALS['database']) && is_string($GLOBALS['database']) && $GLOBALS['database'] !== '') {
             $bancoAtual = $GLOBALS['database'];

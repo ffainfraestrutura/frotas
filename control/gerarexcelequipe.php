@@ -6,6 +6,10 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 if ($databaseName === '') {
     $databaseName = 'bdautofrotas';
 }
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? '');
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
 
 if (($_POST['action'] ?? '') !== 'exportar_hierarquia_completa') {
     http_response_code(400);
@@ -41,13 +45,13 @@ function excelEquipeConsulta(mysqli $conn, string $sql): array
     return $dados;
 }
 
-$arquivo = 'Hierarquia-AutoFrota-' . date('Y-m-d_H-i-s') . '.xls';
+$arquivo = 'Hierarquia-Portal-' . date('Y-m-d_H-i-s') . '.xls';
 $linhas = [];
 
 $sqlGerentes = "
     SELECT DISTINCT g.idtbgerente, u.matricula, u.nome
-    FROM {$databaseName}.tbequipe_gerente g
-    INNER JOIN {$databaseName}.tbusuario u ON u.matricula = g.matricula
+    FROM {$databaseCorp}.tbgerente g
+    INNER JOIN {$databaseCorp}.tbusuario u ON u.matricula = g.matricula
     ORDER BY u.nome
 ";
 
@@ -69,8 +73,8 @@ foreach (excelEquipeConsulta($conn, $sqlGerentes) as $gerente) {
 
     $sqlCoordenadores = "
         SELECT c.idtbcoordenador, u.matricula, u.nome, 'Coordenador' AS cargo
-        FROM {$databaseName}.tbequipe_coordenador c
-        INNER JOIN {$databaseName}.tbusuario u ON u.matricula = c.matricula
+        FROM {$databaseCorp}.tbcoord c
+        INNER JOIN {$databaseCorp}.tbusuario u ON u.matricula = c.matricula
         WHERE c.idtbgerente = {$gerenteId}
         ORDER BY u.nome
     ";
@@ -93,8 +97,8 @@ foreach (excelEquipeConsulta($conn, $sqlGerentes) as $gerente) {
 
         $sqlSupervisores = "
             SELECT s.idtbsupervisor, u.matricula, u.nome, 'Supervisor' AS cargo
-            FROM {$databaseName}.tbequipe_supervisor s
-            INNER JOIN {$databaseName}.tbusuario u ON u.matricula = s.matricula
+            FROM {$databaseCorp}.tbsupervisor s
+            INNER JOIN {$databaseCorp}.tbusuario u ON u.matricula = s.matricula
             WHERE s.idtbcoordenador = {$coordenadorId}
             ORDER BY u.nome
         ";
@@ -117,7 +121,7 @@ foreach (excelEquipeConsulta($conn, $sqlGerentes) as $gerente) {
 
             $sqlTecnicos = "
                 SELECT matricula, nome, 'Técnico' AS cargo
-                                                                FROM {$databaseName}.tbusuario
+                                                                FROM {$databaseCorp}.tbusuario
                 WHERE perfil = 0
                   AND idtbsupervisor = {$supervisorId}
                 ORDER BY nome

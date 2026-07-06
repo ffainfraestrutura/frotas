@@ -270,35 +270,6 @@ $insertCota = consultaPreparada(
     ]
 );
 
-$sqlHistorico = "INSERT INTO historico_combustivel 
-                    (valor, matricula, operacao, matricula_autor, valor_anterior, valor_atual, acao, data) 
-                  VALUES (?, ?, 'adicao', ?, ?, ?, 'cota extra', NOW())";
-
-$stmtHistorico = mysqli_prepare($conn, $sqlHistorico);
-mysqli_stmt_bind_param($stmtHistorico, 'dssdd', $valorInserido, $pedido['matricula'], $matriculaLogada, $saldoAtual, $novoSaldo);
-mysqli_stmt_execute($stmtHistorico);
-mysqli_stmt_close($stmtHistorico);
-
-$sql_gerente = "SELECT * FROM bdcorp.tbcoord WHERE matricula = ?";
-$stmt = mysqli_prepare($conn, $sql_gerente);
-mysqli_stmt_bind_param($stmt, 's', $matriculaLogada);
-mysqli_stmt_execute($stmt);
-$result = mysqli_stmt_get_result($stmt);
-$dados_gerente = mysqli_fetch_assoc($result); 
-mysqli_stmt_close($stmt);
-
-
-$sqlHistorico = "INSERT INTO historico_combustivel 
-                    (valor, matricula, operacao, matricula_autor, valor_anterior, valor_atual, acao, data) 
-                  VALUES (?, ?, 'retirada', ?, ?, ?, 'cota extra', NOW())";
-
-$novoSaldo = $dados_gerente['valor'] - $valorInserido;
-
-$stmtHistorico = mysqli_prepare($conn, $sqlHistorico);
-mysqli_stmt_bind_param($stmtHistorico, 'dssdd', $valorInserido, $matriculaLogada, $matriculaLogada, $dados_gerente['valor'], $novoSaldo);
-mysqli_stmt_execute($stmtHistorico);
-mysqli_stmt_close($stmtHistorico);
-
 if (($insertCota['erro'] ?? '') !== '') {
     consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbpedidostec` SET flag = 0, valorinserido = 0 WHERE idtbpedidostec = ?", 'i', [$idPedido]);
     voltarAprovacaoCota('Erro ao registrar cota aprovada: ' . $insertCota['erro']);

@@ -70,6 +70,75 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
         <div class="collapse navbar-collapse" id="afMenuSuperior">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
+                <?php if ($_SESSION['perfil'] == 1): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivelSupervisor" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivelSupervisor">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('supervisor/solicitar-cota-extra.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Solicitar Cota Extra
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+
+                <?php if ($_SESSION['perfil'] == 2): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remanejamento
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Cotas de Técnicos
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('coordenador/aprovacao-cotas-supervisor.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Cotas de Supervisores
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+                
+       <?php if ($_SESSION['perfil'] == 3): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuGerenteCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuGerenteCombustivel">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gerente/solicitacao-orcamento-diretor.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Pedir Orçamento ao Diretor
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Cota Escalonada
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                <?php endif; ?>
+
                 <?php if ($_SESSION['perfil'] == 4): ?>
 
                     <li class="nav-item">
@@ -78,7 +147,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             <i class="fas fa-house me-1"></i>Início
                         </a>
                     </li>
-
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('aprovar-pedidos-orcamento-frota.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('aprovar-pedidos-orcamento-frota.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-clipboard-check me-1"></i>Aprovar Pedidos Frota
+                        </a>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCondutores" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -195,33 +269,41 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                 <?php endif; ?>
 
-                <?php if ($_SESSION['perfil'] == 2): ?>
+                <?php if ($_SESSION['perfil'] == 10): ?>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuDiretorCombustivel" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fa-solid fa-gas-pump"></i> Combustível
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                        <ul class="dropdown-menu" aria-labelledby="afMenuDiretorCombustivel">
                             <li>
                                 <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Aprovar Cotas
+                                    href="<?= menuSuperiorLink('diretor/pedir-orcamento.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Pedir Orçamento
                                 </a>
                             </li>
-                        </ul>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
                             <li>
                                 <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remover Saldo
+                                    href="<?= menuSuperiorLink('diretor/aprovar-orcamento-complementar.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Orçamento Complementar
                                 </a>
                             </li>
-                        </ul>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Remanejar Saldo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Retirar Saldo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Histórico de Combustível
                                 </a>
                             </li>
                         </ul>
