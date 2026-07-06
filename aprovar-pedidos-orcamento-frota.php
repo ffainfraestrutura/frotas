@@ -127,13 +127,13 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                             <td class="small" style="max-width: 360px;"><?= esc($pedido['justificativa']) ?></td>
                             <td class="fw-semibold">R$ <?= esc(moedaFrotaOrcamento($pedido['valor_pedido'])) ?></td>
                             <td class="text-center text-nowrap">
-                                <form method="post" action="/control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
+                                <form method="post" action="control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
                                     <input type="hidden" name="token" value="<?= esc($token) ?>">
                                     <input type="hidden" name="id" value="<?= esc($pedido['idtbpedidosgerente']) ?>">
                                     <input type="hidden" name="decisao" value="2">
                                     <button type="submit" class="btn btn-outline-success btn-sm" title="Aprovar"><i class="fas fa-check"></i></button>
                                 </form>
-                                <form method="post" action="/control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
+                                <form method="post" action="control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
                                     <input type="hidden" name="token" value="<?= esc($token) ?>">
                                     <input type="hidden" name="id" value="<?= esc($pedido['idtbpedidosgerente']) ?>">
                                     <input type="hidden" name="decisao" value="1">
