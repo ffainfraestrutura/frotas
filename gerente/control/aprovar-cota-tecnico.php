@@ -26,8 +26,7 @@ function voltarAprovacaoCotaGerente(string $mensagem, string $tipo = 'danger'): 
 
 function normalizarMoedaAprovacao(string $valor): float
 {
-    $valor = str_replace('.', '', trim($valor));
-    $valor = str_replace(',', '.', $valor);
+    $valor = str_replace(',', '.', trim($valor));
     return is_numeric($valor) ? (float) $valor : 0.0;
 }
 
