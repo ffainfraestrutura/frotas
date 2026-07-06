@@ -8,7 +8,7 @@ $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databas
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
-$matriculasAutorizadas = ['601004', '004607', '086272', '000000'];
+$matriculasAutorizadas = ['601004', '004607', '086272', '000000', '601000'];
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
