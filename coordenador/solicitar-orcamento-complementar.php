@@ -64,11 +64,11 @@ renderCabecalhoAutofrota('Solicitar Orçamento Complementar');
                 <h1 class="h3 mb-1">Solicitar orçamento complementar</h1>
                 <p class="text-muted mb-0">Coordenador: <strong><?= esc($nomeExibicao . ' (' . $matriculaLogada . ')') ?></strong></p>
             </div>
-            <div class="d-flex flex-column flex-sm-row gap-2">
+            <!-- <div class="d-flex flex-column flex-sm-row gap-2">
                 <div class="border rounded-3 px-3 py-2 bg-light">
                     <div class="text-muted small">Valor orçamento</div>
                     <div class="fw-bold">R$ <?= esc(moedaSolicitacaoOrcamentoCoordenador($orcamentoRecebido)) ?></div>
-                </div>
+                </div> -->
                 <div class="border rounded-3 px-3 py-2 bg-light">
                     <div class="text-muted small">Saldo atual</div>
                     <div class="fw-bold text-primary">R$ <?= esc(moedaSolicitacaoOrcamentoCoordenador($saldoCoordenador)) ?></div>

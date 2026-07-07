@@ -110,6 +110,7 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                         <th>Data e hora</th>
                         <th>Justificativa</th>
                         <th>Novo orç.</th>
+                        <th class="text-center">Histórico</th>
                         <th class="text-center">Decisão</th>
                     </tr>
                 </thead>
@@ -127,6 +128,9 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                             <td><?= esc(formatarDataPortal($pedido['data'])) ?></td>
                             <td class="small" style="max-width: 360px;"><?= esc($pedido['justificativa']) ?></td>
                             <td class="fw-semibold">R$ <?= esc(moedaFrotaOrcamento($pedido['valor_pedido'])) ?></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Histórico" disabled><i class="fa-solid fa-eye"></i></button>
+                            </td>
                             <td class="text-center text-nowrap">
                                 <form method="post" action="control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
                                     <input type="hidden" name="token" value="<?= esc($token) ?>">

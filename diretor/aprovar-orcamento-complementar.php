@@ -7,6 +7,7 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databas
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
+$nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
 
 if (!$conn instanceof mysqli) {
@@ -61,7 +62,7 @@ renderCabecalhoAutofrota('Aprovar Orçamento Complementar');
         <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
                 <h1 class="h3 mb-1">Aprovar orçamento complementar</h1>
-                <p class="text-muted mb-0">Diretor: <strong><?= esc($nomeLogado) ?></strong> (<?= esc($matriculaLogada) ?>)</p>
+                <p class="text-muted mb-0">Diretor: <strong><?= esc($nomeExibicao . ' (' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="border rounded-3 px-3 py-2 bg-light align-self-start">
                 <div class="text-muted small">Saldo atual do diretor</div>
@@ -91,6 +92,7 @@ renderCabecalhoAutofrota('Aprovar Orçamento Complementar');
                         <th>Data e hora</th>
                         <th>Justificativa</th>
                         <th>Valor pedido</th>
+                        <th class="text-center">Histórico</th>
                         <th class="text-center">Decisão</th>
                     </tr>
                 </thead>
@@ -104,6 +106,9 @@ renderCabecalhoAutofrota('Aprovar Orçamento Complementar');
                             <td><?= esc(formatarDataPortal($pedido['data'])) ?></td>
                             <td class="small" style="max-width: 360px;"><?= esc($pedido['justificativa']) ?></td>
                             <td class="fw-semibold">R$ <?= esc(moedaAprovacaoOrcamentoDiretor($pedido['valor_pedido'])) ?></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Histórico" disabled><i class="fa-solid fa-eye"></i></button>
+                            </td>
                             <td class="text-center text-nowrap">
                                 <form method="post" action="control/aprovar-orcamento-complementar.php" class="d-inline">
                                     <input type="hidden" name="token" value="<?= esc($token) ?>">
