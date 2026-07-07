@@ -137,6 +137,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             </li>
                             <li>
                                 <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gerente/aprovar-orcamento-complementar.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Orçamento de Coordenadores
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('gerente/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Aprovar Cota Escalonada
                                 </a>
