@@ -3,8 +3,10 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
+$nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
@@ -29,7 +31,7 @@ renderCabecalhoAutofrota('Solicitação de Cota Extra');
         <div class="card-body d-flex flex-column flex-md-row justify-content-between gap-3">
             <div>
                 <h1 class="h3 mb-1">Solicitação de cota extra</h1>
-                <p class="text-muted mb-0">Supervisor: <strong><?= esc($nomeLogado) ?></strong> (<?= esc($matriculaLogada) ?>)</p>
+                <p class="text-muted mb-0">Supervisor: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
             </div>
         </div>
     </section>

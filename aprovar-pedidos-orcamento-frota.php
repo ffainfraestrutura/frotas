@@ -7,6 +7,7 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databas
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
+$nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
 $matriculasAutorizadas = ['601004', '004607', '086272', '000000', '601000'];
 
@@ -76,7 +77,7 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
         <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
                 <h1 class="h3 mb-1">Aprovar pedidos de orçamento de gerentes e diretores</h1>
-                <p class="text-muted mb-0">Frota: <strong><?= esc($nomeLogado) ?></strong> (<?= esc($matriculaLogada) ?>)</p>
+                <p class="text-muted mb-0">Frota: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="border rounded-3 px-3 py-2 bg-light align-self-start">
                 <div class="text-muted small">Fundo atual da frota</div>

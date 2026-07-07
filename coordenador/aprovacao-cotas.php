@@ -6,6 +6,8 @@ $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
+$nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
+$nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
 
 if (!$conn instanceof mysqli) {
@@ -239,6 +241,7 @@ if ($supervisorTabela === '') {
             <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
                 <div>
                     <h1 class="h3 mb-1">Aprovação de pedidos de cota</h1>
+                    <p class="text-muted mb-0">Coordenador: <strong><?= escCota($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
                 </div>
                 </div>
             </div>
