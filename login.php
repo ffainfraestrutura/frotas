@@ -6,13 +6,16 @@ if (usuarioLogado()) {
     if ($perfilLogado === '0') {
         redirecionarAutofrota('tecnico.php');
     }
+    if ($perfilLogado === '1') {
+        redirecionarAutofrota('supervisor/solicitar-cota-extra.php');
+    }
     if ($perfilLogado === '2') {
         redirecionarAutofrota('coordenador/aprovacao-cotas.php');
     }
     if ($perfilLogado === '3') {
         redirecionarAutofrota('gerente/aprovacao-cotas.php');
     }
-    redirecionarAutofrota('index.php');
+    redirecionarAutofrota('inicio.php');
 }
 ?>
 <!DOCTYPE html>
@@ -46,7 +49,7 @@ if (usuarioLogado()) {
                 <h3>AutoFrota</h3>
             </div>
             <div class="card-body p-4">
-                <form method="post" action="./control/logincontrole.php">
+                <form method="post" action="./control/logincontroller.php">
                     <div class="mb-3">
                         <label for="inputUsuario" class="form-label">Usuário</label>
                         <input class="form-control" name="login" id="inputUsuario" type="text" placeholder="Digite sua matrícula" inputmode="numeric" pattern="[0-9]+" maxlength="10" required />
