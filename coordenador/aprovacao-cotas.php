@@ -240,7 +240,7 @@ if ($supervisorTabela === '') {
         <section class="card panel-card mb-4">
             <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
                 <div>
-                    <h1 class="h3 mb-1">Aprovação de pedidos de cota</h1>
+                    <h1 class="h3 mb-1">Aprovação de pedidos de Cota Extra</h1>
                     <p class="text-muted mb-0">Coordenador: <strong><?= escCota($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
                 </div>
                 </div>

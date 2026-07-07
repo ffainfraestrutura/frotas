@@ -79,7 +79,7 @@ renderCabecalhoAutofrota('Aprovação de Cotas de Supervisores');
     <section class="card shadow-sm border-0 mb-4">
         <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
-                <h1 class="h3 mb-1">Aprovação de pedidos de cota de supervisores</h1>
+                <h1 class="h3 mb-1">Aprovação de pedidos de Cota Extra de supervisores</h1>
                 <p class="text-muted mb-0">Coordenador: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="text-lg-end">
@@ -98,11 +98,12 @@ renderCabecalhoAutofrota('Aprovação de Cotas de Supervisores');
         <div class="card-header bg-white fw-semibold"><i class="fas fa-check-double me-2"></i>Pedidos pendentes</div>
         <div class="card-body table-responsive">
             <table class="table table-hover align-middle" data-datatable="1">
-                <thead><tr><th>Supervisor</th><th>Matrícula</th><th>Placa</th><th>Data</th><th>Saldo supervisor</th><th>Total extra</th><th>Valor pedido</th><th>Justificativa</th><th>Ação</th></tr></thead>
+                <thead><tr><th>Supervisor</th><th>Matrícula</th><th>Placa</th><th>Data</th><th>Saldo supervisor</th><th>Total extra</th><th>Valor pedido</th><th>Justificativa</th><th>Histórico</th><th>Ação</th></tr></thead>
                 <tbody>
                 <?php if ($pedidos === []): ?>
                     <tr>
                         <td class="text-muted">Nenhum pedido pendente encontrado.</td>
+                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -122,6 +123,9 @@ renderCabecalhoAutofrota('Aprovação de Cotas de Supervisores');
                         <td>R$ <?= esc(moedaCotaSupervisor($pedido['totcotaextra'])) ?></td>
                         <td>R$ <?= esc(moedaCotaSupervisor($pedido['valor'])) ?></td>
                         <td style="min-width:240px;white-space:normal"><?= esc($pedido['justificativa']) ?></td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" title="Histórico" disabled><i class="fa-solid fa-eye"></i></button>
+                        </td>
                         <td style="min-width:220px">
                             <form action="control/aprovar-cota-supervisor.php" method="post" class="d-flex flex-column gap-2">
                                 <input type="hidden" name="token" value="<?= esc($token) ?>">
