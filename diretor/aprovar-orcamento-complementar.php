@@ -87,7 +87,7 @@ renderCabecalhoAutofrota('Aprovar Orçamento Complementar');
                     <tr>
                         <th>Matrícula</th>
                         <th>Gerente</th>
-                        <th>Saldo</th>
+                        <th>Saldo Orçamento</th>
                         <th>Orç. recebido</th>
                         <th>Data e hora</th>
                         <th>Justificativa</th>

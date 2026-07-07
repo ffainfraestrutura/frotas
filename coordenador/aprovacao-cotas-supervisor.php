@@ -98,7 +98,8 @@ renderCabecalhoAutofrota('Aprovação de Cotas de Supervisores');
         <div class="card-header bg-white fw-semibold"><i class="fas fa-check-double me-2"></i>Pedidos pendentes</div>
         <div class="card-body table-responsive">
             <table class="table table-hover align-middle" data-datatable="1">
-                <thead><tr><th>Supervisor</th><th>Matrícula</th><th>Placa</th><th>Data</th><th>Saldo supervisor</th><th>Total extra</th><th>Valor pedido</th><th>Justificativa</th><th>Histórico</th><th>Ação</th></tr></thead>
+                <!-- Atualizar aqui depois -->
+                <thead><tr><th>Supervisor</th><th>Matrícula</th><th>Placa</th><th>Data</th><th>Saldo Cartão</th><th>Total extra</th><th>Valor pedido</th><th>Justificativa</th><th>Histórico</th><th>Ação</th></tr></thead>
                 <tbody>
                 <?php if ($pedidos === []): ?>
                     <tr>

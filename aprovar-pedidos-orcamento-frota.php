@@ -80,7 +80,7 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                 <p class="text-muted mb-0">Frota: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="border rounded-3 px-3 py-2 bg-light align-self-start">
-                <div class="text-muted small">Fundo atual da frota</div>
+                <div class="text-muted small">Saldo</div>
                 <div class="fw-bold text-primary">R$ <?= esc(moedaFrotaOrcamento($saldoFrota)) ?></div>
             </div>
         </div>
@@ -103,7 +103,7 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                         <th>Matrícula</th>
                         <th>Solicitante</th>
                         <th>Tipo</th>
-                        <th>Saldo</th>
+                        <th>Saldo Orçamento</th>
                         <th>Orç. complementar</th>
                         <th>Sld. remanejamento</th>
                         <th>Fd. frota</th>

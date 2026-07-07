@@ -81,7 +81,7 @@ renderCabecalhoAutofrota('Aprovar Orçamento Complementar de Coordenadores');
                 <p class="text-muted mb-0">Gerente: <strong><?= esc($nomeExibicao . ' (' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="border rounded-3 px-3 py-2 bg-light align-self-start">
-                <div class="text-muted small">Saldo atual do gerente</div>
+                <div class="text-muted small">Saldo Gerente</div>
                 <div class="fw-bold text-primary">R$ <?= esc(moedaAprovacaoOrcamentoGerente($saldoGerente)) ?></div>
             </div>
         </div>
@@ -103,7 +103,7 @@ renderCabecalhoAutofrota('Aprovar Orçamento Complementar de Coordenadores');
                     <tr>
                         <th>Matrícula</th>
                         <th>Coordenador</th>
-                        <th>Saldo</th>
+                        <th>Saldo Orçamento</th>
                         <th>Orç. complementar</th>
                         <th>Filial</th>
                         <th>Data e hora</th>
