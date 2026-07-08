@@ -1,5 +1,4 @@
 <?php
-// remanejamento/historico.php
 date_default_timezone_set('America/Sao_Paulo');
 session_start();
 $nome = $_SESSION['nome'];
@@ -12,14 +11,12 @@ $_SESSION['nome'] = $nome;
 $_SESSION['usuario'] = $usuariof;
 require_once '../control/conecta.php';
 require_once '../includes/autofrota_common.php';
+error_reporting(1);
+ini_set('display_errors', 1);
 
 // Pega o filtro de colaborador (se tiver)
 $filtro_matricula = isset($_GET['matricula']) ? $_GET['matricula'] : '';
 
-<<<<<<< HEAD
-// Busca lista de colaboradores baseado no perfil do usuário
-$colaboradores = [];
-=======
 // Busca lista de colaboradores que já fizeram remanejamento
 $sql_colaboradores = "SELECT DISTINCT 
                         h.matricula,
@@ -31,7 +28,6 @@ $sql_colaboradores = "SELECT DISTINCT
                         h.acao IN ('remanejamento', 'cota_extra')
                       ORDER BY 
                         u.nome ASC";
->>>>>>> d420eb678f962afa76239ee99a9003e4e9352772
 
 if ($perfil == 4) {
     // Perfil 4 - Visualiza todos os colaboradores
@@ -51,25 +47,32 @@ if ($perfil == 4) {
     $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
 } elseif ($perfil == 2) {
     // Perfil 2 - Coordenador - Busca apenas técnicos vinculados a ele
-    $sql_colaboradores = "SELECT DISTINCT 
-                            u.matricula,
-                            u.nome
-                        FROM 
+    $sql_colaboradores = "SELECT DISTINCT
+                            u.matricula, u.nome
+                        FROM
                             bdcorp.tbcoord coord
-                            JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
-                            JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
-                            JOIN tbsaldo sal ON sal.matricula = u.matricula
-                            JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
-                        WHERE 
+                                JOIN
+                            bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
+                                JOIN
+                            bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
+                                JOIN
+                            tbsaldo sal ON sal.matricula = u.matricula
+                                JOIN
+                            bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
+                        WHERE
                             coord.matricula = ?
-                            AND tec.status != 'demitido'
-                            AND u.perfil = 0
-                        ORDER BY 
-                            u.nome ASC";
+                                AND tec.status != 'demitido'
+                                AND u.perfil = 0 
+                        UNION SELECT DISTINCT
+                            u.matricula, u.nome
+                        FROM
+                            bdcorp.tbusuario u
+                        WHERE
+                            u.matricula = ?
+                        ORDER BY nome ASC";
 
-<<<<<<< HEAD
     $stmt = mysqli_prepare($conn, $sql_colaboradores);
-    mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
+    mysqli_stmt_bind_param($stmt, 'ss', $_SESSION['matricula'], $_SESSION['matricula']);
     mysqli_stmt_execute($stmt);
     $result_colaboradores = mysqli_stmt_get_result($stmt);
     $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
@@ -78,7 +81,8 @@ if ($perfil == 4) {
     // Perfil 3 - Gerente - Busca técnicos de todos os coordenadores abaixo dele
     $sql_colaboradores = "SELECT DISTINCT 
                             u.matricula,
-                            u.nome
+                            u.nome,
+                            'Técnico' AS tipo
                         FROM 
                             bdcorp.tbgerente ger
                             JOIN bdcorp.tbcoord coord ON coord.idtbgerente = ger.idtbgerente
@@ -87,14 +91,42 @@ if ($perfil == 4) {
                             JOIN tbsaldo sal ON sal.matricula = u.matricula
                             JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
                         WHERE 
-                            ger.matricula = ?
+                            CAST(ger.matricula AS CHAR) = ?
                             AND tec.status != 'demitido'
                             AND u.perfil = 0
+
+                        UNION
+
+                        -- Coordenadores do gerente
+                        SELECT DISTINCT 
+                            u.matricula,
+                            u.nome,
+                            'Coordenador' AS tipo
+                        FROM 
+                            bdcorp.tbgerente ger
+                            JOIN bdcorp.tbcoord coord ON coord.idtbgerente = ger.idtbgerente
+                            JOIN bdcorp.tbusuario u ON coord.matricula = u.matricula
+                        WHERE 
+                            CAST(ger.matricula AS CHAR) = ?
+                            AND u.perfil = 2
+
+                        UNION
+
+                        -- O próprio gerente (garantindo que seja APENAS o 4901)
+                        SELECT DISTINCT 
+                            u.matricula,
+                            u.nome,
+                            'Gerente' AS tipo
+                        FROM 
+                            bdcorp.tbusuario u
+                        WHERE 
+                            CAST(u.matricula AS CHAR) = ?
+
                         ORDER BY 
-                            u.nome ASC";
+                            tipo DESC, nome ASC;";
 
     $stmt = mysqli_prepare($conn, $sql_colaboradores);
-    mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
+    mysqli_stmt_bind_param($stmt, 'sss', $_SESSION['matricula'], $_SESSION['matricula'], $_SESSION['matricula']);
     mysqli_stmt_execute($stmt);
     $result_colaboradores = mysqli_stmt_get_result($stmt);
     $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
@@ -116,22 +148,56 @@ if ($perfil == 4) {
                             dir.matricula = ?
                             AND tec.status != 'demitido'
                             AND u.perfil = 0
+
+                        UNION
+
+                        -- Gerentes abaixo do diretor
+                        SELECT DISTINCT 
+                            u.matricula,
+                            u.nome
+                        FROM 
+                            bdcorp.tbdiretor dir
+                            JOIN bdcorp.tbgerente ger ON ger.idtbdiretor = dir.id
+                            JOIN bdcorp.tbusuario u ON ger.matricula = u.matricula
+                        WHERE 
+                            dir.matricula = ?
+                            AND u.perfil = 3
+
+                        UNION
+
+                        -- Coordenadores abaixo do diretor
+                        SELECT DISTINCT 
+                            u.matricula,
+                            u.nome
+                        FROM 
+                            bdcorp.tbdiretor dir
+                            JOIN bdcorp.tbgerente ger ON ger.idtbdiretor = dir.id
+                            JOIN bdcorp.tbcoord coord ON coord.idtbgerente = ger.idtbgerente
+                            JOIN bdcorp.tbusuario u ON coord.matricula = u.matricula
+                        WHERE 
+                            dir.matricula = ?
+                            AND u.perfil = 2
+
+                        UNION
+
+                        -- O próprio diretor
+                        SELECT DISTINCT 
+                            u.matricula,
+                            u.nome
+                        FROM 
+                            bdcorp.tbusuario u
+                        WHERE 
+                            u.matricula = ?
+
                         ORDER BY 
-                            u.nome ASC";
+                            nome ASC";
 
     $stmt = mysqli_prepare($conn, $sql_colaboradores);
-    mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
+    mysqli_stmt_bind_param($stmt, 'ssss', $_SESSION['matricula'], $_SESSION['matricula'], $_SESSION['matricula'], $_SESSION['matricula']);
     mysqli_stmt_execute($stmt);
     $result_colaboradores = mysqli_stmt_get_result($stmt);
     $colaboradores = mysqli_fetch_all($result_colaboradores, MYSQLI_ASSOC);
     mysqli_stmt_close($stmt);
-=======
-// Adiciona filtro de colaborador se selecionado
-if (!empty($filtro_matricula)) {
-    $sql_historico .= " WHERE h.matricula = '$filtro_matricula' AND h.acao IN ('remanejamento', 'cota_extra')";
-} else {
-    $sql_historico .= " WHERE h.acao IN ('remanejamento', 'cota_extra')";
->>>>>>> d420eb678f962afa76239ee99a9003e4e9352772
 }
 
 // ==============================================
@@ -147,7 +213,7 @@ if (!empty($filtro_matricula)) {
                     u.matricula,
                     u.nome,
                     u.perfil,
-                    s.saldo_real_calculado as saldo_atual,
+                    s.saldo as saldo_atual,
                     s.kmorcsem as kmproj,
                     s.data as ultima_atualizacao
                   FROM 
@@ -168,7 +234,7 @@ if (!empty($filtro_matricula)) {
 
     // Busca o saldo inicial do colaborador (primeiro registro da tbsaldo)
     $sql_saldo_inicial = "SELECT 
-                            s.saldo_real_calculado as saldo_inicial,
+                            s.saldo as saldo_inicial,
                             s.data as data_saldo
                           FROM 
                             tbsaldo s
@@ -674,7 +740,6 @@ if (count($historico) > 0) {
                                     if ($saldo_inicial_data) {
                                         $saldo_timeline = floatval($saldo_inicial_data['saldo_inicial'] ?? 0);
                                     }
-<<<<<<< HEAD
                                     ?>
 
                                     <!-- Itens do histórico -->
@@ -720,47 +785,6 @@ if (count($historico) > 0) {
                                                     </small>
                                                 </div>
                                                 <div class="col-md-2">
-=======
-                                    
-                                    $classe_operacao = $h['operacao'] == 'adicao' ? 'adicao' : 'retirada';
-                                    $icone = $h['operacao'] == 'adicao' ? 'fa-arrow-down' : 'fa-arrow-up';
-                                    $classe_valor = $h['operacao'] == 'adicao' ? 'valor-positivo' : 'valor-negativo';
-                                    $sinal = $h['operacao'] == 'adicao' ? '+' : '-';
-                                ?>
-                                    <div class="timeline-item <?= $classe_operacao ?>">
-                                        <div class="row">
-                                            <div class="col-md-2">
-                                                <strong><?= $h['acao'] === 'cota_extra' ? date('d/m/Y', strtotime($h['data'])) : date('d/m/Y H:i', strtotime($h['data'])) ?></strong>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <span class="badge <?= $h['operacao'] == 'adicao' ? 'badge-adicao' : 'badge-retirada' ?>">
-                                                    <i class="fas <?= $icone ?>"></i> 
-                                                    <?= ucfirst($h['operacao']) ?>
-                                                </span>
-                                                <span class="badge <?= $h['acao'] == 'remanejamento' ? 'badge-remanejamento' : 'badge-outro' ?> ms-1">
-                                                    <?= $h['acao'] == 'cota_extra' ? 'Cota Extra' : ucfirst($h['acao']) ?>
-                                                </span>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <span class="<?= $classe_valor ?>">
-                                                    <?= $sinal ?> R$ <?= number_format($h['valor'], 2, ',', '.') ?>
-                                                </span>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <small>
-                                                    <span class="text-muted"></span> R$ <?= number_format($h['valor_anterior'], 2, ',', '.') ?>
-                                                    <i class="fas fa-arrow-right mx-1"></i>
-                                                    <span class="text-primary">R$ <?= number_format($h['valor_atual'], 2, ',', '.') ?></span>
-                                                </small>
-                                            </div>
-                                            <div class="col-md-2">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-user me-1"></i>
-                                                    <?= htmlspecialchars($h['nome_autor'] ?? $h['matricula_autor']) ?>
-                                                </small>
-                                                <?php if (empty($filtro_matricula)): ?>
-                                                    <br>
->>>>>>> d420eb678f962afa76239ee99a9003e4e9352772
                                                     <small class="text-muted">
                                                         <i class="fas fa-user me-1"></i>
                                                         <?= htmlspecialchars($h['nome_autor'] ?? $h['matricula_autor']) ?>

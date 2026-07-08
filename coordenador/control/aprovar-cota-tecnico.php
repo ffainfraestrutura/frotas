@@ -271,7 +271,7 @@ $insertCota = consultaPreparada(
 
 $sqlHistorico = "INSERT INTO historico_combustivel 
                     (valor, matricula, operacao, matricula_autor, valor_anterior, valor_atual, acao, data) 
-                  VALUES (?, ?, 'adicao', ?, ?, ?, 'cota extra', NOW())";
+                  VALUES (?, ?, 'adição', ?, ?, ?, 'cota extra', NOW())";
 
 $stmtHistorico = mysqli_prepare($conn, $sqlHistorico);
 mysqli_stmt_bind_param($stmtHistorico, 'dssdd', $valorInserido, $pedido['matricula'], $matriculaLogada, $saldoAtual, $novoSaldo);
@@ -340,18 +340,6 @@ if (colunaAprovacaoExiste($conn, $databaseName, 'tbsaldo', 'kmorcsem')) {
         's',
         [$matriculaTecnico]
     );
-}
-
-$historicoCota = consultaPreparada(
-    $conn,
-    "INSERT INTO `{$databaseName}`.`historico_combustivel`
-        (matricula, valor, operacao, matricula_autor, valor_anterior, valor_atual, acao, data)
-     VALUES (?, ?, 'adicao', ?, ?, ?, 'cota_extra', ?)",
-    'sdsdds',
-    [$matriculaTecnico, $valorInserido, $matriculaLogada, $saldoAnteriorTecnico, $saldoAnteriorTecnico + $valorInserido, $agora]
-);
-if (($historicoCota['erro'] ?? '') !== '') {
-    voltarAprovacaoCota('Erro ao registrar histórico da cota aprovada: ' . $historicoCota['erro']);
 }
 
 
