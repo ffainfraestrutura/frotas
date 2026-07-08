@@ -102,14 +102,20 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             </li>
                             <li>
                                 <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('coordenador/solicitar-orcamento-complementar.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Solicitar Orçamento Complementar
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Aprovar Cotas de Técnicos
+                                    target="_self">Aprovar Cotas Extra de Colaboradores
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('coordenador/aprovacao-cotas-supervisor.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Aprovar Cotas de Supervisores
+                                    target="_self">Aprovar Cotas Extra de Supervisores
                                 </a>
                             </li>
                         </ul>
@@ -127,6 +133,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('gerente/solicitacao-orcamento-diretor.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Pedir Orçamento ao Diretor
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gerente/aprovar-orcamento-complementar.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Orçamento de Coordenadores
                                 </a>
                             </li>
                             <li>

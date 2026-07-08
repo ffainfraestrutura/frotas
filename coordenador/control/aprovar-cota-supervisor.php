@@ -22,8 +22,7 @@ function voltarAprovacaoCotaSupervisor(string $mensagem, string $tipo = 'danger'
 
 function normalizarMoedaAprovacaoSupervisor(string $valor): float
 {
-    $valor = str_replace('.', '', trim($valor));
-    $valor = str_replace(',', '.', $valor);
+    $valor = str_replace(',', '.', trim($valor));
     return is_numeric($valor) ? (float) $valor : 0.0;
 }
 
@@ -101,12 +100,15 @@ if ($valorInseridoRaw === '') {
 }
 
 if ($decisao === 1) {
-    consultaPreparada(
+    $atualizacaoReprovacao = consultaPreparada(
         $conn,
-        "UPDATE `{$databaseName}`.`tbpedidossup` SET flag = 1, tipocota = 'extra', dataplantao = 'extra' WHERE idtbpedidossupcota = ? AND flag = 0",
+        "UPDATE `{$databaseName}`.`tbpedidossup` SET flag = 1, tipocota = 0, dataplantao = NULL WHERE idtbpedidossupcota = ?",
         'i',
         [$idPedido]
     );
+    if (($atualizacaoReprovacao['erro'] ?? '') !== '') {
+        voltarAprovacaoCotaSupervisor('Erro ao reprovar pedido: ' . $atualizacaoReprovacao['erro']);
+    }
     registrarLogSupervisor($conn, $databaseName, $idPedido, $decisao, $matriculaSupervisor, $matriculaLogada, $valorPedido, 0.0);
     voltarAprovacaoCotaSupervisor('Pedido reprovado com sucesso.', 'success');
 }
@@ -124,19 +126,23 @@ $agora = date('Y-m-d H:i:s');
 
 $temValorInseridoPedido = colunaSupervisorExiste($conn, $databaseName, 'tbpedidossup', 'valorinserido');
 if ($temValorInseridoPedido) {
-    consultaPreparada(
+    $atualizacaoAprovacao = consultaPreparada(
         $conn,
-        "UPDATE `{$databaseName}`.`tbpedidossup` SET flag = 2, tipocota = 'extra', dataplantao = 'extra', valorinserido = ? WHERE idtbpedidossupcota = ? AND flag = 0",
+        "UPDATE `{$databaseName}`.`tbpedidossup` SET flag = 2, tipocota = 0, dataplantao = NULL, valorinserido = ? WHERE idtbpedidossupcota = ?",
         'di',
         [$valorInserido, $idPedido]
     );
 } else {
-    consultaPreparada(
+    $atualizacaoAprovacao = consultaPreparada(
         $conn,
-        "UPDATE `{$databaseName}`.`tbpedidossup` SET flag = 2, tipocota = 'extra', dataplantao = 'extra' WHERE idtbpedidossupcota = ? AND flag = 0",
+        "UPDATE `{$databaseName}`.`tbpedidossup` SET flag = 2, tipocota = 0, dataplantao = NULL WHERE idtbpedidossupcota = ?",
         'i',
         [$idPedido]
     );
+}
+
+if (($atualizacaoAprovacao['erro'] ?? '') !== '') {
+    voltarAprovacaoCotaSupervisor('Erro ao aprovar pedido: ' . $atualizacaoAprovacao['erro']);
 }
 
 $temIdPedidoCota = colunaSupervisorExiste($conn, $databaseName, 'tbcotaextraac', 'idtbpedidossupcota');

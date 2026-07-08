@@ -7,8 +7,9 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databas
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
+$nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
-$matriculasAutorizadas = ['601004', '004607', '086272', '000000'];
+$matriculasAutorizadas = ['601004', '004607', '086272', '000000', '601000'];
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
@@ -76,10 +77,10 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
         <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
                 <h1 class="h3 mb-1">Aprovar pedidos de orçamento de gerentes e diretores</h1>
-                <p class="text-muted mb-0">Frota: <strong><?= esc($nomeLogado) ?></strong> (<?= esc($matriculaLogada) ?>)</p>
+                <p class="text-muted mb-0">Frota: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="border rounded-3 px-3 py-2 bg-light align-self-start">
-                <div class="text-muted small">Fundo atual da frota</div>
+                <div class="text-muted small">Saldo</div>
                 <div class="fw-bold text-primary">R$ <?= esc(moedaFrotaOrcamento($saldoFrota)) ?></div>
             </div>
         </div>
@@ -102,13 +103,14 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                         <th>Matrícula</th>
                         <th>Solicitante</th>
                         <th>Tipo</th>
-                        <th>Saldo</th>
+                        <th>Saldo Orçamento</th>
                         <th>Orç. complementar</th>
                         <th>Sld. remanejamento</th>
                         <th>Fd. frota</th>
                         <th>Data e hora</th>
                         <th>Justificativa</th>
                         <th>Novo orç.</th>
+                        <th class="text-center">Histórico</th>
                         <th class="text-center">Decisão</th>
                     </tr>
                 </thead>
@@ -126,14 +128,17 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
                             <td><?= esc(formatarDataPortal($pedido['data'])) ?></td>
                             <td class="small" style="max-width: 360px;"><?= esc($pedido['justificativa']) ?></td>
                             <td class="fw-semibold">R$ <?= esc(moedaFrotaOrcamento($pedido['valor_pedido'])) ?></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" title="Histórico" disabled><i class="fa-solid fa-eye"></i></button>
+                            </td>
                             <td class="text-center text-nowrap">
-                                <form method="post" action="/control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
+                                <form method="post" action="control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
                                     <input type="hidden" name="token" value="<?= esc($token) ?>">
                                     <input type="hidden" name="id" value="<?= esc($pedido['idtbpedidosgerente']) ?>">
                                     <input type="hidden" name="decisao" value="2">
                                     <button type="submit" class="btn btn-outline-success btn-sm" title="Aprovar"><i class="fas fa-check"></i></button>
                                 </form>
-                                <form method="post" action="/control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
+                                <form method="post" action="control/aprovar-pedidos-orcamento-frota.php" class="d-inline">
                                     <input type="hidden" name="token" value="<?= esc($token) ?>">
                                     <input type="hidden" name="id" value="<?= esc($pedido['idtbpedidosgerente']) ?>">
                                     <input type="hidden" name="decisao" value="1">

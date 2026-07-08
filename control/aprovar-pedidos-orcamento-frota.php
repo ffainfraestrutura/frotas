@@ -32,6 +32,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: /aprovar-pedidos-orcamento-frota.php');
         exit;
     }
+
+    $pedidoLinha = buscarUmaLinha(
+        $conn,
+        "SELECT valor FROM `{$databaseName}`.`tbpedidosgerente` WHERE idtbpedidosgerente = ? AND flag = 0 LIMIT 1",
+        'i',
+        [$id]
+    );
+    if ($pedidoLinha === []) {
+        $_SESSION['frota_orcamento_mensagem'] = 'Pedido não encontrado ou já processado.';
+        $_SESSION['frota_orcamento_tipo'] = 'warning';
+        header('Location: /aprovar-pedidos-orcamento-frota.php');
+        exit;
+    }
+
+    $valorPedido = (float) ($pedidoLinha['valor'] ?? 0);
+    if ($decisao === 2) {
+        $saldoLinha = buscarUmaLinha(
+            $conn,
+            "SELECT saldoatual FROM `{$databaseName}`.`tbsaldofrota` ORDER BY data_e_hora DESC LIMIT 1"
+        );
+        $saldoAtual = is_numeric($saldoLinha['saldoatual'] ?? null) ? (float) $saldoLinha['saldoatual'] : 0.0;
+        if ($valorPedido > $saldoAtual) {
+            $_SESSION['frota_orcamento_mensagem'] = 'Saldo insuficiente da frota para aprovar este pedido.';
+            $_SESSION['frota_orcamento_tipo'] = 'warning';
+            header('Location: /aprovar-pedidos-orcamento-frota.php');
+            exit;
+        }
+    }
     
     $sql = "UPDATE `{$databaseName}`.`tbpedidosgerente` SET flag = ? WHERE idtbpedidosgerente = ?";
     $stmt = $conn->prepare($sql);

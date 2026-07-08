@@ -12,66 +12,66 @@ $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
-if ($perfilLogado !== '3') {
+if ($perfilLogado !== '2') {
     http_response_code(403);
-    exit('Acesso permitido apenas para perfil gerente.');
+    exit('Acesso permitido apenas para perfil coordenador.');
 }
 
-function moedaSolicitacaoOrcamentoDiretor($valor): string
+function moedaSolicitacaoOrcamentoCoordenador($valor): string
 {
     return number_format((float) ($valor ?? 0), 2, ',', '.');
 }
 
-$mensagem = (string) ($_SESSION['solicitacao_orcamento_diretor_mensagem'] ?? '');
-$tipoMensagem = (string) ($_SESSION['solicitacao_orcamento_diretor_tipo'] ?? 'info');
-unset($_SESSION['solicitacao_orcamento_diretor_mensagem'], $_SESSION['solicitacao_orcamento_diretor_tipo']);
+$mensagem = (string) ($_SESSION['solicitacao_orcamento_coordenador_mensagem'] ?? '');
+$tipoMensagem = (string) ($_SESSION['solicitacao_orcamento_coordenador_tipo'] ?? 'info');
+unset($_SESSION['solicitacao_orcamento_coordenador_mensagem'], $_SESSION['solicitacao_orcamento_coordenador_tipo']);
 
-$tokensSolicitacaoDiretor = $_SESSION['solicitacao_orcamento_diretor_tokens'] ?? [];
-if (!is_array($tokensSolicitacaoDiretor)) {
-    $tokensSolicitacaoDiretor = [];
+$tokensSolicitacaoCoordenador = $_SESSION['solicitacao_orcamento_coordenador_tokens'] ?? [];
+if (!is_array($tokensSolicitacaoCoordenador)) {
+    $tokensSolicitacaoCoordenador = [];
 }
 $token = bin2hex(random_bytes(32));
-$tokensSolicitacaoDiretor[] = $token;
-$tokensSolicitacaoDiretor = array_slice(array_values(array_unique($tokensSolicitacaoDiretor)), -5);
-$_SESSION['solicitacao_orcamento_diretor_tokens'] = $tokensSolicitacaoDiretor;
-$_SESSION['solicitacao_orcamento_diretor_token'] = $token;
+$tokensSolicitacaoCoordenador[] = $token;
+$tokensSolicitacaoCoordenador = array_slice(array_values(array_unique($tokensSolicitacaoCoordenador)), -5);
+$_SESSION['solicitacao_orcamento_coordenador_tokens'] = $tokensSolicitacaoCoordenador;
+$_SESSION['solicitacao_orcamento_coordenador_token'] = $token;
 
 $erroTela = '';
-$saldoGerente = 0.0;
+$saldoCoordenador = 0.0;
 $orcamentoRecebido = 0.0;
-$gerente = buscarUmaLinha(
+$coordenador = buscarUmaLinha(
     $conn,
-    "SELECT valor, orcrecebido, idtbdiretor FROM `{$databaseCorp}`.`tbgerente` WHERE matricula = ? LIMIT 1",
+    "SELECT valor, orcrecebido, idtbgerente FROM `{$databaseCorp}`.`tbcoord` WHERE matricula = ? LIMIT 1",
     's',
     [$matriculaLogada]
 );
-if ($gerente === []) {
-    $erroTela = 'Cadastro do gerente não encontrado.';
+if ($coordenador === []) {
+    $erroTela = 'Cadastro do coordenador não encontrado.';
 } else {
-    $saldoGerente = is_numeric($gerente['valor'] ?? null) ? (float) $gerente['valor'] : 0.0;
-    $orcamentoRecebido = is_numeric($gerente['orcrecebido'] ?? null) ? (float) $gerente['orcrecebido'] : 0.0;
-    if ((int) ($gerente['idtbdiretor'] ?? 0) <= 0) {
-        $erroTela = 'Gerente sem diretor vinculado.';
+    $saldoCoordenador = is_numeric($coordenador['valor'] ?? null) ? (float) $coordenador['valor'] : 0.0;
+    $orcamentoRecebido = is_numeric($coordenador['orcrecebido'] ?? null) ? (float) $coordenador['orcrecebido'] : 0.0;
+    if ((int) ($coordenador['idtbgerente'] ?? 0) <= 0) {
+        $erroTela = 'Coordenador sem gerente vinculado.';
     }
 }
 
-renderCabecalhoAutofrota('Solicitar Orçamento para Diretor');
+renderCabecalhoAutofrota('Solicitar Orçamento Complementar');
 ?>
 <div class="container-fluid px-4">
     <section class="card shadow-sm border-0 mb-4">
         <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
-                <h1 class="h3 mb-1">Solicitação de orçamento para o diretor</h1>
-                <p class="text-muted mb-0">Gerente: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
+                <h1 class="h3 mb-1">Solicitar orçamento complementar</h1>
+                <p class="text-muted mb-0">Coordenador: <strong><?= esc($nomeExibicao . ' (' . $matriculaLogada . ')') ?></strong></p>
             </div>
-            <div class="d-flex flex-column flex-sm-row gap-2">
-                <!-- <div class="border rounded-3 px-3 py-2 bg-light">
+            <!-- <div class="d-flex flex-column flex-sm-row gap-2">
+                <div class="border rounded-3 px-3 py-2 bg-light">
                     <div class="text-muted small">Valor orçamento</div>
-                    <div class="fw-bold">R$ <?= esc(moedaSolicitacaoOrcamentoDiretor($orcamentoRecebido)) ?></div> -->
-                </div>
+                    <div class="fw-bold">R$ <?= esc(moedaSolicitacaoOrcamentoCoordenador($orcamentoRecebido)) ?></div>
+                </div> -->
                 <div class="border rounded-3 px-3 py-2 bg-light">
                     <div class="text-muted small">Saldo atual</div>
-                    <div class="fw-bold text-primary">R$ <?= esc(moedaSolicitacaoOrcamentoDiretor($saldoGerente)) ?></div>
+                    <div class="fw-bold text-primary">R$ <?= esc(moedaSolicitacaoOrcamentoCoordenador($saldoCoordenador)) ?></div>
                 </div>
             </div>
         </div>
@@ -88,7 +88,7 @@ renderCabecalhoAutofrota('Solicitar Orçamento para Diretor');
     <section class="card shadow-sm border-0">
         <div class="card-header bg-white fw-semibold"><i class="fas fa-file-invoice-dollar me-2"></i>Solicitação:</div>
         <div class="card-body">
-            <form action="control\solicitacao-orcamento-diretor.php" method="post" class="row g-3">
+            <form action="control/solicitar-orcamento-complementar.php" method="post" class="row g-3">
                 <input type="hidden" name="token" value="<?= esc($token) ?>">
                 <div class="col-12 col-md-4">
                     <label class="form-label" for="valor">Valor solicitado</label>

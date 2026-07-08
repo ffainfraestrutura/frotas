@@ -72,6 +72,42 @@ if (!function_exists('autofrotaInit')) {
     }
 }
 
+if (!function_exists('autofrotaNomeExibicaoPorMatricula')) {
+    function autofrotaNomeExibicaoPorMatricula(mysqli $conn, string $databaseCorp, string $matricula, string $fallback = ''): string
+    {
+        $matricula = trim($matricula);
+        $fallback = trim($fallback);
+
+        if ($matricula === '') {
+            return $fallback !== '' ? $fallback : '';
+        }
+
+        $dados = buscarUmaLinha(
+            $conn,
+            "SELECT u.usuario, f.nome
+               FROM `{$databaseCorp}`.`tbusuario` u
+               LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON f.matricula = u.matricula
+              WHERE u.matricula = ?
+              LIMIT 1",
+            's',
+            [$matricula]
+        );
+
+        $nomeFuncionario = trim((string) ($dados['nome'] ?? ''));
+        $nomeUsuario = trim((string) ($dados['usuario'] ?? ''));
+
+        if ($nomeFuncionario !== '') {
+            return $nomeFuncionario;
+        }
+
+        if ($nomeUsuario !== '') {
+            return $nomeUsuario;
+        }
+
+        return $fallback !== '' ? $fallback : $matricula;
+    }
+}
+
 if (!function_exists('autofrotaMenu')) {
     function autofrotaMenu(): void
     {
