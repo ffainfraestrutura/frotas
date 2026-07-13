@@ -52,11 +52,22 @@ function buscarLinhasSaldo(mysqli $conn, string $sql, string $types = '', array 
     return $rows;
 }
 
-$ccustoFiltro = trim((string) ($_POST['ccusto'] ?? 'td'));
-$cargoFiltro = trim((string) ($_POST['cargo'] ?? 'td'));
-$filialFiltro = trim((string) ($_POST['filial'] ?? 'td'));
-$matriculaFiltro = trim((string) ($_POST['mattec'] ?? ''));
-$placaFiltro = strtoupper(trim((string) ($_POST['placatec'] ?? '')));
+function lerFiltroSaldo(string $nome, string $padrao = ''): string
+{
+    if (isset($_GET[$nome])) {
+        return trim((string) $_GET[$nome]);
+    }
+    if (isset($_POST[$nome])) {
+        return trim((string) $_POST[$nome]);
+    }
+    return $padrao;
+}
+
+$ccustoFiltro = lerFiltroSaldo('ccusto', 'td');
+$cargoFiltro = lerFiltroSaldo('cargo', 'td');
+$filialFiltro = lerFiltroSaldo('filial', 'td');
+$matriculaFiltro = lerFiltroSaldo('mattec');
+$placaFiltro = strtoupper(lerFiltroSaldo('placatec'));
 $inicioSemana = inicioSemanaSaldo();
 
 $centrosCusto = buscarLinhasSaldo($conn, "SELECT DISTINCT COALESCE(ccusto, 'Sem centro de custo') AS ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE (ccusto LIKE '%IHS%' OR ccusto LIKE '%CLARO%' OR ccusto LIKE '%Alloha%' OR ccusto LIKE '%Controle e Eficiência Operacional%' OR ccusto IS NULL) ORDER BY ccusto");
@@ -116,7 +127,7 @@ unset($_SESSION['rel_saldo_alert_detalhes']);
         <div class="alert <?= stripos($mensagemRetorno, 'sucesso') !== false ? 'alert-success' : 'alert-warning' ?>" role="alert"><?= escSaldo($mensagemRetorno) ?></div>
     <?php endif; ?>
     <div class="alert alert-secondary">Informe ao menos um filtro para carregar os veículos. A referência de saldo é a semana iniciada em <strong><?= escSaldo(date('d/m/Y', strtotime($inicioSemana))) ?></strong>.</div>
-    <form method="post" class="card card-body mb-4">
+    <form id="formFiltrosSaldo" method="get" class="card card-body mb-4">
         <div class="row g-3 align-items-end">
             <div class="col-md-3"><label class="form-label">Centro de Custo</label><select class="form-select" name="ccusto"><option value="td">Todos</option><?php foreach ($centrosCusto as $item): $v=(string)$item['ccusto']; ?><option value="<?= escSaldo($v) ?>" <?= $ccustoFiltro===$v?'selected':'' ?>><?= escSaldo($v) ?></option><?php endforeach; ?></select></div>
             <div class="col-md-3"><label class="form-label">Cargo</label><select class="form-select" name="cargo"><option value="td">Todos</option><?php foreach ($cargos as $item): $v=(string)$item['cargo']; ?><option value="<?= escSaldo($v) ?>" <?= $cargoFiltro===$v?'selected':'' ?>><?= escSaldo($v) ?></option><?php endforeach; ?></select></div>
@@ -152,6 +163,18 @@ unset($_SESSION['rel_saldo_alert_detalhes']);
 <?php if ($alertaDetalhesSaldo !== ''): ?>
 alert(<?= json_encode($alertaDetalhesSaldo, JSON_UNESCAPED_UNICODE) ?>);
 <?php endif; ?>
+const houveRetornoRemanejamento = <?= $mensagemRetorno !== '' ? 'true' : 'false' ?>;
+const storageFiltroSaldo = 'rel_saldo_veiculos_filtros';
+const queryAtual = window.location.search.replace(/^\?/, '');
+if (queryAtual) {
+    localStorage.setItem(storageFiltroSaldo, queryAtual);
+} else if (houveRetornoRemanejamento) {
+    const querySalva = (localStorage.getItem(storageFiltroSaldo) || '').trim();
+    if (querySalva) {
+        window.location.replace('relatorio-saldo-veiculos.php?' + querySalva);
+    }
+}
+
 function validarFormulario(id){const v=(document.getElementById(id)?.value||'').trim(); if(v.length<10){alert('Informe uma justificativa com pelo menos 10 caracteres.'); return false;} return true;}
 document.getElementById('btnExportExcel').addEventListener('click',()=>{const html='\ufeff'+document.getElementById('datatablesSimple').outerHTML; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'})); a.download='rel_saldo_veiculos.xls'; a.click();});
 function buscarJustificativas(){ $.post('control/buscar_justificativas.php',{matricula:$('#filtroMatricula').val(),placa:$('#filtroPlaca').val(),tipo_acao:$('#filtroTipoAcao').val(),data_inicio:$('#filtroDataInicio').val(),data_fim:$('#filtroDataFim').val()},function(dados){let html=''; if(!Array.isArray(dados)||!dados.length){html='<tr><td colspan="8" class="text-center text-muted">Nenhum registro encontrado</td></tr>';} else {dados.forEach(function(i){html+='<tr><td>'+i.id+'</td><td>'+i.data_hora_formatada+'</td><td>'+(i.tipo_acao==1?'Adição':'Remoção')+'</td><td>'+i.placa+'</td><td>'+i.matricula_tecnico+'</td><td>R$ '+Number(i.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td><td>'+i.matricula_autor+'</td><td>'+i.justificativa+'</td></tr>';});} $('#corpoTabelaJustificativas').html(html);},'json').fail(function(xhr){$('#corpoTabelaJustificativas').html('<tr><td colspan="8" class="text-center text-danger">Erro ao buscar justificativas.</td></tr>');});}
