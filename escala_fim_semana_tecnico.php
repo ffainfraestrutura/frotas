@@ -33,8 +33,16 @@ function semanaEscalaFimSemana(string $data): string
 function nomeTecnicoEscala(mysqli $conn, string $databaseCorp, string $matricula): string
 {
     $stmt = mysqli_prepare($conn, "SELECT COALESCE(f.nome, u.usuario) AS nome FROM `{$databaseCorp}`.`tbusuario` u LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON f.matricula = u.matricula WHERE u.matricula = ? LIMIT 1");
+    if (!$stmt) {
+        return $matricula;
+    }
+
     mysqli_stmt_bind_param($stmt, 's', $matricula);
-    mysqli_stmt_execute($stmt);
+    if (!mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_close($stmt);
+        return $matricula;
+    }
+
     $resultado = mysqli_stmt_get_result($stmt);
     $linha = $resultado ? mysqli_fetch_assoc($resultado) : [];
     mysqli_stmt_close($stmt);
@@ -44,74 +52,101 @@ function nomeTecnicoEscala(mysqli $conn, string $databaseCorp, string $matricula
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
 
-    if (!$conn instanceof mysqli || $databaseAutofrota === '') {
-        echo json_encode(['success' => false, 'msg' => 'Conexão indisponível']);
-        exit;
-    }
+    try {
 
-    $segunda = strtotime('monday this week');
-    $sabado = date('Y-m-d', strtotime('+5 days', $segunda));
-    $domingo = date('Y-m-d', strtotime('+6 days', $segunda));
-    $diasFimSemana = [$sabado, $domingo];
+        if (!$conn instanceof mysqli || $databaseAutofrota === '') {
+            echo json_encode(['success' => false, 'msg' => 'Conexão indisponível']);
+            exit;
+        }
 
-    if (isset($_POST['limpar'])) {
-        $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?)");
-        mysqli_stmt_bind_param($stmtLimpar, 'ss', $sabado, $domingo);
-        $okLimpar = mysqli_stmt_execute($stmtLimpar);
-        $erroLimpar = mysqli_stmt_error($stmtLimpar);
-        mysqli_stmt_close($stmtLimpar);
-        echo json_encode(['success' => $okLimpar, 'msg' => $erroLimpar]);
-        exit;
-    }
+        $segunda = strtotime('monday this week');
+        $sabado = date('Y-m-d', strtotime('+5 days', $segunda));
+        $domingo = date('Y-m-d', strtotime('+6 days', $segunda));
+        $diasFimSemana = [$sabado, $domingo];
 
-    $escalasPost = json_decode((string) ($_POST['escalas'] ?? '[]'), true);
-    if (!is_array($escalasPost)) {
-        echo json_encode(['success' => false, 'msg' => 'Payload inválido']);
-        exit;
-    }
-
-    mysqli_begin_transaction($conn);
-    $ok = true;
-    $erro = '';
-
-    $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?)");
-    mysqli_stmt_bind_param($stmtLimpar, 'ss', $sabado, $domingo);
-    $ok = mysqli_stmt_execute($stmtLimpar);
-    $erro = mysqli_stmt_error($stmtLimpar);
-    mysqli_stmt_close($stmtLimpar);
-
-    if ($ok) {
-        $stmtInserir = mysqli_prepare($conn, "INSERT INTO `{$databaseAutofrota}`.`tbescala` (nome, matricula, mes, ano, dia, status, semana) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        foreach ($escalasPost as $escala) {
-            $matriculaTecnico = trim((string) ($escala['matricula'] ?? ''));
-            $dia = substr((string) ($escala['dia'] ?? ''), 0, 10);
-            $status = (string) ((int) ($escala['status'] ?? 1));
-
-            if ($matriculaTecnico === '' || !in_array($dia, $diasFimSemana, true)) {
-                continue;
+        if (isset($_POST['limpar'])) {
+            $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?)");
+            if (!$stmtLimpar) {
+                throw new RuntimeException('Falha ao preparar limpeza');
             }
 
-            $nomeTecnico = nomeTecnicoEscala($conn, $databaseCorp, $matriculaTecnico);
-            $mes = (int) date('m', strtotime($dia));
-            $ano = (int) date('Y', strtotime($dia));
-            $semana = semanaEscalaFimSemana($dia);
-            mysqli_stmt_bind_param($stmtInserir, 'ssiisss', $nomeTecnico, $matriculaTecnico, $mes, $ano, $dia, $status, $semana);
-            if (!mysqli_stmt_execute($stmtInserir)) {
+            mysqli_stmt_bind_param($stmtLimpar, 'ss', $sabado, $domingo);
+            $okLimpar = mysqli_stmt_execute($stmtLimpar);
+            $erroLimpar = $okLimpar ? '' : 'Falha ao limpar escalas';
+            mysqli_stmt_close($stmtLimpar);
+            echo json_encode(['success' => $okLimpar, 'msg' => $erroLimpar]);
+            exit;
+        }
+
+        $escalasPost = json_decode((string) ($_POST['escalas'] ?? '[]'), true);
+        if (!is_array($escalasPost)) {
+            echo json_encode(['success' => false, 'msg' => 'Payload inválido']);
+            exit;
+        }
+
+        mysqli_begin_transaction($conn);
+        $ok = true;
+        $erro = '';
+
+        $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?)");
+        if (!$stmtLimpar) {
+            throw new RuntimeException('Falha ao preparar exclusão inicial');
+        }
+
+        mysqli_stmt_bind_param($stmtLimpar, 'ss', $sabado, $domingo);
+        $ok = mysqli_stmt_execute($stmtLimpar);
+        $erro = mysqli_stmt_error($stmtLimpar);
+        mysqli_stmt_close($stmtLimpar);
+
+        if ($ok) {
+            $stmtInserir = mysqli_prepare($conn, "INSERT INTO `{$databaseAutofrota}`.`tbescala` (matricula, dia, status, mat_coord) VALUES (?, ?, ?, ?)");
+            if (!$stmtInserir) {
                 $ok = false;
-                $erro = mysqli_stmt_error($stmtInserir);
-                break;
+                $erro = 'Falha ao preparar inserção';
+            }
+
+            if ($ok) {
+                foreach ($escalasPost as $escala) {
+                    $matriculaTecnico = trim((string) ($escala['matricula'] ?? ''));
+                    $dia = substr((string) ($escala['dia'] ?? ''), 0, 10);
+                    $status = (int) ($escala['status'] ?? 1);
+                    $diaCompleto = $dia . ' 00:00:00';
+                    $matCoord = $matricula;
+
+                    if ($matriculaTecnico === '' || !in_array($dia, $diasFimSemana, true)) {
+                        continue;
+                    }
+
+                    mysqli_stmt_bind_param($stmtInserir, 'ssis', $matriculaTecnico, $diaCompleto, $status, $matCoord);
+                    if (!mysqli_stmt_execute($stmtInserir)) {
+                        $ok = false;
+                        $erro = 'Falha ao salvar escalas';
+                        break;
+                    }
+                }
+                mysqli_stmt_close($stmtInserir);
             }
         }
-        mysqli_stmt_close($stmtInserir);
+
+        if ($ok) {
+            mysqli_commit($conn);
+        } else {
+            mysqli_rollback($conn);
+        }
+
+        echo json_encode(['success' => $ok, 'msg' => $erro]);
+    } catch (Throwable $e) {
+        if ($conn instanceof mysqli) {
+            @mysqli_rollback($conn);
+        }
+
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'msg' => 'Erro interno ao processar escala',
+        ]);
     }
 
-    if ($ok) {
-        mysqli_commit($conn);
-    } else {
-        mysqli_rollback($conn);
-    }
-
-    echo json_encode(['success' => $ok, 'msg' => $erro]);
     exit;
 }
 
@@ -374,10 +409,30 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
             totalMarcados++;
         });
 
+        function montarMensagemErroAjax(acao) {
+            return `❌ Falha ao ${acao}. Tente novamente.`;
+        }
+
         if (totalMarcados === 0) {
             if (confirm('Nenhum técnico escalado. Deseja limpar todas as escalas?')) {
                 if (confirm('CONFIRME: Limpar TODAS as escalas do fim de semana?')) {
-                    $.post(window.location.href, {limpar: true}, function(resp) { alert('✅ Escalas limpas!'); location.reload(); }, 'json');
+                    $.ajax({
+                        url: window.location.href,
+                        method: 'POST',
+                        data: { limpar: true },
+                        dataType: 'json',
+                        success: function(resp) {
+                            if (resp && resp.success) {
+                                alert('✅ Escalas limpas!');
+                                location.reload();
+                            } else {
+                                alert('❌ Falha ao limpar escalas: ' + ((resp && resp.msg) ? resp.msg : 'resposta inválida do servidor'));
+                            }
+                        },
+                        error: function() {
+                            alert(montarMensagemErroAjax('limpar as escalas'));
+                        }
+                    });
                 }
             }
             return;
@@ -396,7 +451,9 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
                     if (resp.success) { alert(`✅ SALVO!\n${totalMarcados} escalas atualizadas com sucesso`); location.reload(); }
                     else { alert('❌ Erro: ' + (resp.msg || 'Erro desconhecido')); }
                 },
-                error: function() { alert('❌ Erro de conexão.'); }
+                error: function() {
+                    alert(montarMensagemErroAjax('salvar as escalas'));
+                }
             });
         }
     }
