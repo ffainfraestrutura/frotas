@@ -234,7 +234,7 @@ if (!empty($filtro_matricula)) {
 
     // Busca o saldo inicial do colaborador (primeiro registro da tbsaldo)
     $sql_saldo_inicial = "SELECT 
-                            s.saldo as saldo_inicial,
+                            s.valoraplicado as saldo_inicial,
                             s.data as data_saldo
                           FROM 
                             tbsaldo s
@@ -291,9 +291,9 @@ if ($saldo_inicial_data) {
 } else {
 
     $dados_tabela = match ($dados_colaborador['perfil']) {
-        2       => 'tbcoord',
-        3       => 'tbgerente',
-        10      => 'tbdiretor',
+        2 => 'tbcoord',
+        3 => 'tbgerente',
+        10 => 'tbdiretor',
         default => 'tbusuario'
     };
 
@@ -314,7 +314,7 @@ if ($saldo_inicial_data) {
 
 if (count($historico) > 0) {
     foreach ($historico as $h) {
-        if ($h['operacao'] == 'adicao') {
+        if ($h['operacao'] == 'adição') {
             $saldo_acumulado += floatval($h['valor']);
         } else {
             $saldo_acumulado -= floatval($h['valor']);
@@ -340,6 +340,10 @@ if (count($historico) > 0) {
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
 
     <style>
+        html {
+            zoom: 0.8;
+        }
+
         .badge-adicao {
             background-color: #d4edda;
             color: #155724;
@@ -744,16 +748,16 @@ if (count($historico) > 0) {
 
                                     <!-- Itens do histórico -->
                                     <?php foreach ($historico as $h):
-                                        if ($h['operacao'] == 'adicao') {
+                                        if ($h['operacao'] == 'adição') {
                                             $saldo_timeline += floatval($h['valor']);
                                         } else {
                                             $saldo_timeline -= floatval($h['valor']);
                                         }
 
-                                        $classe_operacao = $h['operacao'] == 'adicao' ? 'adicao' : 'retirada';
-                                        $icone = $h['operacao'] == 'adicao' ? 'fa-arrow-down' : 'fa-arrow-up';
-                                        $classe_valor = $h['operacao'] == 'adicao' ? 'valor-positivo' : 'valor-negativo';
-                                        $sinal = $h['operacao'] == 'adicao' ? '+' : '-';
+                                        $classe_operacao = $h['operacao'] == 'adição' ? 'adição' : 'retirada';
+                                        $icone = $h['operacao'] == 'adição' ? 'fa-arrow-down' : 'fa-arrow-up';
+                                        $classe_valor = $h['operacao'] == 'adição' ? 'valor-positivo' : 'valor-negativo';
+                                        $sinal = $h['operacao'] == 'adição' ? '+' : '-';
                                         ?>
                                         <div class="timeline-item <?= $classe_operacao ?>">
                                             <div class="row align-items-center">
@@ -762,7 +766,7 @@ if (count($historico) > 0) {
                                                 </div>
                                                 <div class="col-md-3">
                                                     <span
-                                                        class="badge <?= $h['operacao'] == 'adicao' ? 'badge-adicao' : 'badge-retirada' ?>">
+                                                        class="badge <?= $h['operacao'] == 'adição' ? 'badge-adicao' : 'badge-retirada' ?>">
                                                         <i class="fas <?= $icone ?>"></i>
                                                         <?= ucfirst($h['operacao']) ?>
                                                     </span>

@@ -58,6 +58,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 </style>
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top af-top-simple" aria-label="Menu superior AutoFrota">
+    <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <div class="container-fluid px-3">
         <a class="navbar-brand" href="<?= menuSuperiorLink('index.php', $baseAutofrotaUrl) ?>"
             target="_self">AutoFrota</a>
@@ -170,20 +171,6 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                 <?php endif; ?>
 
                 <?php if ($_SESSION['perfil'] == 4): ?>
-
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('index.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('index.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-house me-1"></i>Início
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('aprovar-pedidos-orcamento-frota.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('aprovar-pedidos-orcamento-frota.php', $baseAutofrotaUrl) ?>"
-                            target="_self">
-                            <i class="fas fa-clipboard-check me-1"></i>Aprovar Pedidos Frota
-                        </a>
-                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCondutores" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
@@ -261,14 +248,32 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
                             <li>
                                 <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('aprovar-pedidos-orcamento-frota.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Aprovar Pedidos Frota
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remanejamento
+                                    target="_self">Remanejar Saldo
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" a
+                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Remover Saldo
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Histórico de Combustível
+                                    target="_self">Histórico Financeiro por Colaborador
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('combustivel/dashboard_financeiro.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Dashboard Financeiro
                                 </a>
                             </li>
                         </ul>
@@ -345,13 +350,28 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             </li>
                             <li>
                                 <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/dashboard_financeiro.php', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('combustivel/dashboard_financeiro.php?matricula=' . $_SESSION['matricula'], $baseAutofrotaUrl) ?>"
                                     target="_self">Dashboard Financeiro
                                 </a>
                             </li>
                         </ul>
                     </li>
                 <?php endif; ?>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa-solid fa-map"></i> Deslocamento
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                        <li>
+                            <a class="dropdown-item"
+                                href="<?= menuSuperiorLink('deslocamento/relatorio_deslocamento.php', $baseAutofrotaUrl) ?>"
+                                target="_self">Relatório de Deslocamento
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
                 <?php if ((int) ($_SESSION['perfil'] ?? 0) !== 0): ?>
                     <li class="nav-item">
@@ -362,6 +382,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                 <?php endif; ?>
             </ul>
+
 
 
 
@@ -392,6 +413,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
     </div>
 </nav>
 
+<script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js"></script>
 <script>
     (function () {
         var body = document.body;

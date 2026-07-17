@@ -225,6 +225,10 @@ switch ($_SESSION['perfil']) {
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link href="src/css/styles.css" rel="stylesheet" />
     <style>
+        html {
+            zoom: 0.8;
+        }
+
         .saldo-display {
             font-size: 1.1em;
             font-weight: bold;

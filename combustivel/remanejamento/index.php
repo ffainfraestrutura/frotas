@@ -185,6 +185,10 @@ if ($_SESSION['perfil'] == 4) {
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <link href="src/css/styles.css" rel="stylesheet" />
     <style>
+        html {
+            zoom: 0.8;
+        }
+
         .saldo-info {
             font-size: 1.1em;
             font-weight: bold;
