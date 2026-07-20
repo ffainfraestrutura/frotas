@@ -98,7 +98,7 @@ $horarioEncerramentoTexto = sprintf('%02d:00', $horarioEncerramento);
   <div id="layoutSidenav_content">
     <main style="width: 100%;" class="mb-2">
       <div class="container-fluid" style="width: 100%;">
-        <h1 class="h1 pt-2 pb-2"> Gerenciar Escala Fim de Semana </h1>
+        <!-- <h1 class="h1 pt-2 pb-2"> Gerenciar Escala Fim de Semana </h1> -->
 
         <div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
           <div class="card mb-4 shadow" style="width: 600px;">
@@ -122,10 +122,15 @@ $horarioEncerramentoTexto = sprintf('%02d:00', $horarioEncerramento);
                 <p class="mb-0 small">As edições da semana são encerradas na <strong><?= escEscalaLegado($diaEncerramentoTexto) ?></strong>, às <strong><?= escEscalaLegado($horarioEncerramentoTexto) ?></strong>.</p>
               </div>
 
-              <div class="d-grid">
+              <div class="d-grid gap-2">
                 <button type="button" class="btn btn-primary btn-lg" onclick="abrirEscala()" id="btnAbrir">
                   <i class="fas fa-calendar-check me-2"></i> Abrir Gerenciamento de Escala
                 </button>
+                <?php if ($perfil === '4'): ?>
+                <button type="button" class="btn btn-outline-dark btn-lg" onclick="abrirConfiguracaoEscala()">
+                  <i class="fas fa-gear me-2"></i> Configurar Encerramento
+                </button>
+                <?php endif; ?>
               </div>
 
               <div class="alert alert-danger mt-4" id="avisoEncerrado" style="display: none;">
@@ -204,6 +209,13 @@ $horarioEncerramentoTexto = sprintf('%02d:00', $horarioEncerramento);
       modal.show();
     }
 
+    function abrirConfiguracaoEscala() {
+      document.getElementById('iframeEscala').src = '../configuracao_escala_tecnicos.php';
+      document.getElementById('importModalLabel').textContent = 'Configurar Encerramento da Escala';
+      const modal = new bootstrap.Modal(document.getElementById('importModal'));
+      modal.show();
+    }
+
     document.getElementById('importModal').addEventListener('hidden.bs.modal', function () {
       document.getElementById('iframeEscala').src = '';
     });
@@ -212,6 +224,12 @@ $horarioEncerramentoTexto = sprintf('%02d:00', $horarioEncerramento);
       if (event.data === 'fecharModal') {
         const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
         if (modal) { modal.hide(); }
+      }
+
+      if (event.data === 'recarregarPagina') {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+        if (modal) { modal.hide(); }
+        window.location.reload();
       }
     });
 
