@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/autofrota_common.php';
 
+header('Location: index.php');
+exit;
+
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
