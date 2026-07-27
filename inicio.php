@@ -22,7 +22,7 @@ if ($perfilLogado === '3') {
     exit;
 }
 if ($perfilLogado === '4') {
-    header('Location: aprovar-pedidos-orcamento-frota.php');
+    header('Location: combustivel/dashboard_financeiro.php');
     exit;
 }
 if ($perfilLogado === '10') {
