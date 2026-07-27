@@ -76,7 +76,8 @@ renderCabecalhoAutofrota('Aprovar Pedidos de Orçamento');
     <section class="card shadow-sm border-0 mb-4">
         <div class="card-body d-flex flex-column flex-lg-row justify-content-between gap-3">
             <div>
-                <h1 class="h3 mb-1">Aprovar pedidos de orçamento de gerentes e diretores</h1>
+                <h1 class="h3 mb-1">Aprovar solicitação de orçamento de  diretor</h1>
+                <!-- Atualizar pra exibir apenas de diretor -->
                 <p class="text-muted mb-0">Frota: <strong><?= esc($nomeExibicao . '(' . $matriculaLogada . ')') ?></strong></p>
             </div>
             <div class="border rounded-3 px-3 py-2 bg-light align-self-start">
