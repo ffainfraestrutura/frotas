@@ -331,7 +331,7 @@ if (count($historico) > 0) {
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>Histórico de Combustível - Portal FFA</title>
+    <title>Histórico Financeiro por Colaborador</title>
     <link rel="icon" type="image/png" href="../src/images/favicon.png" />
     <link href="../src/css/styles.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -567,7 +567,7 @@ if (count($historico) > 0) {
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
                     <div>
                         <h1 class="mt-4 mb-1">
-                            <i class="fas fa-history me-2"></i>Histórico de Combustível
+                            <i class="fas fa-history me-2"></i>Histórico Financeiro por Colaborador
                         </h1>
                         <ol class="breadcrumb mb-4">
                             <li class="breadcrumb-item active">Acompanhe todas as transferências de saldo</li>
