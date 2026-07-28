@@ -331,7 +331,7 @@ if (count($historico) > 0) {
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>Histórico Financeiro por Colaborador</title>
+    <title>Histórico Financeiro por Colaborador - Portal FFA</title>
     <link rel="icon" type="image/png" href="../src/images/favicon.png" />
     <link href="../src/css/styles.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -603,16 +603,15 @@ if (count($historico) > 0) {
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Selecione um Colaborador</label>
-                                        <select name="matricula" class="form-select" onchange="this.form.submit()">
-                                            <option value="">-- Selecione um colaborador --</option>
+                                        <input type="search" id="busca-colaborador" class="form-control"
+                                            list="lista-colaboradores" placeholder="Digite o nome ou a matrícula" autocomplete="off">
+                                        <input type="hidden" name="matricula" id="matricula-colaborador">
+                                        <datalist id="lista-colaboradores">
                                             <?php foreach ($colaboradores as $colab): ?>
-                                                <option value="<?= $colab['matricula'] ?>"
-                                                    <?= ($filtro_matricula == $colab['matricula']) ? 'selected' : '' ?>>
-                                                    <?= htmlspecialchars($colab['nome'] ?? $colab['matricula']) ?>
-                                                    (<?= $colab['matricula'] ?>)
-                                                </option>
+                                                <option data-matricula="<?= htmlspecialchars($colab['matricula']) ?>"
+                                                    value="<?= htmlspecialchars($colab['nome'] ?? $colab['matricula']) ?> (<?= htmlspecialchars($colab['matricula']) ?>)">
                                             <?php endforeach; ?>
-                                        </select>
+                                        </datalist>
                                     </div>
                                 </div>
                             </form>
@@ -879,6 +878,13 @@ if (count($historico) > 0) {
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js"></script>
 
     <script>
+        $('#busca-colaborador').on('input', function () {
+            const opcao = $('#lista-colaboradores option').filter((_, item) => item.value === this.value).first();
+            if (opcao.length) {
+                $('#matricula-colaborador').val(opcao.attr('data-matricula'));
+                this.form.submit();
+            }
+        });
         $(document).ready(function () {
             // Scroll para o timeline quando carregar
             if (window.location.hash) {
