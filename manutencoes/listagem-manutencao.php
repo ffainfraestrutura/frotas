@@ -21,12 +21,26 @@ $dataInicialPadrao = date('Y-m-d', strtotime('-6 days'));
 $matriculasSemPermissaoEdicao = 
 ['160030', '410109', '501285', '410039', '411425', '003931'];
 $tipoSelecionado = $_GET['tipo'] ?? $_GET['tipo_manutencao'] ?? $_POST['tipo'] ?? $_POST['tipo_manutencao'] ?? '';
+$statusSelecionado = $_GET['status'] ?? $_POST['status'] ?? '';
+$unidadeSelecionada = $_GET['unidade'] ?? $_POST['unidade'] ?? '';
 $tiposManutencao = [
     '' => 'Todas',
     'MP' => 'Preventiva',
     'MC' => 'Corretiva',
     'OS' => 'Ordem de Serviço',
     'SS' => 'Sinistro',
+];
+$statusManutencao = [
+    '' => 'Todos',
+    'ABERTO' => 'Aberto',
+    'CONCLUIDO' => 'Concluído',
+];
+$unidades = [
+    '' => 'Todas',
+    'RJ' => 'RJ',
+    'PR' => 'PR',
+    'SP' => 'SP',
+    'MG' => 'MG',
 ];
 $manutencoes = [];
 $erroConsulta = '';
@@ -44,10 +58,20 @@ if (!isset($tiposManutencao[$tipoSelecionado])) {
     $tipoSelecionado = '';
 }
 
+if (!isset($statusManutencao[$statusSelecionado])) {
+    $statusSelecionado = '';
+}
+
+if (!isset($unidades[$unidadeSelecionada])) {
+    $unidadeSelecionada = '';
+}
+
 $filtrosUrl = [
     'datai' => $dataInicial,
     'dataf' => $dataFinal,
     'tipo' => $tipoSelecionado,
+    'status' => $statusSelecionado,
+    'unidade' => $unidadeSelecionada,
 ];
 
 if (
@@ -57,6 +81,8 @@ if (
         || !array_key_exists('datai', $_GET)
         || !array_key_exists('dataf', $_GET)
         || !array_key_exists('tipo', $_GET)
+        || !array_key_exists('status', $_GET)
+        || !array_key_exists('unidade', $_GET)
     )
 ) {
     header('Location: listagem-manutencao.php?' . http_build_query($filtrosUrl));
@@ -158,10 +184,13 @@ function montarLinhaManutencao(array $manutencao, bool $podeEditar): array
         'unidade' => esc($manutencao['unidade'] ?? ''),
         'data_agendamento' => esc(formatarDataManutencao($manutencao['dataagendamento'] ?? '')),
         'data_cadastro' => esc(formatarDataManutencao($manutencao['data'] ?? '')),
+        'prev_saida' => esc(formatarDataManutencao($manutencao['prevsaida'] ?? '')),
+        'data_conclusao' => esc(formatarDataManutencao($manutencao['dataconclusao'] ?? '')),
         'tipo' => esc(descreverTipoManutencao($manutencao['tipo'] ?? '')),
         'status' => esc(descreverStatusManutencao($manutencao['status'] ?? '')),
         'oficina' => esc($manutencao['oficina'] ?? ''),
         'observacao' => esc($manutencao['observacao'] ?? ''),
+        'hodometro' => esc($manutencao['hodometro'] ?? ''),
         'editar' => $editar,
         'ordem_servico' => $ordemServico,
     ];
@@ -190,6 +219,24 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
         $parametros[] = $tipoSelecionado;
     }
 
+    if ($statusSelecionado === 'ABERTO') {
+        $where[] = '(man.status = ? OR man.status = ?)';
+        $tiposBind .= 'ss';
+        $parametros[] = 'ABERTO';
+        $parametros[] = '1';
+    } elseif ($statusSelecionado === 'CONCLUIDO') {
+        $where[] = '(man.status = ? OR man.status = ?)';
+        $tiposBind .= 'ss';
+        $parametros[] = 'CONCLUIDO';
+        $parametros[] = '2';
+    }
+
+    if ($unidadeSelecionada !== '') {
+        $where[] = 'vei.unidade = ?';
+        $tiposBind .= 's';
+        $parametros[] = $unidadeSelecionada;
+    }
+
     $sqlManutencoes = "
         SELECT
             man.idtbmanprev,
@@ -198,9 +245,12 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
             man.tipo,
             man.dataentrada,
             man.dataagendamento,
+            man.prevsaida,
+            man.dataconclusao,
             man.status,
             man.oficina,
             man.observacao,
+            man.hodometro,
             vei.unidade
         FROM `{$databaseName}`.`tbmanprev` man
         LEFT JOIN `{$databaseName}`.`tbveiculo` vei
@@ -280,15 +330,31 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
             <section class="filter-area">
                 <form action="listagem-manutencao.php" method="get">
                     <div class="row g-2 align-items-end">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label" for="datai">Data inicial:<span style="color: red;">*</span></label>
                             <input class="form-control" type="date" id="datai" name="datai" value="<?= esc($dataInicial) ?>" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label" for="dataf">Data final:<span style="color: red;">*</span></label>
                             <input class="form-control" type="date" id="dataf" name="dataf" value="<?= esc($dataFinal) ?>" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label" for="status">Status:</label>
+                            <select class="form-select" name="status" id="status">
+                                <?php foreach ($statusManutencao as $valor => $rotulo): ?>
+                                    <option value="<?= esc($valor) ?>" <?= $statusSelecionado === $valor ? 'selected' : '' ?>><?= esc($rotulo) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" for="unidade">Unidade:</label>
+                            <select class="form-select" name="unidade" id="unidade">
+                                <?php foreach ($unidades as $valor => $rotulo): ?>
+                                    <option value="<?= esc($valor) ?>" <?= $unidadeSelecionada === $valor ? 'selected' : '' ?>><?= esc($rotulo) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label" for="tipo">Tipo de Manutenção:</label>
                             <select class="form-select" name="tipo" id="tipo">
                                 <?php foreach ($tiposManutencao as $valor => $rotulo): ?>
@@ -317,6 +383,8 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                         <input type="hidden" name="datain" value="<?= esc($dataInicial) ?>">
                         <input type="hidden" name="datafi" value="<?= esc($dataFinal) ?>">
                         <input type="hidden" name="tipofim" value="<?= esc($tipoSelecionado) ?>">
+                        <input type="hidden" name="statusfim" value="<?= esc($statusSelecionado) ?>">
+                        <input type="hidden" name="unidade" value="<?= esc($unidadeSelecionada) ?>">
                         <button type="submit" class="btn btn-excel-green">Exportar Registros em Excel</button>
                     </form>
                 </div>
@@ -330,10 +398,13 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                             <th>Unidade</th>
                             <th>Data de Agendamento</th>
                             <th>Data de Cadastro</th>
+                            <th>Prev de Saída</th>
+                            <th>Data de Conclusão</th>
                             <th>Tipo</th>
                             <th>Status</th>
                             <th>Oficina</th>
                             <th>Observação</th>
+                            <th>Hodometro Cadastrado</th>
                             <th>Editar manutenção</th>
                             <th>Ordem de Serviço</th>
                         </tr>
@@ -345,10 +416,13 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                                 <td><?= $manutencao['unidade'] ?></td>
                                 <td><?= $manutencao['data_agendamento'] ?></td>
                                 <td><?= $manutencao['data_cadastro'] ?></td>
+                                <td><?= $manutencao['prev_saida'] ?></td>
+                                <td><?= $manutencao['data_conclusao'] ?></td>
                                 <td><?= $manutencao['tipo'] ?></td>
                                 <td><?= $manutencao['status'] ?></td>
                                 <td><?= $manutencao['oficina'] ?></td>
                                 <td><?= $manutencao['observacao'] ?></td>
+                                <td><?= $manutencao['hodometro'] ?></td>
                                 <td class="text-center"><?= $manutencao['editar'] ?></td>
                                 <td class="text-center"><?= $manutencao['ordem_servico'] ?></td>
                             </tr>

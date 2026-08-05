@@ -14,6 +14,8 @@ $hoje = date('Y-m-d');
 $dataInicial = trim((string) ($_POST['datain'] ?? ''));
 $dataFinal = trim((string) ($_POST['datafi'] ?? ''));
 $tipoSelecionado = trim((string) ($_POST['tipofim'] ?? ''));
+$statusSelecionado = trim((string) ($_POST['statusfim'] ?? ''));
+$unidadeSelecionada = trim((string) ($_POST['unidade'] ?? ''));
 
 function excelEsc(?string $valor): string
 {
@@ -94,6 +96,24 @@ if ($tipoSelecionado !== '') {
     $where[] = 'man.tipo = ?';
     $tiposBind .= 's';
     $parametros[] = $tipoSelecionado;
+}
+
+if ($statusSelecionado === 'ABERTO') {
+    $where[] = '(man.status = ? OR man.status = ?)';
+    $tiposBind .= 'ss';
+    $parametros[] = 'ABERTO';
+    $parametros[] = '1';
+} elseif ($statusSelecionado === 'CONCLUIDO') {
+    $where[] = '(man.status = ? OR man.status = ?)';
+    $tiposBind .= 'ss';
+    $parametros[] = 'CONCLUIDO';
+    $parametros[] = '2';
+}
+
+if ($unidadeSelecionada !== '') {
+    $where[] = 'vei.unidade = ?';
+    $tiposBind .= 's';
+    $parametros[] = $unidadeSelecionada;
 }
 
 $sql = "
