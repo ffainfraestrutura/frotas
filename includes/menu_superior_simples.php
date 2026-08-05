@@ -237,8 +237,13 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Adicionar
                                     manutenção</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('manutencoes/farol-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                                    target="_self" onclick="window.location.href=this.href; return false;">Farol manutenção
+                                    preventiva</a></li>
                         </ul>
                     </li>
+                    
 
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
@@ -377,8 +382,34 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     <li class="nav-item">
                         <a class="nav-link<?= menuSuperiorAtivo('gerenciar-equipe.php', $paginaAtual, $baseAutofrotaUrl) ?>"
                             href="<?= menuSuperiorLink('gerenciar-equipe.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-users-gear me-1"></i>Gerenciar equipe
+                            <i class="fas fa-users-gear me-1"></i>Equipe
                         </a>
+                    </li>
+                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle<?= menuSuperiorAtivo('gestao/gerenciarescalatecnicos.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="#" id="afMenuEscala" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-calendar-check me-1"></i>Escala
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuEscala">
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('gestao/gerenciarescalatecnicos.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">
+                                    Gerenciar escala de técnicos
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuGestao" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-briefcase me-1"></i>Gestão
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuGestao">
+                            <li>
+                                <a class="dropdown-item" href="#" target="_self">Cota Fixa</a>
+                            </li>
+                        </ul>
                     </li>
                 <?php endif; ?>
             </ul>
