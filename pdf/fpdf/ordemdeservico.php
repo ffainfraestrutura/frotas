@@ -83,9 +83,27 @@ function campo(array $row, string $name): string
 	return (string) ($row[$name] ?? '');
 }
 
+function codificarUtf8(string $value): string
+{
+	if (function_exists('mb_convert_encoding')) {
+		return mb_convert_encoding($value, 'UTF-8', 'ISO-8859-1');
+	}
+
+	return iconv('ISO-8859-1', 'UTF-8//TRANSLIT', $value) ?: $value;
+}
+
+function decodificarUtf8(string $value): string
+{
+	if (function_exists('mb_convert_encoding')) {
+		return mb_convert_encoding($value, 'ISO-8859-1', 'UTF-8');
+	}
+
+	return iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $value) ?: $value;
+}
+
 function textoPdf(?string $value): string
 {
-	return utf8_encode((string) $value);
+	return codificarUtf8((string) $value);
 }
 
 function formatarDataPdf(?string $value): string
@@ -299,7 +317,7 @@ function Header()
 	// Move to the right
 	$this->Cell(20);
 	// Title
-	$this->Cell(155,10,utf8_decode('ORDEM DE SERVIÇO'),1,1,'C','true');
+	$this->Cell(155,10,decodificarUtf8('ORDEM DE SERVIÇO'),1,1,'C','true');
 	// Line break
 	//$this->Ln(1);
 }
@@ -313,296 +331,296 @@ $pdf->AddPage();
 
 $pdf->SetFont('Times','B',11.5);
 $pdf->Cell(20);
-$pdf->MultiCell(155,5,utf8_decode("DADOS SOLICITAÇÃO"),1,'C');
+$pdf->MultiCell(155,5,decodificarUtf8("DADOS SOLICITAÇÃO"),1,'C');
 
 $pdf->SetFont('Times','',11.5);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("NÚMERO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("NÚMERO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$id"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$id"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("PROTOCOLO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("PROTOCOLO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$protocolo"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$protocolo"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("DATA ABERTURA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("DATA ABERTURA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode(trim("$dataf $horaf")),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8(trim("$dataf $horaf")),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("ABERTO POR"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("ABERTO POR"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$solicitante"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$solicitante"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("UNIDADE"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("UNIDADE"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$filial"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$filial"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("CENTRO CUSTO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("CENTRO CUSTO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$ccusto"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$ccusto"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("KM ABERTURA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("KM ABERTURA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$hodometro"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$hodometro"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("STATUS"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("STATUS"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$status"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$status"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("ETAPA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("ETAPA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$etapa"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$etapa"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("FORNECEDOR"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("FORNECEDOR"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$fornman"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$fornman"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,10,utf8_decode("DESCRIÇÃO INICIAL"),1,1);
+$pdf->MultiCell(40,10,decodificarUtf8("DESCRIÇÃO INICIAL"),1,1);
 
 $pdf->Ln(-20);
 $pdf->Cell(60);
-$pdf->MultiCell(115,20,utf8_decode("$descricao"),1,1);
+$pdf->MultiCell(115,20,decodificarUtf8("$descricao"),1,1);
 
 $pdf->Ln(5);
 $pdf->SetFont('Times','B',11.5);
 $pdf->Cell(20);
-$pdf->MultiCell(155,5,utf8_decode("DADOS VEÍCULO"),1,'C');
+$pdf->MultiCell(155,5,decodificarUtf8("DADOS VEÍCULO"),1,'C');
 
 $pdf->SetFont('Times','',11.5);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("PLACA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("PLACA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$placa"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$placa"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("MODELO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("MODELO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$modelo"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$modelo"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("PROPRIEDADE"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("PROPRIEDADE"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$propriedade"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$propriedade"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("LOCADORA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("LOCADORA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$fantasia"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$fantasia"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("STATUS"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("STATUS"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$statusf"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$statusf"),1,1);
 
 $pdf->Ln(5);
 $pdf->SetFont('Times','B',11.5);
 $pdf->Cell(20);
-$pdf->MultiCell(155,5,utf8_decode("DADOS CONDUTOR"),1,'C');
+$pdf->MultiCell(155,5,decodificarUtf8("DADOS CONDUTOR"),1,'C');
 
 $pdf->SetFont('Times','',11.5);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("CONDUTOR"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("CONDUTOR"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$nome"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$nome"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("MATRÍCULA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("MATRÍCULA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$condutor"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$condutor"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("CARGO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("CARGO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$cargo"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$cargo"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("TELEFONE"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("TELEFONE"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$telefone"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$telefone"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("TIPO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("TIPO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$tipocolab"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$tipocolab"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("STATUS"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("STATUS"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$statusaniel"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$statusaniel"),1,1);
 
 $pdf->Ln(5);
 $pdf->SetFont('Times','B',11.5);
 $pdf->Cell(20);
-$pdf->MultiCell(155,5,utf8_decode("DADOS PEDIDO"),1,'C');
+$pdf->MultiCell(155,5,decodificarUtf8("DADOS PEDIDO"),1,'C');
 
 $pdf->SetFont('Times','',11.5);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("Nº ATENDIMENTO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("Nº ATENDIMENTO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$numatend"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$numatend"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("Nº COTAÇÃO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("Nº COTAÇÃO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$numcotacao"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$numcotacao"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("Nº PEDIDO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("Nº PEDIDO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$numpedido"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$numpedido"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("Nº PED SERVIÇO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("Nº PED SERVIÇO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$numservico"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$numservico"),1,1);
 
 $pdf->Ln(5);
 $pdf->SetFont('Times','B',11.5);
 $pdf->Cell(20);
-$pdf->MultiCell(155,5,utf8_decode("VALORES"),1,'C');
+$pdf->MultiCell(155,5,decodificarUtf8("VALORES"),1,'C');
 
 $pdf->SetFont('Times','',11.5);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("FORNECEDOR"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("FORNECEDOR"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$fornman"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$fornman"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("OFICINA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("OFICINA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$oficina"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$oficina"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("AGENDAMENTO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("AGENDAMENTO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$dataagf"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$dataagf"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("TIPO ORÇAMENTO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("TIPO ORÇAMENTO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$tipopagamento"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$tipopagamento"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VALOR TOTAL"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VALOR TOTAL"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$valoroficina"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$valoroficina"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VAL M.DE OBRA"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VAL M.DE OBRA"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$valormaoobra"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$valormaoobra"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VALOR MATERIAL"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VALOR MATERIAL"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$valormaterial"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$valormaterial"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VAL TRANSPORTE"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VAL TRANSPORTE"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$valortransp"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$valortransp"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VALOR OUTROS"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VALOR OUTROS"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$outrosvalor"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$outrosvalor"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VAL DESCONTO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VAL DESCONTO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$valordesconto"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$valordesconto"),1,1);
 
 $pdf->Cell(20);
-$pdf->MultiCell(40,5,utf8_decode("VAL REEMBOLSO"),1,1);
+$pdf->MultiCell(40,5,decodificarUtf8("VAL REEMBOLSO"),1,1);
 
 $pdf->Ln(-5);
 $pdf->Cell(60);
-$pdf->MultiCell(115,5,utf8_decode("$valorreembolso"),1,1);
+$pdf->MultiCell(115,5,decodificarUtf8("$valorreembolso"),1,1);
 
 $pdf->Output();
 
