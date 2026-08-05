@@ -192,6 +192,30 @@ if (!($conn instanceof mysqli) || $databaseName === '' || $databaseCorp === '') 
                 <?php if ($erroConsulta !== ''): ?>
                     <div class="alert alert-warning" role="alert"><?= esc($erroConsulta) ?></div>
                 <?php endif; ?>
+                <div class="card mb-3">
+                    <div class="card-body py-2">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label mb-1" for="filtroUf">UF</label>
+                                <select class="form-select form-select-sm filtro-farol" id="filtroUf" data-column="13">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label mb-1" for="filtroStatusFarol">Status</label>
+                                <select class="form-select form-select-sm filtro-farol" id="filtroStatusFarol" data-column="9">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label mb-1" for="filtroStatusVeiculo">Status do veículo</label>
+                                <select class="form-select form-select-sm filtro-farol" id="filtroStatusVeiculo" data-column="15">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <section style="width: 100%; overflow-x: auto;">
                     <table id="tabelaFarol" class="table table-striped" style="width: 100%;">
                         <thead><tr><th>Placa</th><th>Condutor</th><th>Centro de Custo</th><th>Última Manutenção</th><th>Hodômetro Atual</th><th>Últ. Man. Hodômetro</th><th>Diferença</th><th>Locadora</th><th>Dev. para locadora</th><th>Status</th><th>Cadastrar manutenção</th><th>Data últ. agend. em aberto</th><th>Obs. últ. manutenção</th><th>UF</th><th>Base de gestão</th><th>Status do veículo</th></tr></thead>
@@ -211,7 +235,48 @@ if (!($conn instanceof mysqli) || $databaseName === '' || $databaseCorp === '') 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.getElementById('sidebarToggle')?.addEventListener('click', function(event) { event.preventDefault(); document.body.classList.toggle('sb-sidenav-toggled'); });
-$(document).ready(function() { $('#tabelaFarol').DataTable({ language: { decimal: '', emptyTable: 'Não há dados disponíveis na tabela', info: 'Mostrando _START_ a _END_ de _TOTAL_ entradas', infoEmpty: 'Mostrando 0 a 0 de 0 entradas', infoFiltered: '(filtrado de _MAX_ entradas totais)', thousands: '.', lengthMenu: 'Mostrar _MENU_ entradas', loadingRecords: 'Carregando...', processing: '', search: 'Buscar:', zeroRecords: 'Nenhum registro correspondente encontrado', paginate: { first: 'Primeiro', last: 'Último', next: 'Próximo', previous: 'Anterior' } } }); });
+$(document).ready(function() {
+    var tabelaFarol = $('#tabelaFarol').DataTable({
+        language: {
+            decimal: '',
+            emptyTable: 'Não há dados disponíveis na tabela',
+            info: 'Mostrando _START_ a _END_ de _TOTAL_ entradas',
+            infoEmpty: 'Mostrando 0 a 0 de 0 entradas',
+            infoFiltered: '(filtrado de _MAX_ entradas totais)',
+            thousands: '.',
+            lengthMenu: 'Mostrar _MENU_ entradas',
+            loadingRecords: 'Carregando...',
+            processing: '',
+            search: 'Buscar:',
+            zeroRecords: 'Nenhum registro correspondente encontrado',
+            paginate: { first: 'Primeiro', last: 'Último', next: 'Próximo', previous: 'Anterior' }
+        }
+    });
+
+    function popularFiltro($select) {
+        var coluna = tabelaFarol.column(Number($select.data('column')));
+        var valores = [];
+        coluna.data().each(function(valor) {
+            var texto = $('<div>').html(valor).text().trim();
+            if (texto !== '' && valores.indexOf(texto) === -1) {
+                valores.push(texto);
+            }
+        });
+        valores.sort(function(a, b) { return a.localeCompare(b, 'pt-BR'); });
+        valores.forEach(function(valor) {
+            $select.append($('<option>', { value: valor, text: valor }));
+        });
+    }
+
+    $('.filtro-farol').each(function() {
+        var $select = $(this);
+        popularFiltro($select);
+        $select.on('change', function() {
+            var valor = $.fn.dataTable.util.escapeRegex($(this).val());
+            tabelaFarol.column(Number($(this).data('column'))).search(valor ? '^' + valor + '$' : '', true, false).draw();
+        });
+    });
+});
 </script>
 </body>
 </html>
