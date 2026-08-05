@@ -2,7 +2,7 @@
 // Farol Manutenção Preventiva migrado do legado 3/frotas/gestao/farolmanutencaopreventiva.php.
 // Funcionamento original: lista veículos ativos, compara o hodômetro atual do veículo com a última MP
 // registrada em tbmanprev e classifica o farol em verde/amarelo/vermelho/cinza.
-// Tabelas utilizadas: tbveiculo, tbmanprev, tbfornecedor, tbastatusvel (schema AutoFrota) e tbfuncionario (schema corporativo).
+// Tabelas utilizadas: tbveiculo, tbmanprev, tbfornecedor, tbvelstatus (schema AutoFrota) e tbfuncionario (schema corporativo).
 require_once __DIR__ . '/../includes/autofrota_common.php';
 
 $autofrotaSessao = autofrotaInit();
@@ -90,7 +90,7 @@ if (!($conn instanceof mysqli) || $databaseName === '' || $databaseCorp === '') 
             ON func.matricula = vei.matcond
         LEFT JOIN `{$databaseName}`.`tbfornecedor` forn
             ON forn.idtbfornecedor = vei.idlocador
-        LEFT JOIN `{$databaseName}`.`tbastatusvel` stat
+        LEFT JOIN `{$databaseName}`.`tbvelstatus` stat
             ON stat.idtbastatusvel = vei.statusvel
         LEFT JOIN `{$databaseName}`.`tbmanprev` man
             ON man.idtbmanprev = (
