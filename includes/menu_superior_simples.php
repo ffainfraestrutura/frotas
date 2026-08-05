@@ -237,8 +237,13 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Adicionar
                                     manutenção</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('manutencoes/farol-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                                    target="_self" onclick="window.location.href=this.href; return false;">Farol manutenção
+                                    preventiva</a></li>
                         </ul>
                     </li>
+                    
 
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
