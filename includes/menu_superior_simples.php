@@ -407,7 +407,10 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuGestao">
                             <li>
-                                <a class="dropdown-item" href="#" target="_self">Cota Fixa</a>
+                                <a class="dropdown-item" href="<?= menuSuperiorLink('cotafixa.php', $baseAutofrotaUrl) ?>" target="_self">Cota Fixa</a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>" target="_self">Relatório de Saldo</a>
                             </li>
                         </ul>
                     </li>

@@ -18,7 +18,7 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? '');
 $matriculaLogada = (string) (($autofrotaSessao['matricula'] ?? '') !== '' ? $autofrotaSessao['matricula'] : ($_SESSION['usuario'] ?? ''));
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? '');
-$matriculasSemPermissaoEdicao = ['160030', '410109', '501285', '410039', '411425', '003931'];
+$matriculasSemPermissaoEdicao = [];
 $podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $matriculasSemPermissaoEdicao, true);
 $linhasFarol = [];
 $erroConsulta = '';
