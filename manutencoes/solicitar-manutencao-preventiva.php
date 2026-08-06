@@ -12,6 +12,34 @@ $usuarioLogado = $_SESSION['usuario'] ?? $_SESSION['nome'] ?? 'Usuário';
 $placaInicial = strtoupper(trim((string) ($_GET['placa'] ?? $_POST['placa'] ?? '')));
 $placaInicial = str_replace(['-', ' '], '', $placaInicial);
 
+$placas = [];
+$erroCarregamentoPlacas = '';
+
+if ($conn instanceof mysqli) {
+    mysqli_set_charset($conn, 'utf8mb4');
+    $sqlPlacas = "SELECT DISTINCT placa
+                    FROM `{$databaseName}`.`tbveiculo`
+                   WHERE placa IS NOT NULL
+                     AND TRIM(placa) <> ''
+                   ORDER BY placa";
+    $resultadoPlacas = mysqli_query($conn, $sqlPlacas);
+
+    if ($resultadoPlacas) {
+        while ($veiculo = mysqli_fetch_assoc($resultadoPlacas)) {
+            $placa = strtoupper(trim((string) ($veiculo['placa'] ?? '')));
+            if ($placa !== '') {
+                $placas[] = $placa;
+            }
+        }
+        mysqli_free_result($resultadoPlacas);
+    } else {
+        error_log('Erro ao carregar placas para manutenção preventiva: ' . mysqli_error($conn));
+        $erroCarregamentoPlacas = 'Não foi possível carregar as placas cadastradas. Tente novamente mais tarde.';
+    }
+} else {
+    $erroCarregamentoPlacas = 'Não foi possível carregar as placas cadastradas. Tente novamente mais tarde.';
+}
+
 $_SESSION['perfil'] = $perfilLogado;
 $_SESSION['matricula'] = $matriculaLogada;
 
@@ -29,6 +57,8 @@ function esc(?string $valor): string
     <meta name="author" content="FFA" />
     <title>AutoFrota - Cadastro de Manutenção</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <link rel="stylesheet" href="src/autofrota-botoes.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
@@ -42,7 +72,9 @@ function esc(?string $valor): string
         .page-title { font-size: 24px; font-weight: 600; margin: 0 0 18px; }
         .card-form { max-width: 760px; margin: 0; }
         .form-label { margin-bottom: 6px; }
-        .form-control { font-size: 12px; border-radius: 2px; text-transform: uppercase; }
+        .form-control, .form-select { font-size: 12px; border-radius: 2px; text-transform: uppercase; }
+        .select2-container--bootstrap-5 { font-size: 12px; }
+        .select2-container--bootstrap-5 .select2-selection { border-radius: 2px; }
         .btn { font-size: 12px; border-radius: 3px; padding: 6px 10px; }
         .required-note { color: red; }
         @media (max-width: 576px) {
@@ -65,16 +97,27 @@ function esc(?string $valor): string
                     <input type="hidden" name="matr_autor" value="<?= esc($matriculaLogada) ?>">
 
                     <div class="mt-2 col-sm-8 ps-0">
-                        <label class="form-label" for="placa">Informe a placa:<span class="required-note">*</span></label>
-                        <input class="form-control" type="text" name="placa" id="placa" placeholder="Placa" maxlength="8" value="<?= esc($placaInicial) ?>" required>
+                        <label class="form-label" for="placa">Selecione a placa:<span class="required-note">*</span></label>
+                        <select class="form-select" name="placa" id="placa" aria-describedby="placa-ajuda" required <?= $erroCarregamentoPlacas !== '' ? 'disabled' : '' ?>>
+                            <option value="">Digite para buscar uma placa</option>
+                            <?php foreach ($placas as $placa): ?>
+                                <?php $placaNormalizada = str_replace(['-', ' '], '', $placa); ?>
+                                <option value="<?= esc($placa) ?>" <?= $placaNormalizada === $placaInicial ? 'selected' : '' ?>><?= esc($placa) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div id="placa-ajuda" class="form-text">Digite parte da placa e escolha uma das opções cadastradas.</div>
                     </div>
+
+                    <?php if ($erroCarregamentoPlacas !== ''): ?>
+                        <div class="alert alert-danger mt-3 col-sm-8" role="alert"><?= esc($erroCarregamentoPlacas) ?></div>
+                    <?php endif; ?>
 
                     <div class="mt-2 pt-2 col-sm-8 ps-0 required-note">
                         <p>* Campos obrigatórios.</p>
                     </div>
 
                     <div class="mt-3 pb-2 d-flex col-sm-12 justify-content-start gap-4 ps-0">
-                        <button class="btn btn-success" type="submit">Confirmar</button>
+                        <button class="btn btn-success" type="submit" <?= $erroCarregamentoPlacas !== '' ? 'disabled' : '' ?>>Confirmar</button>
                         <button class="btn btn-secondary" type="button" onclick="history.back()">Voltar</button>
                         <button class="btn btn-danger" type="button" onclick="history.back()">Cancelar</button>
                     </div>
@@ -85,7 +128,8 @@ function esc(?string $valor): string
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('sidebarToggle')?.addEventListener('click', function(event) {
@@ -94,18 +138,12 @@ function esc(?string $valor): string
         });
 
         $(document).ready(function() {
-            $('#placa').mask('AAA0U00', {
-                translation: {
-                    'A': { pattern: /[A-Za-z]/ },
-                    'U': { pattern: /[A-Za-z0-9]/ }
-                },
-                onKeyPress: function(value, event, field, options) {
-                    event.currentTarget.value = value.toUpperCase();
-                    const valueWithoutMask = value.replace(/[^\w]/g, '');
-                    const fifthCharacterIsNumeric = !isNaN(parseFloat(valueWithoutMask[4])) && isFinite(valueWithoutMask[4]);
-                    const mask = valueWithoutMask.length > 4 && fifthCharacterIsNumeric ? 'AAA-0000' : 'AAA 0U00';
-                    $(field).mask(mask, options);
-                }
+            $('#placa:not(:disabled)').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Digite para buscar uma placa',
+                language: 'pt-BR',
+                allowClear: false
             });
         });
     </script>
