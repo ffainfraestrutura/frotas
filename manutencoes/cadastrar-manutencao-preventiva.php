@@ -172,7 +172,7 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-2">
             <label class="form-label">Hodômetro:<span style="color: red;">*</span></label>
-            <input class="form-control" name="hodometro" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
+            <input type="number" class="form-control" name="hodometro" min="0" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
         </div>
         <div class="col-md-3">
             <label class="form-label">Centro de custo: <span style="color: red;">*</span></label>
@@ -279,31 +279,31 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor reembolso</label>
-            <input class="form-control" name="valorreembolso" value="<?= esc($man['valorreembolso'] ?? '') ?>">
+            <input type="number" class="form-control" name="valorreembolso" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valorreembolso'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor oficina</label>
-            <input class="form-control" name="valoroficina" value="<?= esc($man['valoroficina'] ?? '') ?>">
+            <input type="number" class="form-control" name="valoroficina" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valoroficina'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor do desconto</label>
-            <input class="form-control" name="valordesconto" value="<?= esc($man['valordesconto'] ?? '') ?>">
+            <input type="number" class="form-control" name="valordesconto" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valordesconto'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor mão de obra</label>
-            <input class="form-control" name="valormaoobra" value="<?= esc($man['valormaoobra'] ?? '') ?>">
+            <input type="number" class="form-control" name="valormaoobra" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valormaoobra'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor material</label>
-            <input class="form-control" name="valormaterial" value="<?= esc($man['valormaterial'] ?? '') ?>">
+            <input type="number" class="form-control" name="valormaterial" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valormaterial'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor transporte</label>
-            <input class="form-control" name="valortransp" value="<?= esc($man['valortransp'] ?? '') ?>">
+            <input type="number" class="form-control" name="valortransp" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valortransp'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Outros valores</label>
-            <input class="form-control" name="outrosvalor" value="<?= esc($man['outrosvalor'] ?? '') ?>">
+            <input type="number" class="form-control" name="outrosvalor" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['outrosvalor'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Descontado do condutor</label>
@@ -330,11 +330,11 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-3">
             <label class="form-label">Número de parcelas</label>
-            <input class="form-control" name="numparc" value="<?= esc($man['numparc'] ?? '') ?>">
+            <input type="number" class="form-control" name="numparc" min="1" step="1" inputmode="numeric" value="<?= esc($man['numparc'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor de parcela</label>
-            <input class="form-control" name="valorparcela" value="<?= esc($man['valorparcela'] ?? '') ?>">
+            <input type="number" class="form-control" name="valorparcela" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valorparcela'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Data da primeira parcela</label>

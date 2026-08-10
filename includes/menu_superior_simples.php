@@ -13,6 +13,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 {
     return menuSuperiorLink($caminho, $baseAutofrotaUrl) === $paginaAtual ? ' active' : '';
 }
+
 ?>
 <style>
     body.autofrota-top-simple {
@@ -217,6 +218,13 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('veiculos/importar-hodometro.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Importar hodômetro</a></li>
                         </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('#', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('#', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-clipboard-check me-1"></i>Checklist
+                        </a>
                     </li>
 
                     <li class="nav-item dropdown">

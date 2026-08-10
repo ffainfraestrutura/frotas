@@ -132,6 +132,20 @@ function esc(?string $valor): string
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/i18n/pt-BR.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function normalizarPlaca(valor) {
+            return String(valor || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+        }
+
+        function buscarPlaca(params, data) {
+            const termo = normalizarPlaca(params.term);
+
+            if (termo === '' || normalizarPlaca(data.text).includes(termo)) {
+                return data;
+            }
+
+            return null;
+        }
+
         document.getElementById('sidebarToggle')?.addEventListener('click', function(event) {
             event.preventDefault();
             document.body.classList.toggle('sb-sidenav-toggled');
@@ -143,7 +157,8 @@ function esc(?string $valor): string
                 width: '100%',
                 placeholder: 'Digite para buscar uma placa',
                 language: 'pt-BR',
-                allowClear: false
+                allowClear: false,
+                matcher: buscarPlaca
             });
         });
     </script>
