@@ -11,7 +11,13 @@ $podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, 
 
 function redirectComMensagem(int $id, string $msg): never
 {
-    header('Location: ../editar-manutencao.php?idtbmanprev=' . $id . '&msg=' . urlencode($msg));
+    if ($id <= 0) {
+        $placa = normalizarPlaca($_POST['placa'] ?? '');
+        header('Location: ../cadastrar-manutencao-preventiva.php?placa=' . rawurlencode($placa) . '&msg=' . rawurlencode($msg));
+        exit;
+    }
+
+    header('Location: ../editar-manutencao.php?idtbmanprev=' . $id . '&msg=' . rawurlencode($msg));
     exit;
 }
 
@@ -117,6 +123,25 @@ $protocolo = normalizarTexto($_POST['protocolo'] ?? '');
 $dataconclusao = normalizarData($_POST['dataconclusao'] ?? null);
 $placaanterior = normalizarPlaca($_POST['placaanterior'] ?? '');
 $observacao = normalizarTexto($_POST['observacao'] ?? '');
+
+$limiteNumerico = 1000000;
+$camposNumericos = [
+    'Hodômetro' => $hodometro,
+    'Valor de reembolso' => $valorreembolso,
+    'Valor da oficina' => $valoroficina,
+    'Valor do desconto' => $valordesconto,
+    'Valor de mão de obra' => $valormaoobra,
+    'Valor de material' => $valormaterial,
+    'Valor de transporte' => $valortransp,
+    'Outros valores' => $outrosvalor,
+    'Número de parcelas' => $numparc,
+    'Valor da parcela' => $valorparcela,
+];
+foreach ($camposNumericos as $rotulo => $valorNumerico) {
+    if ($valorNumerico !== null && $valorNumerico !== '' && (!is_numeric($valorNumerico) || (float) $valorNumerico < 0 || (float) $valorNumerico > $limiteNumerico)) {
+        redirectComMensagem($id, $rotulo . ' deve ser um número de até 7 dígitos (máximo de 1.000.000).');
+    }
+}
 
 $dataagendamentoCompleta = $dataagendamento;
 if ($dataagendamento !== null && $horaagendamento !== '') {
@@ -345,4 +370,3 @@ if ($stmtFallback) {
 }
 
 redirectComMensagem($id, 'Erro ao atualizar manutenção.');
-// 

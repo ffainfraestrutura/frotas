@@ -219,6 +219,13 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </ul>
                     </li>
 
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('checklist/checklistinicio.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-clipboard-check me-1"></i>Checklist
+                        </a>
+                    </li>
+
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuManutencoes" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
