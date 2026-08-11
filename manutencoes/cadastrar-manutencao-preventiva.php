@@ -3,6 +3,8 @@ require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../control/conecta.php';
 exigirLogin();
 
+date_default_timezone_set('America/Sao_Paulo');
+
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
 $matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
 $bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
@@ -32,38 +34,41 @@ if ($id > 0) {
     exit;
 }
 
-if ($id > 0) {
-    $sqlById = "SELECT * FROM `{$database}`.`tbmanprev` WHERE idtbmanprev = ? LIMIT 1";
-    $stmt = mysqli_prepare($conn, $sqlById);
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 'i', $id);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        $man = $res ? mysqli_fetch_assoc($res) : null;
-        mysqli_stmt_close($stmt);
-    }
-}
-
-if (!$man && $placaRecebida !== '') {
-    $sqlByPlaca = "SELECT * FROM `{$database}`.`tbmanprev` WHERE placa = ? ORDER BY (status = 'ABERTO') DESC, idtbmanprev DESC LIMIT 1";
-    $stmt = mysqli_prepare($conn, $sqlByPlaca);
+if ($placaRecebida !== '') {
+    // Assim como no cadastro legado, os dados iniciais devem vir do veículo,
+    // e não de uma manutenção anterior da mesma placa.
+    $sqlVeiculo = "SELECT v.placa,
+                          v.hodometro,
+                          COALESCE(NULLIF(vm.modelo, ''), v.modelo) AS modelo,
+                          v.oficina,
+                          COALESCE(NULLIF(f.ccusto, ''), v.ccusto) AS ccusto
+                     FROM `{$database}`.`tbveiculo` v
+                LEFT JOIN `{$database}`.`tbveiculomodelo` vm
+                       ON vm.idtbmodeloveic = v.modelo
+                LEFT JOIN `{$database}`.`tbfuncionario` f
+                       ON f.matricula = v.matcond
+                    WHERE REPLACE(REPLACE(UPPER(TRIM(v.placa)), '-', ''), ' ', '') = ?
+                    LIMIT 1";
+    $stmt = mysqli_prepare($conn, $sqlVeiculo);
     if ($stmt) {
         mysqli_stmt_bind_param($stmt, 's', $placaRecebida);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
         $man = $res ? mysqli_fetch_assoc($res) : null;
         mysqli_stmt_close($stmt);
-        if ($man) {
-            $id = (int) ($man['idtbmanprev'] ?? 0);
-        }
     }
 }
 
 if (!$man) {
-    // Nenhuma manutenção existente encontrada — inicializa um registro vazio
-    // para permitir criar uma nova manutenção para a placa informada.
-    $man = [];
+    $man = ['placa' => $placaRecebida];
+    if ($placaRecebida === '') {
+        $mensagem = 'Selecione uma placa para cadastrar a manutenção preventiva.';
+    } else {
+        $mensagem = 'Não foi possível localizar os dados do veículo selecionado.';
+    }
 }
+
+$man['atualizadoem'] = date('Y-m-d');
 
 $planosManutencao = [];
 $sqlPlanos = "SELECT codigo, descricao FROM `{$database}`.`tbplanomanutencao` ORDER BY descricao";
@@ -185,7 +190,7 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-2">
             <label class="form-label">Atualizado em</label>
-            <input type="date" class="form-control" name="atualizadoem" value="<?= esc(substr((string)($man['atualizadoem'] ?? ''),0,10)) ?>">
+            <input type="date" class="form-control" name="atualizadoem" value="<?= esc($man['atualizadoem']) ?>" readonly aria-readonly="true">
         </div>
         <div class="col-md-3">
             <label class="form-label">Solicitante</label>
