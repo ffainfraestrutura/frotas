@@ -19,6 +19,7 @@ $database = (isset($databaseName) && preg_match('/^[A-Za-z0-9_]+$/', (string) $d
 $id = (int) ($_GET['idtbmanprev'] ?? $_POST['idtbmanprev'] ?? 0);
 $placaRecebida = strtoupper(trim((string) ($_GET['placa'] ?? $_POST['placa'] ?? '')));
 $placaRecebida = str_replace(['-', ' '], '', $placaRecebida);
+$oficinaRecebida = trim((string) ($_GET['oficina'] ?? ''));
 
 $mensagem = (string) ($_GET['msg'] ?? '');
 
@@ -69,6 +70,9 @@ if (!$man) {
 }
 
 $man['atualizadoem'] = date('Y-m-d');
+if ($oficinaRecebida !== '') {
+    $man['oficina'] = $oficinaRecebida;
+}
 
 $planosManutencao = [];
 $sqlPlanos = "SELECT codigo, descricao FROM `{$database}`.`tbplanomanutencao` ORDER BY descricao";
@@ -141,6 +145,25 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         break;
     }
 }
+
+$oficinas = [];
+$sqlOficinas = "SELECT nome FROM `{$database}`.`tboficina` WHERE nome IS NOT NULL AND TRIM(nome) <> '' ORDER BY nome";
+$resOficinas = mysqli_query($conn, $sqlOficinas);
+if ($resOficinas) {
+    while ($rowOficina = mysqli_fetch_assoc($resOficinas)) {
+        $nomeOficina = trim((string) ($rowOficina['nome'] ?? ''));
+        if ($nomeOficina !== '') {
+            $oficinas[$nomeOficina] = $nomeOficina;
+        }
+    }
+    mysqli_free_result($resOficinas);
+}
+
+$oficinaAtual = trim((string) ($man['oficina'] ?? ''));
+if ($oficinaAtual !== '') {
+    $oficinas[$oficinaAtual] = $oficinaAtual;
+    natcasesort($oficinas);
+}
 ?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}</style></head>
 <body class="sb-nav-fixed bg-light">
 <?php include __DIR__ . '/../includes/menu_superior_simples.php'; ?>
@@ -177,7 +200,7 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-2">
             <label class="form-label">Hodômetro:<span style="color: red;">*</span></label>
-            <input type="number" class="form-control" name="hodometro" min="0" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
+            <input type="number" class="form-control" name="hodometro" min="0" max="1000000" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
         </div>
         <div class="col-md-3">
             <label class="form-label">Centro de custo: <span style="color: red;">*</span></label>
@@ -227,13 +250,23 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
             <label class="form-label">Fornecedor da manutenção</label>
             <input class="form-control" name="fornman" value="<?= esc($man['fornman'] ?? '') ?>">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-5">
             <label class="form-label">Oficina</label>
-            <input class="form-control" name="oficina" value="<?= esc($man['oficina'] ?? '') ?>">
+            <div class="input-group">
+                <select class="form-select" name="oficina">
+                    <option value="">Selecione uma oficina</option>
+                    <?php foreach ($oficinas as $oficinaOpcao): ?>
+                        <option value="<?= esc($oficinaOpcao) ?>" <?= $oficinaAtual === $oficinaOpcao ? 'selected' : '' ?>><?= esc($oficinaOpcao) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <a class="btn btn-outline-success" href="adicionar-oficina.php?placa=<?= rawurlencode($placaRecebida) ?>" title="Adicionar oficina" aria-label="Adicionar oficina">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                </a>
+            </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-12">
             <label class="form-label">Descrição</label>
-            <textarea class="form-control" name="descricao" rows="2"><?= esc($man['descricao'] ?? '') ?></textarea>
+            <textarea class="form-control" name="descricao" rows="3"><?= esc($man['descricao'] ?? '') ?></textarea>
         </div>
 
         <div class="col-12 section-wrap">
@@ -284,31 +317,31 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor reembolso</label>
-            <input type="number" class="form-control" name="valorreembolso" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valorreembolso'] ?? '') ?>">
+            <input type="number" class="form-control" name="valorreembolso" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valorreembolso'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor oficina</label>
-            <input type="number" class="form-control" name="valoroficina" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valoroficina'] ?? '') ?>">
+            <input type="number" class="form-control" name="valoroficina" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valoroficina'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor do desconto</label>
-            <input type="number" class="form-control" name="valordesconto" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valordesconto'] ?? '') ?>">
+            <input type="number" class="form-control" name="valordesconto" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valordesconto'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor mão de obra</label>
-            <input type="number" class="form-control" name="valormaoobra" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valormaoobra'] ?? '') ?>">
+            <input type="number" class="form-control" name="valormaoobra" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valormaoobra'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor material</label>
-            <input type="number" class="form-control" name="valormaterial" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valormaterial'] ?? '') ?>">
+            <input type="number" class="form-control" name="valormaterial" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valormaterial'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor transporte</label>
-            <input type="number" class="form-control" name="valortransp" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valortransp'] ?? '') ?>">
+            <input type="number" class="form-control" name="valortransp" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valortransp'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Outros valores</label>
-            <input type="number" class="form-control" name="outrosvalor" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['outrosvalor'] ?? '') ?>">
+            <input type="number" class="form-control" name="outrosvalor" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['outrosvalor'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Descontado do condutor</label>
@@ -335,11 +368,11 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
         </div>
         <div class="col-md-3">
             <label class="form-label">Número de parcelas</label>
-            <input type="number" class="form-control" name="numparc" min="1" step="1" inputmode="numeric" value="<?= esc($man['numparc'] ?? '') ?>">
+            <input type="number" class="form-control" name="numparc" min="1" max="1000000" step="1" inputmode="numeric" value="<?= esc($man['numparc'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Valor de parcela</label>
-            <input type="number" class="form-control" name="valorparcela" min="0" step="0.01" inputmode="decimal" value="<?= esc($man['valorparcela'] ?? '') ?>">
+            <input type="number" class="form-control" name="valorparcela" min="0" max="1000000" step="0.01" inputmode="decimal" value="<?= esc($man['valorparcela'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Data da primeira parcela</label>
