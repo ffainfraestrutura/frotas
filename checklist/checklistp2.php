@@ -1,107 +1,45 @@
 <?php
 require_once __DIR__ . '/../includes/autofrota_common.php';
-autofrotaInit();
+$autofrota = autofrotaInit();
+$con = $autofrota['conn'];
+$databaseName = (string) ($autofrota['databaseName'] ?? '');
 $placa = strtoupper(trim((string) ($_GET['placa'] ?? '')));
+$idinserido = (int) ($_GET['idinserido'] ?? 0);
+$datavistoria = trim((string) ($_GET['datavistoria'] ?? ''));
+$matriculac = trim((string) ($_GET['matricula'] ?? ''));
+$retomada = ($_GET['retomada'] ?? '') === '1';
+if (empty($_SESSION['checklist_csrf_token'])) {
+    $_SESSION['checklist_csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrfToken = (string) $_SESSION['checklist_csrf_token'];
+$dadosChecklist = [];
+$fotosSalvas = [];
+if ($idinserido > 0 && $con instanceof mysqli && preg_match('/^[A-Za-z0-9_]+$/', $databaseName) === 1) {
+    $stmtChecklist = mysqli_prepare($con, "SELECT nome, matricula, cpf, cnh, categoriacnh, validadecnh, placa, modelo, anofabricacao, unidade, centrocusto, tipo, vistoriador, datavistoria, estado, avaria, hodometro, niveltanque, observacao FROM `{$databaseName}`.`tbvistoria` WHERE idtbvistoria = ? AND statusreg = 0 LIMIT 1");
+    mysqli_stmt_bind_param($stmtChecklist, 'i', $idinserido);
+    mysqli_stmt_execute($stmtChecklist);
+    $dadosChecklist = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtChecklist)) ?: [];
+    $stmtFotos = mysqli_prepare($con, "SELECT frontal, traseira, direita, esquerda, painel, selfie, cnh, extra1, extra2, extra3 FROM `{$databaseName}`.`tbvistoriafotos` WHERE idtbvistoria = ? LIMIT 1");
+    mysqli_stmt_bind_param($stmtFotos, 'i', $idinserido);
+    mysqli_stmt_execute($stmtFotos);
+    $fotosSalvas = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtFotos)) ?: [];
+}
+$escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 header('Content-Type: text/html; charset=utf-8');
 ?>
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="FFA Infraestrutura">
-  <link rel="icon" type="image/png" href="../src/images/favicon.png">
-  <title>Checklist - Passo 2</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-  <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
-  <style>
-    .checklist-container { max-width: 1000px; }
-    .photo-card { border: 0; box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .08); transition: transform .15s ease; }
-    .photo-card:hover { transform: translateY(-2px); }
-    .photo-preview { align-items: center; background: #f2f4f5; border: 2px dashed #adb5bd; border-radius: .5rem; color: #6c757d; display: flex; height: 145px; justify-content: center; overflow: hidden; }
-    .photo-preview img { height: 100%; object-fit: cover; width: 100%; }
-    .photo-input:focus + .photo-label { box-shadow: 0 0 0 .25rem rgba(25, 135, 84, .25); }
-    .step-badge { letter-spacing: .03em; }
-  </style>
-</head>
-<body>
-  <?php autofrotaMenu(); ?>
+<!DOCTYPE html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Checklist - Passo 2</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.wrap{max-width:1000px}.photo-card{border:0;box-shadow:0 .125rem .5rem #00000014}.preview{align-items:center;background:#f2f4f5;border:2px dashed #adb5bd;border-radius:.5rem;color:#6c757d;display:flex;height:145px;justify-content:center;overflow:hidden}.preview img{height:100%;object-fit:cover;width:100%}</style></head>
+<body><?php autofrotaMenu(); ?><main class="container-fluid wrap px-4 pb-4"><div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 pb-2"><div><h1 class="h2 mb-1">Fotos do veículo</h1><p class="text-muted mb-0">Checklist · Passo 2<?= $placa ? ' · '.htmlspecialchars($placa, ENT_QUOTES, 'UTF-8') : '' ?></p></div><a class="btn btn-outline-secondary" href="./checklistp1.php<?= $placa ? '?placa='.rawurlencode($placa) : '' ?>"><i class="fas fa-arrow-left me-1"></i>Voltar</a></div>
+<?php if ($retomada && $dadosChecklist): ?><div class="alert alert-warning my-3"><i class="fas fa-rotate-right me-1"></i><strong>Checklist pendente retomado.</strong> Continue enviando as fotos para concluir a vistoria.</div><?php endif; ?>
+<div class="d-flex justify-content-end gap-2"><button class="btn btn-info btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalDadosChecklist"><i class="fas fa-circle-info me-1"></i>Visualizar dados do checklist</button></div><br>
+<form id="checklist-p2-form" method="post" action="./control/checklistp2.php">
+<input type="hidden" name="placa" value="<?= htmlspecialchars($placa, ENT_QUOTES, 'UTF-8') ?>">
+<input type="hidden" name="vistoriador" value="<?= htmlspecialchars((string) ($_SESSION['matricula'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+<input type="hidden" name="matriculac" value="<?= htmlspecialchars($matriculac, ENT_QUOTES, 'UTF-8') ?>">
+<input type="hidden" name="datavistoriaf" value="<?= htmlspecialchars($datavistoria, ENT_QUOTES, 'UTF-8') ?>">
+<input type="hidden" name="idinserido" value="<?= $idinserido ?>"><div class="row g-3"><?php foreach (['frontal'=>'Frontal','traseira'=>'Traseira','direita'=>'Lateral direita','esquerda'=>'Lateral esquerda','painel'=>'Painel','selfie'=>'Selfie','cnh'=>'CNH','extra1'=>'Extra 1','extra2'=>'Extra 2','extra3'=>'Extra 3'] as $id=>$titulo): ?><div class="col-sm-6 col-lg-4"><section class="card photo-card h-100<?= !empty($fotosSalvas[$id]) ? ' border border-success' : '' ?>"><div class="card-body"><h2 class="h6 mb-3"><i class="fas fa-camera me-2 text-success"></i><?= $titulo ?><?php if (!empty($fotosSalvas[$id])): ?><span class="badge bg-success ms-2">Salva</span><?php endif; ?></h2><div class="preview mb-3" id="preview-<?= $id ?>"><span class="text-center"><i class="fas <?= !empty($fotosSalvas[$id]) ? 'fa-circle-check text-success' : 'fa-image' ?> fa-2x d-block mb-2"></i><?= !empty($fotosSalvas[$id]) ? 'Foto já enviada' : 'Nenhuma foto' ?></span></div><input class="photo-input visually-hidden" type="file" accept="image/*" capture="environment" id="<?= $id ?>-foto" name="<?= $id ?>"><label class="btn btn-outline-success w-100" for="<?= $id ?>-foto"><i class="fas fa-camera me-1"></i>Tirar ou escolher foto</label></div></section></div><?php endforeach ?></div><div class="d-flex justify-content-end gap-2 mt-4"><a class="btn btn-outline-secondary" href="./checklistinicio.php">Cancelar</a><button class="btn btn-success px-4" type="submit">Continuar <i class="fas fa-arrow-right ms-1"></i></button></div></form></main>
 
-  <main class="container-fluid checklist-container px-4 pb-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 pb-2">
-      <div>
-        <h1 class="h2 mb-1">Fotos do veículo</h1>
-        <p class="text-muted mb-0">Checklist · Passo 2 <?= $placa !== '' ? '· ' . htmlspecialchars($placa, ENT_QUOTES, 'UTF-8') : '' ?></p>
-      </div>
-      <a class="btn btn-outline-secondary" href="./checklistp1.php<?= $placa !== '' ? '?placa=' . rawurlencode($placa) : '' ?>">
-        <i class="fas fa-arrow-left me-1"></i> Voltar
-      </a>
-    </div>
-
-    <div class="alert alert-info my-4">
-      <i class="fas fa-info-circle me-1"></i> Registre os mesmos ângulos disponíveis no checklist legado. Nesta etapa de front-end, as fotos selecionadas não serão enviadas nem gravadas.
-    </div>
-
-    <form id="checklist-p2-form">
-      <div class="row g-3">
-        <?php
-        $fotos = [
-          'frontal' => ['Frontal', 'fa-car'],
-          'traseira' => ['Traseira', 'fa-car-rear'],
-          'direita' => ['Lateral direita', 'fa-car-side'],
-          'esquerda' => ['Lateral esquerda', 'fa-car-side'],
-          'painel' => ['Painel', 'fa-gauge-high'],
-          'selfie' => ['Selfie', 'fa-user'],
-          'cnh' => ['CNH', 'fa-id-card'],
-          'extra1' => ['Extra 1', 'fa-camera'],
-          'extra2' => ['Extra 2', 'fa-camera'],
-          'extra3' => ['Extra 3', 'fa-camera'],
-        ];
-        foreach ($fotos as $id => [$titulo, $icone]):
-        ?>
-          <div class="col-sm-6 col-lg-4">
-            <section class="card photo-card h-100">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h2 class="h6 mb-0"><i class="fas <?= $icone ?> me-2 text-success"></i><?= $titulo ?></h2>
-                  <span class="badge bg-light text-secondary step-badge">FOTO</span>
-                </div>
-                <div class="photo-preview mb-3" id="preview-<?= $id ?>">
-                  <span class="text-center"><i class="fas fa-image fa-2x d-block mb-2"></i>Nenhuma foto</span>
-                </div>
-                <input class="photo-input visually-hidden" type="file" accept="image/*" capture="environment" id="<?= $id ?>-foto" name="<?= $id ?>">
-                <label class="btn btn-outline-success w-100 photo-label" for="<?= $id ?>-foto"><i class="fas fa-camera me-1"></i> Tirar ou escolher foto</label>
-              </div>
-            </section>
-          </div>
-        <?php endforeach; ?>
-      </div>
-
-      <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
-        <a class="btn btn-outline-secondary" href="./checklistinicio.php">Cancelar</a>
-        <button class="btn btn-success px-4" type="submit">Continuar <i class="fas fa-arrow-right ms-1"></i></button>
-      </div>
-    </form>
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-  <script>
-    document.querySelectorAll('.photo-input').forEach(function (input) {
-      input.addEventListener('change', function () {
-        const arquivo = input.files && input.files[0];
-        if (!arquivo) return;
-        const preview = document.getElementById('preview-' + input.name);
-        const imagem = document.createElement('img');
-        imagem.alt = 'Pré-visualização de ' + input.name;
-        imagem.src = URL.createObjectURL(arquivo);
-        imagem.onload = function () { URL.revokeObjectURL(imagem.src); };
-        preview.replaceChildren(imagem);
-      });
-    });
-
-    document.getElementById('checklist-p2-form').addEventListener('submit', function (event) {
-      event.preventDefault();
-    });
-  </script>
-</body>
-</html>
+<div class="modal fade" id="modalDadosChecklist" tabindex="-1" aria-labelledby="modalDadosChecklistLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header bg-info text-white"><h2 class="modal-title h5" id="modalDadosChecklistLabel"><i class="fas fa-clipboard-check me-2"></i>Dados do Checklist - Passo 1</h2><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button></div><div class="modal-body">
+<?php if (!$dadosChecklist): ?><div class="alert alert-warning mb-0">Não foi possível localizar os dados desta vistoria pendente.</div><?php else: ?>
+<?php $gruposDados = ['Informações do condutor'=>['nome'=>'Nome','matricula'=>'Matrícula','cpf'=>'CPF','cnh'=>'CNH','categoriacnh'=>'Categoria CNH','validadecnh'=>'Validade CNH'],'Informações do veículo'=>['placa'=>'Placa','modelo'=>'Modelo','anofabricacao'=>'Ano','unidade'=>'Unidade','centrocusto'=>'Centro de custo'],'Informações da vistoria'=>['tipo'=>'Tipo','vistoriador'=>'Vistoriador','datavistoria'=>'Data','estado'=>'Estado geral','avaria'=>'Avaria','hodometro'=>'Hodômetro','niveltanque'=>'Nível do tanque','observacao'=>'Observações']]; foreach ($gruposDados as $grupo=>$campos): ?><section class="mb-4"><h3 class="h6 border-bottom pb-2"><?= $escape($grupo) ?></h3><div class="row g-3"><?php foreach ($campos as $campo=>$rotulo): ?><div class="col-md-6"><strong><?= $escape($rotulo) ?>:</strong> <span class="text-muted"><?= $escape($dadosChecklist[$campo] ?? '') ?: 'Não informado' ?></span></div><?php endforeach; ?></div></section><?php endforeach; ?>
+<?php endif; ?></div><div class="modal-footer d-flex justify-content-between"><form method="post" action="./control/excluir-checklist.php" onsubmit="return confirm('Deseja excluir este checklist pendente? Os dados e vínculos de fotos serão removidos.');"><input type="hidden" name="idinserido" value="<?= $idinserido ?>"><input type="hidden" name="csrf_token" value="<?= $escape($csrfToken) ?>"><button class="btn btn-danger" type="submit"<?= !$dadosChecklist ? ' disabled' : '' ?>><i class="fas fa-trash me-1"></i>Excluir e iniciar novo</button></form><button class="btn btn-secondary" type="button" data-bs-dismiss="modal">Fechar</button></div></div></div></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script><script>document.querySelectorAll('.photo-input').forEach(function(input){input.addEventListener('change',async function(){const file=input.files&&input.files[0];if(!file)return;const image=document.createElement('img');image.alt='Pré-visualização de '+input.name;image.src=URL.createObjectURL(file);image.onload=function(){URL.revokeObjectURL(image.src)};document.getElementById('preview-'+input.name).replaceChildren(image);const data=new FormData();data.append('file',file);data.append('localcarro',input.id);data.append('idinserido',document.querySelector('[name=idinserido]').value);try{const response=await fetch('./control/checklistp2-foto.php',{method:'POST',body:data});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.message||'Falha no upload');input.closest('.photo-card').classList.add('border','border-success')}catch(error){window.alert('Não foi possível salvar a foto. Tente novamente.')}})});</script></body></html>

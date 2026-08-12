@@ -42,10 +42,10 @@ header('Content-Type: text/html; charset=utf-8');
   <main class="mb-2" style="width: 100%;">
     <div class="container-fluid px-4" style="width: 80%;">
       <h1 class="h1 pt-3 pb-2 text-center">Checklist</h1>
-      <p class="text-center">Selecione a placa do veículo para iniciar a vistoria.</p>
-
+      <?php if (($_GET['excluido'] ?? '') === '1'): ?><div class="alert alert-success"><i class="fas fa-check-circle me-1"></i>Checklist pendente excluído. Você já pode iniciar uma nova vistoria.</div><?php endif; ?>
+      <p class="text-center">Selecione uma placa para iniciar uma vistoria ou selecione uma para continuar um checklist pendente.</p>
       <div class="row justify-content-center">
-        <form method="post" action="./checklistp1.php" class="col-md-8">
+        <form method="post" action="./control/iniciar-checklist.php" class="col-md-8">
           <div class="row align-items-center mb-3 m-auto justify-content-center" style="max-width: 500px;">
             <label class="col-auto col-form-label pe-2" for="placa">
               <i class="fas fa-car me-1"></i> Placa:
