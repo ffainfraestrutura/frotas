@@ -1,16 +1,21 @@
 <?php
-require_once __DIR__ . '/../auth.php';
-require_once __DIR__ . '/../control/conecta.php';
-exigirLogin();
+require_once __DIR__ . '/../includes/autofrota_common.php';
+
+$autofrotaSessao = autofrotaInit();
 
 date_default_timezone_set('America/Sao_Paulo');
 
-$perfilLogado = (string) ($_SESSION['perfil'] ?? '');
-$matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
+$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? '');
+$matriculaLogada = (string) (($autofrotaSessao['matricula'] ?? '') !== '' ? $autofrotaSessao['matricula'] : ($_SESSION['usuario'] ?? ''));
+$conn = $autofrotaSessao['conn'] ?? null;
+$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? '');
 $bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
 $podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
-
-function esc(?string $v): string { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
+$nomeSolicitante = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? 'Usuário');
+if ($conn instanceof mysqli && $databaseCorp !== '') {
+    $nomeSolicitante = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeSolicitante);
+}
 
 $database = (isset($databaseName) && preg_match('/^[A-Za-z0-9_]+$/', (string) $databaseName))
     ? (string) $databaseName
@@ -70,6 +75,7 @@ if (!$man) {
 }
 
 $man['atualizadoem'] = date('Y-m-d');
+$man['solicitante'] = $nomeSolicitante;
 if ($oficinaRecebida !== '') {
     $man['oficina'] = $oficinaRecebida;
 }
@@ -164,9 +170,9 @@ if ($oficinaAtual !== '') {
     $oficinas[$oficinaAtual] = $oficinaAtual;
     natcasesort($oficinas);
 }
-?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}</style></head>
+?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}</style></head>
 <body class="sb-nav-fixed bg-light">
-<?php include __DIR__ . '/../includes/menu_superior_simples.php'; ?>
+<?php autofrotaMenu(); ?>
 <div id="layoutSidenav_content">
 <main class="container py-4">
 <h1 class="h1 pt-2 pb-2 m-auto text-center">Cadastrar uma nova Manutenção</h1>
@@ -187,7 +193,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-2">
             <label class="form-label">Placa:<span style="color: red;">*</span></label>
-            <input class="form-control" name="placa" value="<?= esc($man['placa'] ?? '') ?>" required>
+            <input class="form-control" name="placa" value="<?= esc($man['placa'] ?? '') ?>" readonly aria-readonly="true" required>
         </div>
         <div class="col-md-3">
             <label class="form-label">Plano manutenção: <span style="color: red;">*</span></label>
@@ -200,11 +206,12 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-2">
             <label class="form-label">Hodômetro:<span style="color: red;">*</span></label>
-            <input type="number" class="form-control" name="hodometro" min="0" max="1000000" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
+            <input type="number" class="form-control" name="hodometro" min="0" max="1000000" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" readonly aria-readonly="true" required>
         </div>
         <div class="col-md-3">
             <label class="form-label">Centro de custo: <span style="color: red;">*</span></label>
-            <select class="form-select" name="ccusto" required>
+            <input type="hidden" name="ccusto" value="<?= esc($man['ccusto'] ?? '') ?>">
+            <select class="form-select" disabled aria-disabled="true">
                 <option value="">Selecione o centro de custo</option>
                 <?php foreach ($centrosCusto as $ccustoOpcao): ?>
                     <option value="<?= esc($ccustoOpcao) ?>" <?= (($man['ccusto'] ?? '') === $ccustoOpcao) ? 'selected' : '' ?>><?= esc($ccustoOpcao) ?></option>
@@ -217,7 +224,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-3">
             <label class="form-label">Solicitante</label>
-            <input class="form-control" name="solicitante" value="<?= esc($man['solicitante'] ?? '') ?>">
+            <input class="form-control" name="solicitante" value="<?= esc($man['solicitante'] ?? '') ?>" readonly aria-readonly="true">
         </div>
 
         <div class="col-12 section-wrap">
@@ -244,7 +251,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-2">
             <label class="form-label">Modelo</label>
-            <input class="form-control" name="modelo" value="<?= esc($man['modelo'] ?? '') ?>">
+            <input class="form-control" name="modelo" value="<?= esc($man['modelo'] ?? '') ?>" readonly aria-readonly="true">
         </div>
         <div class="col-md-4">
             <label class="form-label">Fornecedor da manutenção</label>
@@ -253,7 +260,8 @@ if ($oficinaAtual !== '') {
         <div class="col-md-5">
             <label class="form-label">Oficina</label>
             <div class="input-group">
-                <select class="form-select" name="oficina">
+                <input type="hidden" name="oficina" value="<?= esc($oficinaAtual) ?>">
+                <select class="form-select" disabled aria-disabled="true">
                     <option value="">Selecione uma oficina</option>
                     <?php foreach ($oficinas as $oficinaOpcao): ?>
                         <option value="<?= esc($oficinaOpcao) ?>" <?= $oficinaAtual === $oficinaOpcao ? 'selected' : '' ?>><?= esc($oficinaOpcao) ?></option>
