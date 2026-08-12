@@ -18,7 +18,6 @@ header('Content-Type: text/html; charset=utf-8');
     .checklist-container { max-width: 1000px; }
     .checklist-section { border: 0; box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .08); }
     .checklist-section .card-header { background: #fff; }
-    .required { color: #dc3545; }
   </style>
 </head>
 <body>
@@ -57,8 +56,8 @@ header('Content-Type: text/html; charset=utf-8');
       <section class="card checklist-section mb-4">
         <div class="card-header py-3"><h2 class="h5 mb-0"><i class="fas fa-id-card me-2 text-success"></i>Informações do condutor</h2></div>
         <div class="card-body row g-3">
-          <div class="col-md-4"><label class="form-label" for="cpf">CPF <span class="required">*</span></label><input class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00" required></div>
-          <div class="col-md-8"><label class="form-label" for="nome">Nome <span class="required">*</span></label><input class="form-control" id="nome" name="nome" placeholder="Nome completo" required></div>
+          <div class="col-md-4"><label class="form-label" for="cpf">CPF</label><input class="form-control" id="cpf" name="cpf" placeholder="000.000.000-00"></div>
+          <div class="col-md-8"><label class="form-label" for="nome">Nome</label><input class="form-control" id="nome" name="nome" placeholder="Nome completo"></div>
           <div class="col-md-4"><label class="form-label" for="matricula">Matrícula</label><input class="form-control" id="matricula" name="matricula"></div>
           <div class="col-md-4"><label class="form-label" for="cnh">CNH</label><input class="form-control" id="cnh" name="cnh"></div>
           <div class="col-md-4"><label class="form-label" for="validade-cnh">Validade da CNH</label><input class="form-control" type="date" id="validade-cnh" name="validade_cnh"></div>
@@ -68,12 +67,12 @@ header('Content-Type: text/html; charset=utf-8');
       <section class="card checklist-section mb-4">
         <div class="card-header py-3"><h2 class="h5 mb-0"><i class="fas fa-clipboard-check me-2 text-success"></i>Informações da vistoria</h2></div>
         <div class="card-body row g-3">
-          <div class="col-md-4"><label class="form-label" for="tipo">Tipo <span class="required">*</span></label><select class="form-select" id="tipo" name="tipo" required><option value="" selected disabled>Selecione</option><option>Recebimento</option><option>Devolução</option><option>Periódica</option></select></div>
-          <div class="col-md-4"><label class="form-label" for="data-vistoria">Data <span class="required">*</span></label><input class="form-control" type="date" id="data-vistoria" name="data_vistoria" required></div>
-          <div class="col-md-4"><label class="form-label" for="hora-vistoria">Hora <span class="required">*</span></label><input class="form-control" type="time" id="hora-vistoria" name="hora_vistoria" required></div>
-          <div class="col-md-4"><label class="form-label" for="estado-geral">Estado geral <span class="required">*</span></label><select class="form-select" id="estado-geral" name="estado_geral" required><option value="" selected disabled>Selecione</option><option>Ótimo</option><option>Bom</option><option>Regular</option><option>Ruim</option><option>Péssimo</option></select></div>
-          <div class="col-md-4"><label class="form-label" for="hodometro">Hodômetro <span class="required">*</span></label><div class="input-group"><input class="form-control" type="number" min="0" id="hodometro" name="hodometro" required><span class="input-group-text">km</span></div></div>
-          <div class="col-md-4"><label class="form-label" for="tanque">Nível do tanque <span class="required">*</span></label><select class="form-select" id="tanque" name="tanque" required><option value="" selected disabled>Selecione</option><option>Reserva</option><option>1/4</option><option>1/2</option><option>3/4</option><option>Cheio</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="tipo">Tipo</label><select class="form-select" id="tipo" name="tipo"><option value="" selected disabled>Selecione</option><option>Recebimento</option><option>Devolução</option><option>Periódica</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="data-vistoria">Data</label><input class="form-control" type="date" id="data-vistoria" name="data_vistoria"></div>
+          <div class="col-md-4"><label class="form-label" for="hora-vistoria">Hora</label><input class="form-control" type="time" id="hora-vistoria" name="hora_vistoria"></div>
+          <div class="col-md-4"><label class="form-label" for="estado-geral">Estado geral</label><select class="form-select" id="estado-geral" name="estado_geral"><option value="" selected disabled>Selecione</option><option>Ótimo</option><option>Bom</option><option>Regular</option><option>Ruim</option><option>Péssimo</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="hodometro">Hodômetro</label><div class="input-group"><input class="form-control" type="number" min="0" id="hodometro" name="hodometro"><span class="input-group-text">km</span></div></div>
+          <div class="col-md-4"><label class="form-label" for="tanque">Nível do tanque</label><select class="form-select" id="tanque" name="tanque"><option value="" selected disabled>Selecione</option><option>Reserva</option><option>1/4</option><option>1/2</option><option>3/4</option><option>Cheio</option></select></div>
         </div>
       </section>
 
@@ -102,6 +101,12 @@ header('Content-Type: text/html; charset=utf-8');
   <script>
     document.getElementById('checklist-p1-form').addEventListener('submit', function (event) {
       event.preventDefault();
+      const placa = document.getElementById('placa').value.trim();
+      const destino = new URL('./checklistp2.php', window.location.href);
+      if (placa) {
+        destino.searchParams.set('placa', placa);
+      }
+      window.location.href = destino.toString();
     });
   </script>
 </body>
