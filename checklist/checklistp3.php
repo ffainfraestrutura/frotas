@@ -47,7 +47,7 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="col-12"><strong>Observações</strong><br><span class="text-muted"><?= nl2br($escape($vistoria['observacao'] ?? '')) ?: 'Nenhuma observação informada' ?></span></div>
     </div></section>
     <section class="card my-3"><div class="card-header bg-white"><h2 class="h5 mb-0">Fotos salvas no Passo 2</h2></div><div class="card-body row g-3">
-      <?php foreach ($camposFotos as $campo=>$titulo): ?><div class="col-6 col-md-4"><strong><?= $titulo ?></strong><?php if (!empty($fotos[$campo])): ?><img class="photo mt-2" src=".<?= $escape($fotos[$campo]) ?>" alt="<?= $titulo ?>"><?php else: ?><div class="photo photo-empty mt-2"><span><i class="fas fa-image me-1"></i>Não enviada</span></div><?php endif; ?></div><?php endforeach; ?>
+      <?php foreach ($camposFotos as $campo=>$titulo): ?><div class="col-6 col-md-4"><strong><?= $titulo ?></strong><?php if (!empty($fotos[$campo])): $fotoSrc = trim((string) $fotos[$campo]); if ($fotoSrc !== '' && !preg_match('/^https?:\/\//i', $fotoSrc) && !str_starts_with($fotoSrc, '/')) { $fotoSrc = '.' . $fotoSrc; } ?><img class="photo mt-2" src="<?= $escape($fotoSrc) ?>" alt="<?= $titulo ?>"><?php else: ?><div class="photo photo-empty mt-2"><span><i class="fas fa-image me-1"></i>Não enviada</span></div><?php endif; ?></div><?php endforeach; ?>
     </div></section>
     <div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="./checklistinicio.php">Nova vistoria</a><a class="btn btn-success" href="./verrelatorio.php?id=<?= $id ?>"><i class="fas fa-file-lines me-1"></i>Visualizar relatório</a></div>
   <?php endif; ?>

@@ -55,10 +55,22 @@ try {
 
     mysqli_commit($con);
 
-    $diretorioFotos = realpath(dirname(__DIR__) . '/docs_old');
-    if ($diretorioFotos !== false) {
-        foreach ($arquivosFotos as $caminhoFoto) {
-            $arquivo = $diretorioFotos . DIRECTORY_SEPARATOR . basename($caminhoFoto);
+    $diretoriosFotos = [
+        realpath(dirname(__DIR__) . '/docs_old'),
+        '/tmp/frotas_docs/vistoria',
+        '/tmp/frotas_docs',
+    ];
+
+    foreach ($arquivosFotos as $caminhoFoto) {
+        $nomeArquivo = basename((string) $caminhoFoto);
+        if (preg_match('/^https?:\/\//i', (string) $caminhoFoto) || strpos((string) $caminhoFoto, '?abrir=') !== false) {
+            $urlParcial = parse_url((string) $caminhoFoto, PHP_URL_QUERY) ?? '';
+            parse_str($urlParcial, $parametrosUrl);
+            $nomeArquivo = basename((string) ($parametrosUrl['abrir'] ?? $nomeArquivo));
+        }
+
+        foreach (array_unique(array_filter($diretoriosFotos, static fn($dir): bool => is_string($dir) && $dir !== '' && is_dir($dir))) as $diretorioFotos) {
+            $arquivo = $diretorioFotos . DIRECTORY_SEPARATOR . $nomeArquivo;
             if (is_file($arquivo)) {
                 @unlink($arquivo);
             }

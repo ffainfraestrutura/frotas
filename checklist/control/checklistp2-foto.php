@@ -32,17 +32,19 @@ if (!isset($extensoes[$mime])) {
     $responder(415, 'Formato não permitido. Use JPEG, PNG ou WebP.');
 }
 
-$diretorio = dirname(__DIR__) . '/docs_old';
-if (!is_dir($diretorio) && !mkdir($diretorio, 0775, true)) {
-    $responder(500, 'Não foi possível preparar o diretório de fotos.');
+$baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+$baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
+$diretorio = '/tmp/frotas_docs/vistoria';
+if (!is_dir($diretorio) && !@mkdir($diretorio, 0775, true) && !is_dir($diretorio)) {
+    $responder(500, 'Não foi possível preparar o diretório de fotos da vistoria.');
 }
 $nome = sprintf('%d-%s-%s-%s.%s', $id, date('YmdHis'), $campo, bin2hex(random_bytes(4)), $extensoes[$mime]);
-$destino = $diretorio . '/' . $nome;
+$destino = $diretorio . DIRECTORY_SEPARATOR . $nome;
 if (!move_uploaded_file($arquivo['tmp_name'], $destino)) {
     $responder(500, 'Não foi possível salvar a imagem.');
 }
 
-$caminho = '/docs_old/' . $nome;
+$caminho = $baseScheme . '://' . $baseHost . '/diagnostico-uploads.php?abrir=' . rawurlencode($nome);
 $stmt = mysqli_prepare($con, "UPDATE `{$databaseName}`.`tbvistoriafotos` SET `$campo` = ? WHERE idtbvistoria = ?");
 mysqli_stmt_bind_param($stmt, 'si', $caminho, $id);
 if (!mysqli_stmt_execute($stmt) || mysqli_stmt_affected_rows($stmt) < 1) {
