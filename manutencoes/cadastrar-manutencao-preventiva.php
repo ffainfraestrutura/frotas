@@ -170,8 +170,8 @@ if ($oficinaAtual !== '') {
     $oficinas[$oficinaAtual] = $oficinaAtual;
     natcasesort($oficinas);
 }
-?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}</style></head>
-<body class="sb-nav-fixed bg-light">
+?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}</style></head>
+<body class="sb-nav-fixed">
 <?php autofrotaMenu(); ?>
 <div id="layoutSidenav_content">
 <main class="container py-4">
@@ -260,8 +260,7 @@ if ($oficinaAtual !== '') {
         <div class="col-md-5">
             <label class="form-label">Oficina</label>
             <div class="input-group">
-                <input type="hidden" name="oficina" value="<?= esc($oficinaAtual) ?>">
-                <select class="form-select" disabled aria-disabled="true">
+                <select class="form-select" name="oficina">
                     <option value="">Selecione uma oficina</option>
                     <?php foreach ($oficinas as $oficinaOpcao): ?>
                         <option value="<?= esc($oficinaOpcao) ?>" <?= $oficinaAtual === $oficinaOpcao ? 'selected' : '' ?>><?= esc($oficinaOpcao) ?></option>
