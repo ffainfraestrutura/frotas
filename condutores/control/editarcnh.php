@@ -11,8 +11,10 @@ exigirLogin();
 date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: text/html; charset=utf-8');
 
-$uploadDir = __DIR__ . '/../docs/cnh/';
-$uploadPathPrefix = '/docs/cnh/';
+$baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+$baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
+$uploadDir = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: '/tmp/frotas_docs/cnhs'), '/\\') . DIRECTORY_SEPARATOR;
+$uploadUrl = rtrim((string) (getenv('FROTAS_UPLOAD_URL') ?: $baseScheme . '://' . $baseHost . '/diagnostico-uploads.php?abrir='), '/');
 
 function responderEdicaoCnh(string $mensagem): void
 {
@@ -33,6 +35,24 @@ function responderEdicaoCnh(string $mensagem): void
         }
     </script>";
     exit;
+}
+
+function mensagemErroPastaUploadEdicaoCnh(string $caminho): string
+{
+    if (file_exists($caminho) && !is_dir($caminho)) {
+        return "Não foi possível preparar a pasta de upload: o caminho '{$caminho}' já existe e não é uma pasta.";
+    }
+
+    if (!is_dir($caminho) && !@mkdir($caminho, 0775, true) && !is_dir($caminho)) {
+        $erro = error_get_last()['message'] ?? 'permissão de criação negada ou caminho inválido';
+        return "Não foi possível preparar a pasta de upload em '{$caminho}'. Verifique se o diretório existe, se o caminho está correto e se o servidor tem permissão para criar a pasta. Detalhe: {$erro}";
+    }
+
+    if (!is_writable($caminho)) {
+        return "Não foi possível preparar a pasta de upload: a pasta '{$caminho}' existe, mas não possui permissão de escrita.";
+    }
+
+    return '';
 }
 
 function colunaExisteEdicaoCnh(mysqli $conn, string $databaseName, string $tabela, string $coluna): bool
@@ -131,12 +151,14 @@ function salvarArquivoEdicaoCnh(string $matricula, string $uploadDir, string $up
         responderEdicaoCnh('O arquivo enviado é muito grande. Envie arquivos de até 4MB.');
     }
 
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
-        responderEdicaoCnh('Não foi possível preparar a pasta de upload.');
+    if (!is_dir($uploadDir)) {
+        if (!@mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            responderEdicaoCnh(mensagemErroPastaUploadEdicaoCnh($uploadDir));
+        }
     }
 
     if (!is_writable($uploadDir)) {
-        responderEdicaoCnh('A pasta de upload não possui permissão de escrita.');
+        responderEdicaoCnh(mensagemErroPastaUploadEdicaoCnh($uploadDir));
     }
 
     $sufixo = $jaPossuiDoc1 ? '-2' : '';

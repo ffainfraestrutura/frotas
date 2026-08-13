@@ -11,8 +11,10 @@ exigirLogin();
 date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: text/html; charset=utf-8');
 
-$uploadDir = __DIR__ . '/../docs/condutor/';
-$uploadPathPrefix = '/docs/condutor/';
+$baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+$baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
+$uploadDir = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: '/tmp/frotas_docs/condutor'), '/\\') . DIRECTORY_SEPARATOR;
+$uploadUrl = rtrim((string) (getenv('FROTAS_UPLOAD_URL') ?: $baseScheme . '://' . $baseHost . '/diagnostico-uploads.php?abrir='), '/');
 
 function responderEnvioDocsCondutor(string $mensagem): void
 {
@@ -33,6 +35,24 @@ function responderEnvioDocsCondutor(string $mensagem): void
         }
     </script>";
     exit;
+}
+
+function mensagemErroPastaUploadCondutor(string $caminho): string
+{
+    if (file_exists($caminho) && !is_dir($caminho)) {
+        return "Não foi possível preparar a pasta de upload: o caminho '{$caminho}' já existe e não é uma pasta.";
+    }
+
+    if (!is_dir($caminho) && !@mkdir($caminho, 0775, true) && !is_dir($caminho)) {
+        $erro = error_get_last()['message'] ?? 'permissão de criação negada ou caminho inválido';
+        return "Não foi possível preparar a pasta de upload em '{$caminho}'. Verifique se o diretório existe, se o caminho está correto e se o servidor tem permissão para criar a pasta. Detalhe: {$erro}";
+    }
+
+    if (!is_writable($caminho)) {
+        return "Não foi possível preparar a pasta de upload: a pasta '{$caminho}' existe, mas não possui permissão de escrita.";
+    }
+
+    return '';
 }
 
 function colunaExisteDocsCondutor(mysqli $conn, string $databaseName, string $tabela, string $coluna): bool
@@ -97,8 +117,14 @@ function salvarDocumentoCondutor(string $campo, string $matricula, string $sufix
         responderEnvioDocsCondutor('O arquivo enviado é muito grande. Envie arquivos de até 32MB.');
     }
 
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
-        responderEnvioDocsCondutor('Não foi possível preparar a pasta de upload.');
+    if (!is_dir($uploadDir)) {
+        if (!@mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
+            responderEnvioDocsCondutor(mensagemErroPastaUploadCondutor($uploadDir));
+        }
+    }
+
+    if (!is_writable($uploadDir)) {
+        responderEnvioDocsCondutor(mensagemErroPastaUploadCondutor($uploadDir));
     }
 
     $timestamp = date('YmdHis');
