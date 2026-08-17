@@ -3,6 +3,7 @@ $usuarioMenu = $_SESSION['nome'] ?? $_SESSION['usuario'] ?? 'Usuário';
 $baseAutofrotaUrl = '';
 $paginaAtual = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
 $paginaAtual = preg_replace('#^/+#', '/', $paginaAtual);
+$menuCompactScale = defined('AUTOFROTA_MENU_COMPACT_SCALE') ? (float) AUTOFROTA_MENU_COMPACT_SCALE : 0.9;
 
 function menuSuperiorLink(string $caminho, string $baseAutofrotaUrl): string
 {
@@ -25,8 +26,41 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
         margin-bottom: 12px;
     }
 
+    .af-top-simple .container-fluid {
+        flex-wrap: nowrap;
+    }
+
+    .af-top-simple.navbar {
+        min-height: calc(48px * <?= $menuCompactScale ?>);
+        padding-top: calc(0.5rem * <?= $menuCompactScale ?>);
+        padding-bottom: calc(0.5rem * <?= $menuCompactScale ?>);
+    }
+
     .af-top-simple .navbar-brand {
+        font-size: calc(1.25rem * <?= $menuCompactScale ?>);
         font-weight: 700;
+        margin-right: calc(1rem * <?= $menuCompactScale ?>);
+        padding-top: calc(0.3125rem * <?= $menuCompactScale ?>);
+        padding-bottom: calc(0.3125rem * <?= $menuCompactScale ?>);
+        white-space: nowrap;
+    }
+
+    .af-top-simple .navbar-nav {
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+
+    .af-top-simple .nav-link {
+        font-size: calc(1rem * <?= $menuCompactScale ?>);
+        padding-left: calc(0.5rem * <?= $menuCompactScale ?>);
+        padding-right: calc(0.5rem * <?= $menuCompactScale ?>);
+        white-space: nowrap;
+    }
+
+    .af-top-simple .nav-link i,
+    .af-top-simple .nav-link svg {
+        font-size: calc(1rem * <?= $menuCompactScale ?>);
+        margin-right: calc(0.25rem * <?= $menuCompactScale ?>) !important;
     }
 
     .af-top-simple .nav-link.active {
@@ -44,8 +78,20 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
     }
 
     .af-user-greeting {
+        font-size: calc(0.875rem * <?= $menuCompactScale ?>);
         font-weight: 600;
         white-space: nowrap;
+    }
+
+    .af-user-dropdown {
+        flex-shrink: 0;
+        gap: calc(1rem * <?= $menuCompactScale ?>) !important;
+    }
+
+    .af-user-dropdown .btn-sm {
+        --bs-btn-font-size: calc(0.875rem * <?= $menuCompactScale ?>);
+        --bs-btn-padding-x: calc(0.5rem * <?= $menuCompactScale ?>);
+        --bs-btn-padding-y: calc(0.25rem * <?= $menuCompactScale ?>);
     }
 
     .af-user-dropdown .dropdown-toggle::after {

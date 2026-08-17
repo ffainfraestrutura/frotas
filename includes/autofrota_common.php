@@ -5,6 +5,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/portal_helpers.php';
 
+if (!defined('AUTOFROTA_MENU_COMPACT_SCALE')) {
+    define('AUTOFROTA_MENU_COMPACT_SCALE', 0.9);
+}
+
 if (!function_exists('autofrotaInit')) {
     function autofrotaInit(): array
     {
