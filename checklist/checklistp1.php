@@ -166,6 +166,15 @@ header('Content-Type: text/html; charset=utf-8');
               <div class="col-md-4"><label class="form-label" for="<?= $campo ?>"><?= htmlspecialchars($rotulo, ENT_QUOTES, 'UTF-8') ?><span class="text-danger">*</span></label><select class="form-select" id="<?= $campo ?>" name="<?= $campo ?>" required><option value="" selected disabled>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
             <?php endforeach; ?>
           <?php endforeach; ?>
+          <div class="col-12"><h3 class="h6 border-bottom pb-2 mb-0">Pneus, acessórios e conservação</h3></div>
+          <div class="col-md-4"><label class="form-label" for="step">Step</label><select class="form-select" id="step" name="step"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="marcapneus">Marca dos pneus</label><input class="form-control" id="marcapneus" name="marcapneus" type="text"></div>
+          <div class="col-md-4"><label class="form-label" for="kitstep">Kit Step</label><select class="form-select" id="kitstep" name="kitstep"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="calotas">Calotas</label><select class="form-select" id="calotas" name="calotas"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="bateria">Marca da bateria</label><input class="form-control" id="bateria" name="bateria" type="text"></div>
+          <div class="col-md-4"><label class="form-label" for="safecar">SafeCar</label><select class="form-select" id="safecar" name="safecar"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="ausente">Ausente</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="limpint">Limpeza interna</label><select class="form-select" id="limpint" name="limpint"><option value="" selected>Selecione</option><option value="limpo">Limpo</option><option value="sujo">Sujo</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="limpext">Limpeza externa</label><select class="form-select" id="limpext" name="limpext"><option value="" selected>Selecione</option><option value="limpo">Limpo</option><option value="sujo">Sujo</option></select></div>
           <div class="col-12"><label class="form-label" for="observacoes">Observações</label><textarea class="form-control" id="observacoes" name="observacao" rows="3" placeholder="Descreva avarias ou outras observações"></textarea></div>
         </div>
       </section>

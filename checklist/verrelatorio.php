@@ -60,6 +60,16 @@ $gruposItens = [
         'itinterno'=>'Itens internos',
         'pneus'=>'Pneus',
     ],
+    'Pneus, acessórios e conservação' => [
+        'step'=>'Step',
+        'marcapneus'=>'Marca dos pneus',
+        'kitstep'=>'Kit Step',
+        'calotas'=>'Calotas',
+        'bateria'=>'Marca da bateria',
+        'safecar'=>'SafeCar',
+        'limpint'=>'Limpeza interna',
+        'limpext'=>'Limpeza externa',
+    ],
 ];
 $camposFotos = ['frontal'=>'Frontal','traseira'=>'Traseira','direita'=>'Lateral direita','esquerda'=>'Lateral esquerda','bateria'=>'Bateria','painel'=>'Painel','selfie'=>'Selfie','cnh'=>'CNH','extra1'=>'Extra 1','extra2'=>'Extra 2','extra3'=>'Extra 3','extra4'=>'Extra 4','extra5'=>'Extra 5'];
 header('Content-Type: text/html; charset=utf-8');
