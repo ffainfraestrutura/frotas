@@ -116,6 +116,24 @@ $linksPortal = [
         'url' => 'multa/multasfrota.php',
         'icone' => 'fa-file-invoice-dollar',
     ],
+    [
+        'titulo' => 'Cadastrar',
+        'icone' => 'fa-square-plus',
+        'links' => [
+            [
+                'titulo' => 'Condutor',
+                'url' => 'condutores/cadastrar_condutorespj.php',
+            ],
+            [
+                'titulo' => 'Veículo',
+                'url' => 'veiculos/cadastroveiculo.php',
+            ],
+            [
+                'titulo' => 'Manutenção',
+                'url' => 'manutencoes/solicitar-manutencao-preventiva.php',
+            ],
+        ],
+    ],
 ];
 ?>
 <!DOCTYPE html>
@@ -194,6 +212,17 @@ $linksPortal = [
             font-size: 20px;
             margin-bottom: 14px;
         }
+
+        .portal-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .portal-links a {
+            font-weight: 600;
+            text-decoration: none;
+        }
     </style>
 </head>
 
@@ -212,13 +241,29 @@ $linksPortal = [
             <section class="row g-3" aria-label="Links disponíveis no AutoFrota">
                 <?php foreach ($linksPortal as $link): ?>
                     <div class="col-12 col-md-6 col-xl-4">
-                        <a class="card portal-card" href="<?= htmlspecialchars($link['url']) ?>">
-                            <div class="card-body">
-                                <span class="portal-icon"><i class="fas <?= htmlspecialchars($link['icone']) ?>"></i></span>
-                                <h2 class="h5 card-title mb-2"><?= htmlspecialchars($link['titulo']) ?></h2>
-                                <p class="card-text text-muted"><?= htmlspecialchars($link['descricao']) ?></p>
+                        <?php if (isset($link['links'])): ?>
+                            <div class="card portal-card">
+                                <div class="card-body">
+                                    <span class="portal-icon"><i class="fas <?= htmlspecialchars($link['icone']) ?>"></i></span>
+                                    <h2 class="h5 card-title mb-2"><?= htmlspecialchars($link['titulo']) ?></h2>
+                                    <nav class="portal-links" aria-label="Opções de cadastro">
+                                        <?php foreach ($link['links'] as $cadastro): ?>
+                                            <a class="btn btn-outline-primary" href="<?= htmlspecialchars($cadastro['url']) ?>">
+                                                Cadastrar <?= htmlspecialchars($cadastro['titulo']) ?>
+                                            </a>
+                                        <?php endforeach; ?>
+                                    </nav>
+                                </div>
                             </div>
-                        </a>
+                        <?php else: ?>
+                            <a class="card portal-card" href="<?= htmlspecialchars($link['url']) ?>">
+                                <div class="card-body">
+                                    <span class="portal-icon"><i class="fas <?= htmlspecialchars($link['icone']) ?>"></i></span>
+                                    <h2 class="h5 card-title mb-2"><?= htmlspecialchars($link['titulo']) ?></h2>
+                                    <p class="card-text text-muted"><?= htmlspecialchars($link['descricao']) ?></p>
+                                </div>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             </section>
