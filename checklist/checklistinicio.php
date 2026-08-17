@@ -43,6 +43,7 @@ header('Content-Type: text/html; charset=utf-8');
     <div class="container-fluid px-4" style="width: 80%;">
       <h1 class="h1 pt-3 pb-2 text-center">Checklist</h1>
       <?php if (($_GET['excluido'] ?? '') === '1'): ?><div class="alert alert-success"><i class="fas fa-check-circle me-1"></i>Checklist pendente excluído. Você já pode iniciar uma nova vistoria.</div><?php endif; ?>
+      <?php if (($_GET['erro'] ?? '') === 'manutencao_aberta'): ?><div class="alert alert-danger"><i class="fas fa-ban me-1"></i>Veículo em manutenção aberta. Vistoria não autorizada.</div><?php endif; ?>
       <p class="text-center">Selecione uma placa para iniciar uma vistoria ou selecione uma para continuar um checklist pendente.</p>
       <div class="row justify-content-center">
         <form method="post" action="./control/iniciar-checklist.php" class="col-md-8">

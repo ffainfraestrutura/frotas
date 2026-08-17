@@ -15,6 +15,17 @@ if ($placa === '') {
     exit;
 }
 
+$stmtManutencao = mysqli_prepare($con, "SELECT status FROM `{$databaseName}`.`tbmanprev` WHERE placa = ? ORDER BY idtbmanprev DESC LIMIT 1");
+if ($stmtManutencao) {
+    mysqli_stmt_bind_param($stmtManutencao, 's', $placa);
+    mysqli_stmt_execute($stmtManutencao);
+    $manutencao = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtManutencao));
+    if (strtoupper(trim((string) ($manutencao['status'] ?? ''))) === 'ABERTO') {
+        header('Location: ../checklistinicio.php?erro=manutencao_aberta');
+        exit;
+    }
+}
+
 $stmt = mysqli_prepare(
     $con,
     "SELECT idtbvistoria, placa, datavistoria, matricula, nome, vistoriador
