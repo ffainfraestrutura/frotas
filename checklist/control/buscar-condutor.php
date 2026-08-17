@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET' || !($con instanceof mysqli) || preg_ma
 
 $cpf = preg_replace('/\D/', '', (string) ($_GET['cpf'] ?? '')) ?? '';
 $matricula = trim((string) ($_GET['matricula'] ?? ''));
+$placaAtual = strtoupper(preg_replace('/[^A-Z0-9]/i', '', (string) ($_GET['placa'] ?? '')) ?? '');
 if ($cpf === '' && $matricula === '') {
     $responder(422, ['ok' => false, 'message' => 'Informe CPF ou matrícula.']);
 }
@@ -39,4 +40,22 @@ $condutor = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 if (!$condutor) {
     $responder(404, ['ok' => false, 'message' => 'Condutor não encontrado ou com status inválido.']);
 }
+
+$stmtAssociacao = mysqli_prepare(
+    $con,
+    "SELECT placa FROM `{$databaseName}`.`tbveiculo` WHERE matcond = ? AND placa <> ? AND placa IS NOT NULL AND placa <> '' LIMIT 1"
+);
+if ($stmtAssociacao) {
+    $matriculaCondutor = (string) ($condutor['matricula'] ?? '');
+    mysqli_stmt_bind_param($stmtAssociacao, 'ss', $matriculaCondutor, $placaAtual);
+    mysqli_stmt_execute($stmtAssociacao);
+    $associacao = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtAssociacao));
+    if ($associacao) {
+        $responder(409, [
+            'ok' => false,
+            'message' => 'Condutor já possui outra placa associada: ' . (string) $associacao['placa'] . '.',
+        ]);
+    }
+}
+
 $responder(200, ['ok' => true, 'condutor' => $condutor]);

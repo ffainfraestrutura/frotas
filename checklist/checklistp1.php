@@ -5,12 +5,39 @@ $con = $autofrota['conn'];
 $databaseName = (string) ($autofrota['databaseName'] ?? '');
 $placa = strtoupper(trim((string) ($_POST['placa'] ?? $_GET['placa'] ?? '')));
 $veiculo = [];
+$tiposVistoria = [];
+$statusVeiculo = [];
+$erroManutencao = '';
 if ($placa !== '' && $con instanceof mysqli && preg_match('/^[A-Za-z0-9_]+$/', $databaseName) === 1) {
+  $stmtManutencao = mysqli_prepare($con, "SELECT status FROM `{$databaseName}`.`tbmanprev` WHERE placa = ? ORDER BY idtbmanprev DESC LIMIT 1");
+  if ($stmtManutencao) {
+    mysqli_stmt_bind_param($stmtManutencao, 's', $placa);
+    mysqli_stmt_execute($stmtManutencao);
+    $manutencao = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtManutencao)) ?: [];
+    if (strtoupper(trim((string) ($manutencao['status'] ?? ''))) === 'ABERTO') {
+      $erroManutencao = 'Veículo em manutenção. Vistoria não autorizada. Status da Manutenção: ABERTO';
+    }
+  }
+
   $stmtVeiculo = mysqli_prepare($con, "SELECT placa, modelo, anofabr, unidade, basegestao, statusvel, matcond FROM `{$databaseName}`.`tbveiculo` WHERE placa = ? LIMIT 1");
   if ($stmtVeiculo) {
     mysqli_stmt_bind_param($stmtVeiculo, 's', $placa);
     mysqli_stmt_execute($stmtVeiculo);
     $veiculo = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtVeiculo)) ?: [];
+  }
+
+  $resultadoTipos = mysqli_query($con, "SELECT idtbatipovist, tipo FROM `{$databaseName}`.`tbatipovist` ORDER BY idtbatipovist");
+  if ($resultadoTipos instanceof mysqli_result) {
+    while ($tipoVistoria = mysqli_fetch_assoc($resultadoTipos)) {
+      $tiposVistoria[] = $tipoVistoria;
+    }
+  }
+
+  $resultadoStatus = mysqli_query($con, "SELECT idtbastatusvel, status FROM `{$databaseName}`.`tbvelstatus` WHERE idtbastatusvel IN ('1','2','5','18','36','32') ORDER BY status");
+  if ($resultadoStatus instanceof mysqli_result) {
+    while ($status = mysqli_fetch_assoc($resultadoStatus)) {
+      $statusVeiculo[] = $status;
+    }
   }
 }
 $valorVeiculo = static fn(string $campo): string => htmlspecialchars((string) ($veiculo[$campo] ?? ''), ENT_QUOTES, 'UTF-8');
@@ -45,6 +72,10 @@ header('Content-Type: text/html; charset=utf-8');
         <i class="fas fa-arrow-left me-1"></i> Voltar
       </a>
     </div>
+
+    <?php if ($erroManutencao !== ''): ?>
+      <div class="alert alert-danger"><i class="fas fa-ban me-1"></i><?= htmlspecialchars($erroManutencao, ENT_QUOTES, 'UTF-8') ?></div>
+    <?php endif; ?>
 
     <form id="checklist-p1-form" method="post" action="./control/checklistp1.php">
       <section class="card checklist-section my-4">
@@ -86,13 +117,13 @@ header('Content-Type: text/html; charset=utf-8');
         <div class="card-header py-3"><h2 class="h5 mb-0"><i class="fas fa-clipboard-check me-2 text-success"></i>Informações da vistoria</h2></div>
         <div class="card-body row g-3">
           <div class="col-md-4"><label class="form-label" for="vistoriador">Vistoriador</label><input class="form-control" id="vistoriador" name="vistoriador" value="<?= htmlspecialchars((string) ($autofrota['usuario'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly><input type="hidden" name="matrvistoriador" value="<?= htmlspecialchars((string) ($autofrota['matricula'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
-          <div class="col-md-4"><label class="form-label" for="tipo">Tipo</label><select class="form-select" id="tipo" name="tipo"><option value="" selected disabled>Selecione</option><option value="2">Recebimento</option><option value="3">Devolução</option><option value="1">Periódica</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="tipo">Tipo</label><select class="form-select" id="tipo" name="tipo" required><option value="" selected disabled>Selecione</option><?php foreach ($tiposVistoria as $tipoVistoria): ?><option value="<?= htmlspecialchars((string) $tipoVistoria['idtbatipovist'], ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars((string) $tipoVistoria['tipo'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select></div>
           <div class="col-md-4"><label class="form-label" for="data-vistoria">Data</label><input class="form-control" type="date" id="data-vistoria" name="datavistoria"></div>
           <div class="col-md-4"><label class="form-label" for="hora-vistoria">Hora</label><input class="form-control" type="time" id="hora-vistoria" name="horavistoria"></div>
           <div class="col-md-4"><label class="form-label" for="estado-geral">Estado geral</label><select class="form-select" id="estado-geral" name="estado"><option value="" selected disabled>Selecione</option><option>Ótimo</option><option>Bom</option><option>Regular</option><option>Ruim</option><option>Péssimo</option></select></div>
           <div class="col-md-4"><label class="form-label" for="hodometro">Hodômetro</label><div class="input-group"><input class="form-control" type="number" min="0" id="hodometro" name="hodometro"><span class="input-group-text">km</span></div></div>
           <div class="col-md-4"><label class="form-label" for="tanque">Nível do tanque</label><select class="form-select" id="tanque" name="niveltanque"><option value="" selected disabled>Selecione</option><option>Reserva</option><option>1/4</option><option>1/2</option><option>3/4</option><option>Cheio</option></select></div>
-          <div class="col-md-4"><label class="form-label" for="statusveic">Status do veículo</label><input class="form-control" id="statusveic" name="statusveic" value="<?= $valorVeiculo('statusvel') ?>" readonly></div>
+          <div class="col-md-4"><label class="form-label" for="statusveic">Status do veículo</label><select class="form-select" id="statusveic" name="statusveic" required><option value="">Selecione</option><?php foreach ($statusVeiculo as $status): ?><?php $statusId = (string) $status['idtbastatusvel']; ?><option value="<?= htmlspecialchars($statusId, ENT_QUOTES, 'UTF-8') ?>" <?= $statusId === (string) ($veiculo['statusvel'] ?? '') ? 'selected' : '' ?>><?= htmlspecialchars((string) $status['status'], ENT_QUOTES, 'UTF-8') ?></option><?php endforeach; ?></select></div>
           <div class="col-md-4"><label class="form-label" for="avaria">Possui avaria?</label><select class="form-select" id="avaria" name="avaria"><option value="">Selecione</option><option value="1">Sim</option><option value="0">Não</option></select></div>
           <div class="col-md-4"><label class="form-label" for="documentacao">Documentação</label><select class="form-select" id="documentacao" name="documentacao"><option value="">Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
         </div>
@@ -124,7 +155,7 @@ header('Content-Type: text/html; charset=utf-8');
       <div class="alert alert-info"><i class="fas fa-info-circle me-1"></i>Ao continuar, os dados informados serão salvos.</div>
       <div class="d-flex justify-content-end gap-2">
         <a class="btn btn-outline-secondary" href="./checklistinicio.php">Cancelar</a>
-        <button class="btn btn-success px-4" type="submit">Continuar <i class="fas fa-arrow-right ms-1"></i></button>
+        <button class="btn btn-success px-4" type="submit" <?= $erroManutencao !== '' ? 'disabled' : '' ?>>Continuar <i class="fas fa-arrow-right ms-1"></i></button>
       </div>
     </form>
   </main>
@@ -141,7 +172,8 @@ header('Content-Type: text/html; charset=utf-8');
       const botao = document.getElementById('buscar-condutor');
       const parametros = new URLSearchParams({
         cpf: document.getElementById('cpf').value,
-        matricula: document.getElementById('matricula').value
+        matricula: document.getElementById('matricula').value,
+        placa: document.getElementById('placa').value
       });
       botao.disabled = true;
       mostrarMensagemCondutor('Buscando condutor...', 'info');
@@ -173,6 +205,39 @@ header('Content-Type: text/html; charset=utf-8');
       document.getElementById('matricula').value = <?= json_encode((string) $veiculo['matcond']) ?>;
       buscarCondutor();
     <?php endif; ?>
+
+    // Interceptar envio do formulário
+    document.getElementById('checklist-p1-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      
+      const botaoEnviar = this.querySelector('button[type="submit"]');
+      const botaoOriginal = botaoEnviar.innerHTML;
+      botaoEnviar.disabled = true;
+      botaoEnviar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Salvando...';
+      
+      try {
+        const formData = new FormData(this);
+        const resposta = await fetch('./control/checklistp1.php', {
+          method: 'POST',
+          body: formData,
+          headers: { Accept: 'application/json' }
+        });
+        
+        const resultado = await resposta.json();
+        
+        if (resultado.sucesso) {
+          window.location.href = resultado.redirecionarPara;
+        } else {
+          alert('Erro: ' + resultado.mensagem);
+          botaoEnviar.disabled = false;
+          botaoEnviar.innerHTML = botaoOriginal;
+        }
+      } catch (erro) {
+        alert('Erro ao processar a requisição: ' + erro.message);
+        botaoEnviar.disabled = false;
+        botaoEnviar.innerHTML = botaoOriginal;
+      }
+    });
   </script>
 
 </body>
