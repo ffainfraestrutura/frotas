@@ -298,59 +298,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                     
 
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fa-solid fa-gas-pump"></i> Combustível
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
-                            <li>
-                                <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('aprovar-pedidos-orcamento-frota.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Aprovar Pedidos Frota
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remanejar Saldo
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" a
-                                    href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Remover Saldo
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Histórico Financeiro por Colaborador
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('combustivel/dashboard_financeiro.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Dashboard Financeiro
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
 
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="afMenuGestaoPerfil4" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-briefcase me-1"></i>Gestão
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuGestaoPerfil4">
-                            <li>
-                                <a class="dropdown-item" href="<?= menuSuperiorLink('cotafixa.php', $baseAutofrotaUrl) ?>" target="_self">Cota Fixa</a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>" target="_self">Relatório de Saldo</a>
-                            </li>
-                        </ul>
-                    </li>
                 <?php endif; ?>
 
                 <?php if ($_SESSION['perfil'] == 4 || $_SESSION['perfil'] == 12): ?>
@@ -431,34 +379,45 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                 <?php endif; ?>
 
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
-                        data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fa-solid fa-map"></i> Deslocamento
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
-                        <li>
-                            <a class="dropdown-item"
-                                href="<?= menuSuperiorLink('deslocamento/relatorio_deslocamento.php', $baseAutofrotaUrl) ?>"
-                                target="_self">Relatório de Deslocamento
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
                 <?php if ((int) ($_SESSION['perfil'] ?? 0) !== 0): ?>
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('gerenciar-equipe.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('gerenciar-equipe.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-users-gear me-1"></i>Equipe
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-gas-pump"></i> Combustível
                         </a>
-                    </li>
-                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle<?= menuSuperiorAtivo('gestao/gerenciarescalatecnicos.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="#" id="afMenuEscala" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-calendar-check me-1"></i>Escala
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuEscala">
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCombustivel">
+                            <?php if ($_SESSION['perfil'] == 4): ?>
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('aprovar-pedidos-orcamento-frota.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Aprovar Pedidos Frota
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('combustivel/remanejamento/index.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Remanejar Saldo
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Remover Saldo
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Histórico Financeiro por Colaborador
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('combustivel/dashboard_financeiro.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Dashboard Financeiro
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('gestao/gerenciarescalatecnicos.php', $baseAutofrotaUrl) ?>"
@@ -466,21 +425,25 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     Gerenciar escala de técnicos
                                 </a>
                             </li>
-                        </ul>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="afMenuGestao" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-briefcase me-1"></i>Gestão
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="afMenuGestao">
                             <li>
                                 <a class="dropdown-item" href="<?= menuSuperiorLink('cotafixa.php', $baseAutofrotaUrl) ?>" target="_self">Cota Fixa</a>
                             </li>
                             <li>
                                 <a class="dropdown-item" href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>" target="_self">Relatório de Saldo</a>
                             </li>
+                            <li>
+                                <a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('deslocamento/relatorio_deslocamento.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Relatório de Deslocamento
+                                </a>
+                            </li>
                         </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                            href="https://hierarquia.painel-telecom.com/login.php" target="_blank" rel="noopener noreferrer">
+                            <i class="fas fa-users-gear me-1"></i>Equipe
+                        </a>
                     </li>
                 <?php endif; ?>
             </ul>
@@ -558,3 +521,4 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
         nav.addEventListener('click', forcarMesmaAba, true);
     })();
 </script>
+<!--  -->
