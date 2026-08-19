@@ -116,6 +116,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 
         <div class="collapse navbar-collapse" id="afMenuSuperior">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                                <li class="nav-item">
+                    <a class="nav-link<?= menuSuperiorAtivo('index.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                        href="<?= menuSuperiorLink('index.php', $baseAutofrotaUrl) ?>" target="_self">
+                        <i class="fas fa-house me-1"></i>Início
+                    </a>
+                </li>
 
                 <?php if ($_SESSION['perfil'] == 1): ?>
                     <li class="nav-item dropdown">
