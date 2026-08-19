@@ -16,7 +16,7 @@ if ($matricula === '') {
 
 $condutor = buscarUmaLinha(
     $conn,
-    "SELECT * FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? AND matricula LIKE '62%' LIMIT 1",
+    "SELECT * FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? AND matricula LIKE '162%' LIMIT 1",
     's',
     [$matricula]
 );

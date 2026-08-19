@@ -101,7 +101,7 @@ if ($editando) {
         redirecionarComMensagem('../listar_condutorespj.php', 'Matrícula original não informada.');
     }
 
-    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? AND matricula LIKE '62%' LIMIT 1", 's', [$matriculaOriginal]);
+    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? AND matricula LIKE '162%' LIMIT 1", 's', [$matriculaOriginal]);
     if ($condutorExistente === []) {
         redirecionarComMensagem('../listar_condutorespj.php', 'Condutor PJ não encontrado.');
     }
