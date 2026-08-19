@@ -275,25 +275,21 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuVeiculos">
                             <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Cadastrar veículo</a></li>
+                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/listagem-veiculo.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem de veículos</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cadastro de veículo</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/inventario-veiculo.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Inventário de veículos</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/importar-hodometro.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Importar hodômetro</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>"
+                                    target="_self"><i class="fas fa-clipboard-check me-1"></i>Checklist</a></li>
                         </ul>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link<?= menuSuperiorAtivo('checklist/checklistinicio.php', $paginaAtual, $baseAutofrotaUrl) ?>"
-                            href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>" target="_self">
-                            <i class="fas fa-clipboard-check me-1"></i>Checklist
-                        </a>
                     </li>
 
                     <li class="nav-item dropdown">
@@ -303,16 +299,16 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuManutencoes">
                             <li><a class="dropdown-item"
+                            href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                            target="_self" onclick="window.location.href=this.href; return false;">Cadastrar
+                            manutenção</a></li>
+                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Listagem de
-                                    manutenções</a></li>
+                                    manutenções</a></li>        
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/importar-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Importar
-                                    manutenção</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
-                                    target="_self" onclick="window.location.href=this.href; return false;">Adicionar
                                     manutenção</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/farol-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
