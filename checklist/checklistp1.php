@@ -8,6 +8,7 @@ $veiculo = [];
 $tiposVistoria = [];
 $statusVeiculo = [];
 $erroManutencao = '';
+$possuiAssociacao = false;
 if ($placa !== '' && $con instanceof mysqli && preg_match('/^[A-Za-z0-9_]+$/', $databaseName) === 1) {
   $stmtManutencao = mysqli_prepare($con, "SELECT status FROM `{$databaseName}`.`tbmanprev` WHERE placa = ? ORDER BY idtbmanprev DESC LIMIT 1");
   if ($stmtManutencao) {
@@ -26,7 +27,22 @@ if ($placa !== '' && $con instanceof mysqli && preg_match('/^[A-Za-z0-9_]+$/', $
     $veiculo = mysqli_fetch_assoc(mysqli_stmt_get_result($stmtVeiculo)) ?: [];
   }
 
-  $resultadoTipos = mysqli_query($con, "SELECT idtbatipovist, tipo FROM `{$databaseName}`.`tbatipovist` ORDER BY idtbatipovist");
+  $possuiAssociacao = trim((string) ($veiculo['matcond'] ?? '')) !== '';
+  if (!$possuiAssociacao) {
+    $stmtAssociacao = mysqli_prepare($con, "SELECT 1 FROM `{$databaseName}`.`tbcondutor` WHERE placaassoc = ? AND ativo = 1 LIMIT 1");
+    if ($stmtAssociacao) {
+      mysqli_stmt_bind_param($stmtAssociacao, 's', $placa);
+      mysqli_stmt_execute($stmtAssociacao);
+      $possuiAssociacao = (bool) mysqli_fetch_row(mysqli_stmt_get_result($stmtAssociacao));
+    }
+  }
+
+  $sqlTipos = "SELECT idtbatipovist, tipo FROM `{$databaseName}`.`tbatipovist`";
+  if ($possuiAssociacao) {
+    $sqlTipos .= " WHERE idtbatipovist <> '2'";
+  }
+  $sqlTipos .= ' ORDER BY idtbatipovist';
+  $resultadoTipos = mysqli_query($con, $sqlTipos);
   if ($resultadoTipos instanceof mysqli_result) {
     while ($tipoVistoria = mysqli_fetch_assoc($resultadoTipos)) {
       $tiposVistoria[] = $tipoVistoria;
@@ -130,24 +146,35 @@ header('Content-Type: text/html; charset=utf-8');
       </section>
 
       <section class="card checklist-section mb-4">
-        <div class="card-header py-3"><h2 class="h5 mb-0"><i class="fas fa-screwdriver-wrench me-2 text-success"></i>Itens completos da vistoria</h2></div>
+        <div class="card-header py-3"><h2 class="h5 mb-0"><i class="fas fa-screwdriver-wrench me-2 text-success"></i>Itens personalizados da vistoria</h2></div>
         <div class="card-body row g-3">
           <?php
           $gruposItens = [
-            'Teto' => ['teto'=>'Teto','tetoesp'=>'Espelho do teto','tetoesq'=>'Teto esquerdo','tetodir'=>'Teto direito'],
-            'Frente' => ['frente'=>'Frente','capo'=>'Capô','parabrisa'=>'Para-brisa','farolesq'=>'Farol esquerdo','faroldir'=>'Farol direito','parachoque'=>'Para-choque dianteiro','grade'=>'Grade'],
-            'Lateral esquerda' => ['latesq'=>'Lateral esquerda','paralamaesq'=>'Para-lama esquerdo','retrovesq'=>'Retrovisor esquerdo','cxaresq'=>'Caixa de ar esquerda','ptdiantesq'=>'Porta dianteira esquerda','pttrasesq'=>'Porta traseira esquerda'],
-            'Lateral direita' => ['latdir'=>'Lateral direita','paralamadir'=>'Para-lama direito','retrovdir'=>'Retrovisor direito','cxardir'=>'Caixa de ar direita','ptdiantdir'=>'Porta dianteira direita','pttrasdir'=>'Porta traseira direita'],
-            'Traseira' => ['traseira'=>'Traseira','lantesq'=>'Lanterna esquerda','lantdir'=>'Lanterna direita','tmpmala'=>'Tampa do porta-malas','parachoquet'=>'Para-choque traseiro'],
-            'Interior' => ['itinterno'=>'Itens internos','painel'=>'Painel','som'=>'Som','bancos'=>'Bancos','ilumint'=>'Iluminação interna','tmpbag'=>'Tampa do bagageiro','retrovint'=>'Retrovisor interno','tapetes'=>'Tapetes'],
-            'Pneus e acessórios' => ['pneus'=>'Pneus','step'=>'Estepe','marcapneus'=>'Marca dos pneus','kitstep'=>'Kit estepe','calotas'=>'Calotas','bateria'=>'Bateria','safecar'=>'SafeCar','limpint'=>'Limpeza interna','limpext'=>'Limpeza externa'],
+            'Estado geral dos itens' => [
+              'teto' => 'Teto do veículo',
+              'frente' => 'Frente do veículo',
+              'latesq' => 'Lateral esquerda',
+              'latdir' => 'Lateral direita',
+              'traseira' => 'Traseira do veículo',
+              'itinterno' => 'Itens internos',
+              'pneus' => 'Pneus',
+            ],
           ];
           foreach ($gruposItens as $grupo => $itens): ?>
             <div class="col-12"><h3 class="h6 border-bottom pb-2 mb-0"><?= htmlspecialchars($grupo, ENT_QUOTES, 'UTF-8') ?></h3></div>
             <?php foreach ($itens as $campo => $rotulo): ?>
-              <div class="col-md-4"><label class="form-label" for="<?= $campo ?>"><?= htmlspecialchars($rotulo, ENT_QUOTES, 'UTF-8') ?></label><select class="form-select" id="<?= $campo ?>" name="<?= $campo ?>"><option value="ok" selected>OK</option><option value="naook">Não OK</option></select></div>
+              <div class="col-md-4"><label class="form-label" for="<?= $campo ?>"><?= htmlspecialchars($rotulo, ENT_QUOTES, 'UTF-8') ?><span class="text-danger">*</span></label><select class="form-select" id="<?= $campo ?>" name="<?= $campo ?>" required><option value="" selected disabled>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
             <?php endforeach; ?>
           <?php endforeach; ?>
+          <div class="col-12"><h3 class="h6 border-bottom pb-2 mb-0">Pneus, acessórios e conservação</h3></div>
+          <div class="col-md-4"><label class="form-label" for="step">Step</label><select class="form-select" id="step" name="step"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="marcapneus">Marca dos pneus</label><input class="form-control" id="marcapneus" name="marcapneus" type="text"></div>
+          <div class="col-md-4"><label class="form-label" for="kitstep">Kit Step</label><select class="form-select" id="kitstep" name="kitstep"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="calotas">Calotas</label><select class="form-select" id="calotas" name="calotas"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="naook">Não OK</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="bateria">Marca da bateria</label><input class="form-control" id="bateria" name="bateria" type="text"></div>
+          <div class="col-md-4"><label class="form-label" for="safecar">SafeCar</label><select class="form-select" id="safecar" name="safecar"><option value="" selected>Selecione</option><option value="ok">OK</option><option value="ausente">Ausente</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="limpint">Limpeza interna</label><select class="form-select" id="limpint" name="limpint"><option value="" selected>Selecione</option><option value="limpo">Limpo</option><option value="sujo">Sujo</option></select></div>
+          <div class="col-md-4"><label class="form-label" for="limpext">Limpeza externa</label><select class="form-select" id="limpext" name="limpext"><option value="" selected>Selecione</option><option value="limpo">Limpo</option><option value="sujo">Sujo</option></select></div>
           <div class="col-12"><label class="form-label" for="observacoes">Observações</label><textarea class="form-control" id="observacoes" name="observacao" rows="3" placeholder="Descreva avarias ou outras observações"></textarea></div>
         </div>
       </section>
