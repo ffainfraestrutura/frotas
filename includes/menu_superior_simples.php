@@ -288,7 +288,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Importar hodômetro</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>"
-                                    target="_self"><i class="fas fa-clipboard-check me-1"></i>Checklist</a></li>
+                                    target="_self">Iniciar Vistoria</a></li>
                         </ul>
                     </li>
 
