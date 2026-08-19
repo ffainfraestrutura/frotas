@@ -224,6 +224,24 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 
                 <?php if ($_SESSION['perfil'] == 4): ?>
                     <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="afMenuCadastros" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-square-plus me-1"></i>Cadastros
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="afMenuCadastros">
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Cadastrar Condutor</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Cadastrar Veículo</a></li>
+                            <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Cadastrar Manutenção</a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCondutores" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-id-card me-1"></i>Condutores
