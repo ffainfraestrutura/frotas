@@ -8,15 +8,15 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 $statusFiltro = valorRequisicao(['status']);
 $ccustoFiltro = valorRequisicao(['ccusto']);
 $cargoFiltro = valorRequisicao(['cargo']);
-$where = ["matricula LIKE '62%'"];
+$where = ["matricula LIKE '162%'"];
 $tipos = '';
 $params = [];
 if ($statusFiltro !== '') { $where[] = 'status = ?'; $tipos .= 's'; $params[] = $statusFiltro; }
 if ($ccustoFiltro !== '') { $where[] = 'ccusto = ?'; $tipos .= 's'; $params[] = $ccustoFiltro; }
 if ($cargoFiltro !== '') { $where[] = 'cargo = ?'; $tipos .= 's'; $params[] = $cargoFiltro; }
 $consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseName}`.`tbfuncionario` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE matricula LIKE '62%' AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbfuncionario` WHERE matricula LIKE '62%' AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE matricula LIKE '162%' AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbfuncionario` WHERE matricula LIKE '162%' AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 $mensagem = valorRequisicao(['msg']);
 
 function normalizarStatusCondutorPj($status): string
