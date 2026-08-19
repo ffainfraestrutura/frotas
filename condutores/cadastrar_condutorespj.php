@@ -12,13 +12,13 @@ if (!isset($databaseName) && isset($database) && is_string($database) && $databa
     $databaseName = $database;
 }
 
-$proximaMatricula = '620001';
+$proximaMatricula = '162001';
 $ccustos = ['erro' => '', 'linhas' => []];
 $cargos = ['erro' => '', 'linhas' => []];
 $projetos = ['erro' => '', 'linhas' => []];
 
 if (isset($conn) && $conn instanceof mysqli && isset($databaseName) && $databaseName !== '') {
-    $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseName}`.`tbfuncionario` WHERE matricula REGEXP '^62[0-9]{4}$'");
+    $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseName}`.`tbfuncionario` WHERE matricula REGEXP '^162[0-9]{3}$'");
     if (!empty($linhaMax['max_mat'])) {
         $proximaMatricula = str_pad(((int) $linhaMax['max_mat']) + 1, 6, '0', STR_PAD_LEFT);
     }
