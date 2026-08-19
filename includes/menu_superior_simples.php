@@ -452,7 +452,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                 <a class="dropdown-item" href="<?= menuSuperiorLink('cotafixa.php', $baseAutofrotaUrl) ?>" target="_self">Cota Fixa</a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>" target="_self">Inserir Saldo</a>
+                                <a class="dropdown-item" href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>" target="_self">Inserir Saldo Veículo</a>
                             </li>
                             <li>
                                 <a class="dropdown-item"
