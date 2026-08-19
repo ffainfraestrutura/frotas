@@ -330,6 +330,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         <?php if ($_SESSION['perfil'] == 4): ?>
                             <ul class="dropdown-menu" aria-labelledby="afMenuMultas">
                                 <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/cadastromulta.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Cadastrar Multas</a></li>
+                                <li><a class="dropdown-item"
                                         href="<?= menuSuperiorLink('multa/multasfrota.php', $baseAutofrotaUrl) ?>"
                                         target="_self">Listar Multas</a></li>
                                 <li><a class="dropdown-item"
