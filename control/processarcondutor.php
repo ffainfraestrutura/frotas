@@ -76,14 +76,24 @@ if ($cpfInformado !== '' && (strlen($cpfInformado) < 8 || strlen($cpfInformado) 
     redirecionarComMensagem($retornoFormulario, 'CPF deve conter entre 8 e 11 dígitos.');
 }
 
-$permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep'];
+$emailInformado = trim((string) ($_POST['email'] ?? ''));
+if ($emailInformado !== '' && filter_var($emailInformado, FILTER_VALIDATE_EMAIL) === false) {
+    redirecionarComMensagem($retornoFormulario, 'Informe um e-mail válido.');
+}
+
+$telefoneInformado = preg_replace('/\D+/', '', (string) ($_POST['tel_corp'] ?? ''));
+if (strlen($telefoneInformado) > 11) {
+    redirecionarComMensagem($retornoFormulario, 'Telefone deve conter no máximo 11 dígitos.');
+}
+
+$permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
 $colsInfo = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbfuncionario'", 's', [$databaseName]);
 $colunasExistentes = array_column($colsInfo['linhas'], 'COLUMN_NAME');
 $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
         $valor = trim((string) $_POST[$coluna]);
-        if ($coluna === 'cpf') {
+        if (in_array($coluna, ['cpf', 'tel_corp'], true)) {
             $valor = preg_replace('/\D+/', '', $valor);
         }
         if (in_array($coluna, ['nome','cargo','projeto','endereco','bairro','cidade','uf_trabalho','estado'], true)) {
@@ -161,30 +171,7 @@ if ($editando) {
     }
 }
 
-$email = trim((string) ($_POST['email'] ?? ''));
-$telefone = trim((string) ($_POST['telefone'] ?? ''));
-$matriculaContato = $matricula;
-if ($email !== '' || $telefone !== '') {
-    $userCols = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbusuario'", 's', [$databaseName]);
-    $userExistentes = array_column($userCols['linhas'], 'COLUMN_NAME');
-    $userDados = ['matricula' => $matriculaContato];
-    if (in_array('email', $userExistentes, true)) { $userDados['email'] = $email; }
-    if (in_array('telefone', $userExistentes, true)) { $userDados['telefone'] = $telefone; }
-    if (count($userDados) > 1 && in_array('matricula', $userExistentes, true)) {
-        $usuarioExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbusuario` WHERE matricula = ? LIMIT 1", 's', [$editando ? $matriculaOriginal : $matriculaContato]);
-        if ($usuarioExistente !== []) {
-            $atualizacoesUsuario = [];
-            $parametrosUsuario = [];
-            if (isset($userDados['email'])) { $atualizacoesUsuario[] = '`email` = ?'; $parametrosUsuario[] = $email; }
-            if (isset($userDados['telefone'])) { $atualizacoesUsuario[] = '`telefone` = ?'; $parametrosUsuario[] = $telefone; }
-            if ($editando && $matricula !== $matriculaOriginal) { $atualizacoesUsuario[] = '`matricula` = ?'; $parametrosUsuario[] = $matricula; }
-            $parametrosUsuario[] = $editando ? $matriculaOriginal : $matriculaContato;
-            consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbusuario` SET " . implode(', ', $atualizacoesUsuario) . " WHERE matricula = ?", str_repeat('s', count($parametrosUsuario)), $parametrosUsuario);
-        } else {
-            consultaPreparada($conn, "INSERT INTO `{$databaseName}`.`tbusuario` (`" . implode('`,`', array_keys($userDados)) . "`) VALUES (" . implode(',', array_fill(0, count($userDados), '?')) . ")", str_repeat('s', count($userDados)), array_values($userDados));
-        }
-    }
-} elseif ($editando && $matricula !== $matriculaOriginal) {
+if ($editando && $matricula !== $matriculaOriginal) {
     consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbusuario` SET matricula = ? WHERE matricula = ?", 'ss', [$matricula, $matriculaOriginal]);
 }
 
