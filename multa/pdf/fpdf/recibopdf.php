@@ -9,7 +9,7 @@ ini_set('memory_limit', '256M'); // Aumenta para 256MB
 $link = "$_SERVER[REQUEST_URI]";
 $idaux = explode("=", $link);
 $id = $idaux[1];
-$sql = "SELECT * FROM bdfrota.tbsmultas where id=" . $id . "";
+$sql = "SELECT * FROM bdautofrota.tbsmultas where id=" . $id . "";
 $resultado = mysql_query($sql) or die(mysql_error());
 $row = mysql_fetch_array($resultado);
 $valordescaux = $row[6] * 8 / 10;
@@ -64,7 +64,7 @@ if ($taxaadm1 == '' || $taxaadm1 == '0') {
 }
 
 if ($taxaadm1 == '') {
-    $sql4 = "SELECT tipoposse FROM bdfrota.tbveiculo WHERE placa='$placa';";
+    $sql4 = "SELECT tipoposse FROM bdautofrota.tbveiculo WHERE placa='$placa';";
     $resultado4 = mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
     $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
     $tipoposse = $row4['tipoposse'];

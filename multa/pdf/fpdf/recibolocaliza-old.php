@@ -30,7 +30,7 @@ $id=$_POST['id'];
 //$id = '682';
 //echo $id;
 
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite= '$id';";
+$sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite= '$id';";
 $resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
@@ -93,7 +93,7 @@ $estado = $row2['estado'];
 $cep = $row2['cep'];
 //$matricula = $row2['matricula'];
 
-$sql3 = "SELECT chassi, renavam, modelo FROM bdfrota.tbveiculo WHERE placa='$placa'; ";
+$sql3 = "SELECT chassi, renavam, modelo FROM bdautofrota.tbveiculo WHERE placa='$placa'; ";
 $resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
 $row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 
@@ -101,17 +101,17 @@ $chassi = $row3['chassi'];
 $renavam = $row3['renavam'];
 $modelo = $row3['modelo'];
 
-$sqla = "SELECT modelo FROM bdfrota.tbmodeloveic WHERE idtbmodeloveic='$modelo' ";
+$sqla = "SELECT modelo FROM bdautofrota.tbmodeloveic WHERE idtbmodeloveic='$modelo' ";
 $resultadoa = mysqli_query($conexao, $sqla) or die(mysqli_error($conexao));
 $rowa = mysqli_fetch_array($resultadoa, MYSQLI_BOTH);
 	$modelo = utf8_encode($rowa['modelo']);
 
-$sql4 = "SELECT numcnh FROM bdfrota.tbcnh WHERE matricula='$matricula';";
+$sql4 = "SELECT numcnh FROM bdautofrota.tbcnh WHERE matricula='$matricula';";
 $resultado4 =  mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
 $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
 $cnh = $row4['numcnh'];
 
-$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio, orgao FROM bdfrota.tbmulta WHERE placa='$placa' AND autoinfracao='$autoinfra' ; ";
+$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio, orgao FROM bdautofrota.tbmulta WHERE placa='$placa' AND autoinfracao='$autoinfra' ; ";
 $resultado5 = mysqli_query($conexao, $sql5) or die(mysqli_error($conexao));
 $row5 = mysqli_fetch_array($resultado5, MYSQLI_BOTH);
 

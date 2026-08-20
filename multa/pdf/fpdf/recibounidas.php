@@ -11,7 +11,7 @@ $id=$_POST['id'];
 
 //echo $id;
 
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite='$id';";
+$sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite='$id';";
 $resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
@@ -82,14 +82,14 @@ $estado = $row2['estado'];
 $cep = $row2['cep'];
 $matricula = $row2['matricula'];
 
-$sql3 = "SELECT renavam, chassi FROM bdfrota.tbveiculo WHERE placa='$placa'; ";
+$sql3 = "SELECT renavam, chassi FROM bdautofrota.tbveiculo WHERE placa='$placa'; ";
 $resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
 $row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 
 $chassi = $row3['chassi'];
 $renavam = $row3['renavam'];
 
-$sql4 = "SELECT numcnh FROM bdfrota.tbcnh WHERE matricula='$matricula'; ";
+$sql4 = "SELECT numcnh FROM bdautofrota.tbcnh WHERE matricula='$matricula'; ";
 $resultado4 =  mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
 $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
 
@@ -98,12 +98,12 @@ $cnh = $row4['numcnh'];
 
 
 if($idmovida != ''){
-	$sql5 = "SELECT dataInfra, descricao, endereco, cidade, uf, renavam FROM bdfrota.tbmovidamultas WHERE idmovida = '$idmovida' ; ";
+	$sql5 = "SELECT dataInfra, descricao, endereco, cidade, uf, renavam FROM bdautofrota.tbmovidamultas WHERE idmovida = '$idmovida' ; ";
 } else{
 	if($idmulta == ''){
-		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdfrota.tbmulta WHERE placa='$placa' AND autoinfracao='$autoinfracao'";
+		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdautofrota.tbmulta WHERE placa='$placa' AND autoinfracao='$autoinfracao'";
 	} else{
-		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdfrota.tbmulta WHERE idtbmulta='$idmulta'";
+		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdautofrota.tbmulta WHERE idtbmulta='$idmulta'";
 	}
 }
 

@@ -18,7 +18,7 @@ $id=$_POST['id'];
 
 //echo $id;
 //$id='2759';
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite= '$id';";
+$sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite= '$id';";
 $resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
@@ -38,9 +38,9 @@ $valortotal2 = $valordesc+80;
 $valortotal = sprintf('%0.2f', round($valortotal2, 2));*/
 
 if($idmulta !=''){
-	$sql1 = "SELECT * FROM bdfrota.tbmulta where idtbmulta= '$idmulta';";
+	$sql1 = "SELECT * FROM bdautofrota.tbmulta where idtbmulta= '$idmulta';";
 }else{
-	$sql1 = "SELECT * FROM bdfrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
+	$sql1 = "SELECT * FROM bdautofrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
 }
 
 $resultado1 = mysqli_query($conexao, $sql1) or die(mysqli_error($conexao));
@@ -53,14 +53,14 @@ $row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
 	$valparcelas= $row1['valparcelas'];
 
 if($locadora==''){
-	$sql2="SELECT idlocador FROM bdfrota.tbveiculo WHERE placa='$placa';";
+	$sql2="SELECT idlocador FROM bdautofrota.tbveiculo WHERE placa='$placa';";
 	$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
 	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 		$locadora= $row2['idlocador'];
 }
 
 if($filial ==''){
-	$sql3="SELECT unidade FROM bdfrota.tbveiculo WHERE placa='$placa';";
+	$sql3="SELECT unidade FROM bdautofrota.tbveiculo WHERE placa='$placa';";
 	$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
 	$row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 		$filial= $row3['unidade'];
