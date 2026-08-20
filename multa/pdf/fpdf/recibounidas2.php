@@ -53,12 +53,12 @@ $sql = "
 
         fi.cnpj,
         fi.Estado AS estado_filial_bd
-    FROM bdautofrota.tbmovidatramite t
-    LEFT JOIN bdautofrota.tbmulta m ON 
+    FROM bdautofrotas.tbmovidatramite t
+    LEFT JOIN bdautofrotas.tbmulta m ON 
         (t.idmulta = m.idtbmulta OR (t.idmulta IS NULL AND m.placa = t.placa AND m.autoinfracao = t.autoinfra))
-    LEFT JOIN bdautofrota.tbveiculo v ON v.placa = t.placa
+    LEFT JOIN bdautofrotas.tbveiculo v ON v.placa = t.placa
     LEFT JOIN bdcorp.tbfuncionario f ON f.nome = t.nome
-    LEFT JOIN bdautofrota.tbcnh c ON c.matricula = f.matricula
+    LEFT JOIN bdautofrotas.tbcnh c ON c.matricula = f.matricula
     LEFT JOIN bdcorp.tbfilial fi ON fi.idtbfilial = f.codfilial
     WHERE t.idtbmovidatramite = '".mysqli_real_escape_string($conn, $id)."'
     LIMIT 1;
