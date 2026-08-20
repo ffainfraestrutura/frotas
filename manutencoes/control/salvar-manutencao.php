@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
-
+ 
 exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');

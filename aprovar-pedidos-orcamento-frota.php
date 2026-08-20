@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/includes/autofrota_common.php';
 
+header('Location: index.php');
+exit;
+
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
@@ -15,8 +18,8 @@ if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
 if ($perfilLogado !== '4' || !in_array($matriculaLogada, $matriculasAutorizadas, true)) {
-    http_response_code(403);
-    exit('Acesso permitido apenas para frota autorizada.');
+    header('Location: index.php');
+    exit;
 }
 
 function moedaFrotaOrcamento($valor): string
