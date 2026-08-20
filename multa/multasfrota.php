@@ -228,11 +228,11 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                 t.idtbmovidatramite,
                 f.status,
                 f.ccusto
-            FROM `{$databaseName}`.tbmulta m
-            LEFT JOIN `{$databaseName}`.tbmovidatramite t
+            FROM tbmulta m
+            LEFT JOIN tbmovidatramite t
                 ON t.placa = m.placa
                AND t.autoinfra = m.autoinfracao
-            JOIN bdcorp.tbfuncionario f ON f.matricula = t.matricula
+            LEFT JOIN bdcorp.tbfuncionario f ON f.matricula = t.matricula
             WHERE m.datahoracadastro BETWEEN ? AND ?
         ";
 
