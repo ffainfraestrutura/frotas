@@ -150,7 +150,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
                             </div>
                             <div class="col-md-2">
                                 <label for="telefone" class="form-label">Telefone:</label>
-                                <input type="text" class="form-control form-control-sm" id="telefone" name="telefone" inputmode="numeric" maxlength="11" pattern="[0-9]*">
+                                <input type="text" class="form-control form-control-sm" id="telefone" name="tel_corp" inputmode="numeric" maxlength="11" pattern="[0-9]*">
                                 <div class="char-counter neutral" id="telefone-counter">0/11 dígitos</div>
                             </div>
                         </div>
@@ -219,7 +219,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
                             </div>
                             <div class="col-md-4">
                                 <label for="email" class="form-label">E-mail:</label>
-                                <input type="email" class="form-control form-control-sm" id="email" name="email">
+                                <input type="email" class="form-control form-control-sm" id="email" name="email" maxlength="99">
                             </div>
                         </div>
                     </div>

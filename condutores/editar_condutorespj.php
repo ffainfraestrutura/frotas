@@ -26,19 +26,6 @@ if ($condutor === []) {
     exit;
 }
 
-$userCols = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbusuario'", 's', [$databaseName]);
-$userExistentes = array_column($userCols['linhas'], 'COLUMN_NAME');
-$contato = [];
-if (in_array('matricula', $userExistentes, true) && (in_array('email', $userExistentes, true) || in_array('telefone', $userExistentes, true))) {
-    $colunasContato = array_values(array_intersect(['email', 'telefone'], $userExistentes));
-    $contato = buscarUmaLinha(
-        $conn,
-        "SELECT `" . implode('`,`', $colunasContato) . "` FROM `{$databaseName}`.`tbusuario` WHERE matricula = ? LIMIT 1",
-        's',
-        [$matricula]
-    );
-}
-
 $ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
 $cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbfuncionario` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 
@@ -104,8 +91,8 @@ renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
                 <div class="col-md-3"><label class="form-label">Bairro</label><input class="form-control text-uppercase" name="bairro" value="<?= esc(valorCondutorPj($condutor, 'bairro')) ?>"></div>
                 <div class="col-md-3"><label class="form-label">Cidade</label><input class="form-control text-uppercase" name="cidade" value="<?= esc(valorCondutorPj($condutor, 'cidade')) ?>"></div>
                 <div class="col-md-1"><label class="form-label">CEP</label><input class="form-control" name="cep" value="<?= esc(valorCondutorPj($condutor, 'cep')) ?>"></div>
-                <div class="col-md-4"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" value="<?= esc($contato['email'] ?? '') ?>"></div>
-                <div class="col-md-3"><label class="form-label">Telefone</label><input class="form-control" name="telefone" value="<?= esc($contato['telefone'] ?? '') ?>"></div>
+                <div class="col-md-4"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" maxlength="99" value="<?= esc(valorCondutorPj($condutor, 'email')) ?>"></div>
+                <div class="col-md-3"><label class="form-label">Telefone</label><input class="form-control" name="tel_corp" inputmode="numeric" maxlength="11" pattern="[0-9]*" value="<?= esc(valorCondutorPj($condutor, 'tel_corp')) ?>"></div>
             </div>
         </div>
         <div class="card-footer d-flex justify-content-end gap-2">
