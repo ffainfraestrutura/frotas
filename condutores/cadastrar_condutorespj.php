@@ -4,6 +4,10 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? '');
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? '');
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
 
 if (!isset($conn) && isset($con) && $con instanceof mysqli) {
     $conn = $con;
@@ -12,20 +16,20 @@ if (!isset($databaseName) && isset($database) && is_string($database) && $databa
     $databaseName = $database;
 }
 
-$proximaMatricula = '162001';
+$proximaMatricula = '1620001';
 $ccustos = ['erro' => '', 'linhas' => []];
 $cargos = ['erro' => '', 'linhas' => []];
 $projetos = ['erro' => '', 'linhas' => []];
 
-if (isset($conn) && $conn instanceof mysqli && isset($databaseName) && $databaseName !== '') {
-    $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseName}`.`tbfuncionario` WHERE matricula REGEXP '^162[0-9]{3}$'");
+if (isset($conn) && $conn instanceof mysqli && $databaseCorp !== '') {
+    $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula REGEXP '^16[0-9]{5}$'");
     if (!empty($linhaMax['max_mat'])) {
-        $proximaMatricula = str_pad(((int) $linhaMax['max_mat']) + 1, 6, '0', STR_PAD_LEFT);
+        $proximaMatricula = str_pad(((int) $linhaMax['max_mat']) + 1, 7, '0', STR_PAD_LEFT);
     }
 
-    $ccustos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(ccusto)) AS ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE ccusto IS NOT NULL AND TRIM(ccusto) <> '' ORDER BY ccusto");
-    $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseName}`.`tbfuncionario` WHERE cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
-    $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseName}`.`tbfuncionario` WHERE projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
+    $ccustos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(ccusto)) AS ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND ccusto IS NOT NULL AND TRIM(ccusto) <> '' ORDER BY ccusto");
+    $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
+    $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
 }
 
 $mensagem = valorRequisicao(['msg']);
@@ -238,8 +242,8 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
                         <div class="row g-3 mb-3">
                             <div class="col-md-2">
                                 <label for="matricula" class="form-label">Matrícula:<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc($proximaMatricula) ?>" readonly required style="background-color: #e9ecef;">
-                                <small class="text-muted">Auto-gerada (6 dígitos)</small>
+                                <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc($proximaMatricula) ?>" inputmode="numeric" minlength="7" maxlength="7" pattern="16[0-9]{5}" readonly required style="background-color: #e9ecef;">
+                                <small class="text-muted">Auto-gerada (7 dígitos)</small>
                             </div>
                             <div class="col-md-2">
                                 <label for="status" class="form-label">Situação:</label>

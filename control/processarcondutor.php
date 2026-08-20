@@ -51,6 +51,11 @@ if ($arquivoHelpers === '') {
 require_once $arquivoHelpers;
 exigirLogin();
 
+$databaseCorp = trim((string) ($databaseCorp ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
+
 $acao = trim((string) ($_POST['acao'] ?? 'cadastrar'));
 $editando = $acao === 'editar';
 $matriculaOriginal = trim((string) ($_POST['matricula_original'] ?? ''));
@@ -71,6 +76,10 @@ if ($matricula === '' || $nome === '') {
     redirecionarComMensagem($retornoFormulario, 'Informe matrícula e nome.');
 }
 
+if (preg_match('/^16[0-9]{5}$/D', $matricula) !== 1) {
+    redirecionarComMensagem($retornoFormulario, 'A matrícula deve começar com 16 e conter exatamente 7 dígitos.');
+}
+
 $cpfInformado = preg_replace('/\D+/', '', (string) ($_POST['cpf'] ?? ''));
 if ($cpfInformado !== '' && (strlen($cpfInformado) < 8 || strlen($cpfInformado) > 11)) {
     redirecionarComMensagem($retornoFormulario, 'CPF deve conter entre 8 e 11 dígitos.');
@@ -87,8 +96,8 @@ if (strlen($telefoneInformado) > 11) {
 }
 
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
-$colsInfo = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbfuncionario'", 's', [$databaseName]);
-$colunasExistentes = array_column($colsInfo['linhas'], 'COLUMN_NAME');
+$colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseCorp}`.`tbfuncionario`");
+$colunasExistentes = array_column($colsInfo['linhas'], 'Field');
 $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
@@ -111,13 +120,13 @@ if ($editando) {
         redirecionarComMensagem('../listar_condutorespj.php', 'Matrícula original não informada.');
     }
 
-    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? AND matricula LIKE '162%' LIMIT 1", 's', [$matriculaOriginal]);
+    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1", 's', [$matriculaOriginal]);
     if ($condutorExistente === []) {
         redirecionarComMensagem('../listar_condutorespj.php', 'Condutor PJ não encontrado.');
     }
 
     if ($matricula !== $matriculaOriginal) {
-        $matriculaEmUso = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
+        $matriculaEmUso = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? LIMIT 1", 's', [$matricula]);
         if ($matriculaEmUso !== []) {
             redirecionarComMensagem($retornoFormulario, 'Matrícula já cadastrada.');
         }
@@ -128,7 +137,7 @@ if ($editando) {
         $atribuicoes[] = "`{$coluna}` = ?";
     }
 
-    $sql = "UPDATE `{$databaseName}`.`tbfuncionario` SET " . implode(', ', $atribuicoes) . " WHERE matricula = ?";
+    $sql = "UPDATE `{$databaseCorp}`.`tbfuncionario` SET " . implode(', ', $atribuicoes) . " WHERE idtbempresa = 2 AND matricula = ?";
     $parametros = array_values($dados);
     $parametros[] = $matriculaOriginal;
     $consulta = consultaPreparada($conn, $sql, str_repeat('s', count($parametros)), $parametros);
@@ -136,14 +145,15 @@ if ($editando) {
         redirecionarComMensagem($retornoFormulario, 'Erro ao atualizar: ' . $consulta['erro']);
     }
 } else {
-    $existe = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
+    $existe = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? LIMIT 1", 's', [$matricula]);
     if ($existe !== []) {
         redirecionarComMensagem('../cadastrar_condutorespj.php', 'Matrícula já cadastrada.');
     }
 
+    $dados['idtbempresa'] = '2';
     $colunas = array_keys($dados);
     $placeholders = implode(',', array_fill(0, count($colunas), '?'));
-    $sql = "INSERT INTO `{$databaseName}`.`tbfuncionario` (`" . implode('`,`', $colunas) . "`) VALUES ({$placeholders})";
+    $sql = "INSERT INTO `{$databaseCorp}`.`tbfuncionario` (`" . implode('`,`', $colunas) . "`) VALUES ({$placeholders})";
     $consulta = consultaPreparada($conn, $sql, str_repeat('s', count($dados)), array_values($dados));
     if ($consulta['erro'] !== '') {
         redirecionarComMensagem('../cadastrar_condutorespj.php', 'Erro ao cadastrar: ' . $consulta['erro']);

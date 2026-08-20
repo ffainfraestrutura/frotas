@@ -5,6 +5,10 @@ $autofrotaSessao = autofrotaInit();
 
 $conn = $autofrotaSessao['conn'] ?? null;
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
 
 $matricula = valorRequisicao(['matricula', 'matcond']);
 $mensagem = valorRequisicao(['msg']);
@@ -16,7 +20,7 @@ if ($matricula === '') {
 
 $condutor = buscarUmaLinha(
     $conn,
-    "SELECT * FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? AND matricula LIKE '162%' LIMIT 1",
+    "SELECT * FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1",
     's',
     [$matricula]
 );
@@ -26,8 +30,8 @@ if ($condutor === []) {
     exit;
 }
 
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbfuncionario` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 
 function valorCondutorPj(array $condutor, string $campo): string
 {
@@ -62,7 +66,7 @@ renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
             <div class="row g-3">
                 <div class="col-md-2">
                     <label class="form-label">Matrícula <span class="required-marker">*</span></label>
-                    <input class="form-control" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" required>
+                    <input class="form-control" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" inputmode="numeric" minlength="7" maxlength="7" pattern="16[0-9]{5}" title="A matrícula deve começar com 16 e conter exatamente 7 dígitos." required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Nome <span class="required-marker">*</span></label>
