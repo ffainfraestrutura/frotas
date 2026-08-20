@@ -18,7 +18,7 @@ $id = $_POST['id'];
 //echo $id;
 //$id='2759';
 $sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite= '$id';";
-$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
 $nome = $row['nome'];
@@ -43,7 +43,7 @@ if ($idmulta != '') {
 	$sql1 = "SELECT * FROM bdautofrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
 }
 //print $sql1;
-$resultado1 = mysqli_query($conexao, $sql1) or die(mysqli_error($conexao));
+$resultado1 = mysqli_query($conn, $sql1) or die(mysqli_error($conn));
 $row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
 $valor1 = $row1['valor'];
 $valdesconto1 = $row1['valdesconto'];
@@ -66,20 +66,20 @@ $dataInfraf = $dataInfra2[2] . "/" . $dataInfra2[1] . "/" . $dataInfra2[0] . " "
 
 if ($locadora == '') {
 	$sql2 = "SELECT idlocador FROM bdautofrota.tbveiculo WHERE placa='$placa';";
-	$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+	$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 	$locadora = $row2['idlocador'];
 }
 
 $sql2 = "SELECT cnpj, Estado FROM bdcorp.tbfilial WHERE nome='$filial'; ";
-$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $cnpj = $row2['cnpj'];
 $estadofilial = $row2['Estado'];
 
 if ($filial == '') {
 	$sql3 = "SELECT unidade FROM bdautofrota.tbveiculo WHERE placa='$placa';";
-	$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+	$resultado3 = mysqli_query($conn, $sql3) or die(mysqli_error($conn));
 	$row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 	$estadofilial = $row3['unidade'];
 }
@@ -215,13 +215,13 @@ switch ($mes) {
 $dia = $datah[2];
 
 $sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
-$resultado2a = mysqli_query($conexao, $sql2a) or die(mysqli_error($conexao));
+$resultado2a = mysqli_query($conn, $sql2a) or die(mysqli_error($conn));
 $row2a = mysqli_fetch_array($resultado2a, MYSQLI_BOTH);
 $idtbfuncionario = $row2a['idtbfuncionario'];
 
 //$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
 $sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
-$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $rg = $row2['rg'];
 $cpf = $row2['cpf'];
@@ -233,13 +233,13 @@ $cep = $row2['cep'];
 $matricula = $row2['matricula'];
 
 $sql3 = "SELECT renavam, chassi FROM bdautofrota.tbveiculo WHERE placa='$placa'; ";
-$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+$resultado3 = mysqli_query($conn, $sql3) or die(mysqli_error($conn));
 $row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 $chassi = $row3['chassi'];
 $renavam = $row3['renavam'];
 
 $sql4 = "SELECT numcnh FROM bdautofrota.tbcnh WHERE matricula='$matricula'; ";
-$resultado4 = mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
+$resultado4 = mysqli_query($conn, $sql4) or die(mysqli_error($conn));
 $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
 $cnh = $row4['numcnh'];
 

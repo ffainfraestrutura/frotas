@@ -2,8 +2,8 @@
 require '../181/fpdf.php';
 require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
-ini_set('display_errors', '0');
-ini_set('display_startup_errors', '0');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
@@ -60,11 +60,11 @@ $sql = "
     LEFT JOIN bdcorp.tbfuncionario f ON f.nome = t.nome
     LEFT JOIN bdautofrota.tbcnh c ON c.matricula = f.matricula
     LEFT JOIN bdcorp.tbfilial fi ON fi.idtbfilial = f.codfilial
-    WHERE t.idtbmovidatramite = '".mysqli_real_escape_string($conexao, $id)."'
+    WHERE t.idtbmovidatramite = '".mysqli_real_escape_string($conn, $id)."'
     LIMIT 1;
 ";
 
-$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
 $row = mysqli_fetch_assoc($resultado);
 
 if (!$row) {
