@@ -53,7 +53,6 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
     <style>
         .condutor-status-badge{display:inline-flex;align-items:center;gap:.35rem;min-width:86px;justify-content:center;font-weight:600}
         .condutor-action{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center}
-        table.dataTable thead th{background-color:#2E2851;color:#fff}
     </style>
     <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
     <?php if ($consulta['erro'] !== ''): ?><div class="alert alert-danger"><?= esc($consulta['erro']) ?></div><?php endif; ?>
@@ -63,7 +62,7 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
         <div class="col-md-3"><label class="form-label">Cargo</label><select class="form-select" name="cargo"><option value="">Todos</option><?php foreach ($cargos['linhas'] as $linha): $valor=$linha['cargo']??''; ?><option value="<?= esc($valor) ?>" <?= $cargoFiltro===$valor?'selected':'' ?>><?= esc($valor) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary flex-fill"><i class="fa fa-filter me-1"></i>Filtrar</button><a class="btn btn-secondary flex-fill" href="listar_condutorespj.php">Limpar</a></div>
     </div></form>
-    <div class="card"><div class="card-body table-responsive"><table class="table table-striped table-hover" data-datatable="1"><thead><tr><th>Matrícula</th><th>Nome</th><th>Centro de custo</th><th>Cargo</th><th>UF</th><th>Data admissão</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+    <div class="card"><div class="card-body table-responsive"><table class="table table-striped table-hover" data-datatable="1"><thead class="table-dark"><tr><th>Matrícula</th><th>Nome</th><th>Centro de custo</th><th>Cargo</th><th>UF</th><th>Data admissão</th><th>Status</th><th>Ações</th></tr></thead><tbody>
         <?php foreach ($consulta['linhas'] as $linha): $mat=$linha['matricula']??''; $status=$linha['status'] ?? ''; ?><tr><td><?= esc($mat) ?></td><td><?= esc($linha['nome'] ?? '') ?></td><td><?= esc($linha['ccusto'] ?? '') ?></td><td><?= esc($linha['cargo'] ?? '') ?></td><td><?= esc(($linha['uf_trabalho'] ?? '') ?: ($linha['estado'] ?? '')) ?></td><td><?= esc(formatarDataPortal($linha['dtadmissao'] ?? '', 'd/m/Y')) ?></td><td><span class="badge rounded-pill condutor-status-badge <?= esc(classeBadgeStatusCondutorPj($status)) ?>"><i class="fa fa-circle"></i><?= esc($status) ?></span></td><td class="text-nowrap"><form class="d-inline" method="post" action="dados-condutor-pj.php"><input type="hidden" name="matcond" value="<?= esc($mat) ?>"><button class="btn btn-sm btn-info condutor-action" title="Dados"><i class="fa fa-eye"></i></button></form><a class="btn btn-sm btn-warning condutor-action" href="editar_condutorespj.php?matricula=<?= urlencode((string) $mat) ?>" title="Editar"><i class="fa fa-pen-to-square"></i></a></td></tr><?php endforeach; ?>
     </tbody></table></div></div>
 </div>
