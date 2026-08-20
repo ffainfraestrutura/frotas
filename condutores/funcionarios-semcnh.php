@@ -146,7 +146,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </section>
 
                 <div class="mt-3 alert alert-info" role="alert">
-                    <strong>Filtro Aplicado:</strong> Exibindo funcionários do estado: <strong><?= htmlspecialchars($unidadeSelecionada === 'TODOS' ? 'TODOS OS ESTADOS' : $unidadeSelecionada) ?></strong>
+                    <strong>Filtro Aplicado:</strong> Exibindo colaboradadores do estado: <strong><?= htmlspecialchars($unidadeSelecionada === 'TODOS' ? 'TODOS OS ESTADOS' : $unidadeSelecionada) ?></strong>
                 </div>
 
                 <div style="width: 100%;" class="mt-4 m-auto">
@@ -192,7 +192,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
 
                 <div class="mt-3">
-                    <button type="button" class="btn btn-secondary" onclick="window.location.href = 'listagem-condutor.php';">Voltar</button>
+                    <button type="button" class="btn btn-secondary" onclick="history.back();">Voltar</button>
                 </div>
             </div>
         </main>
