@@ -5,18 +5,22 @@ $autofrotaSessao = autofrotaInit();
 
 $conn = $autofrotaSessao['conn'] ?? null;
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
 $statusFiltro = valorRequisicao(['status']);
 $ccustoFiltro = valorRequisicao(['ccusto']);
 $cargoFiltro = valorRequisicao(['cargo']);
-$where = ["matricula LIKE '162%'"];
+$where = ["idtbempresa = 2", "matricula LIKE '162%'"];
 $tipos = '';
 $params = [];
 if ($statusFiltro !== '') { $where[] = 'status = ?'; $tipos .= 's'; $params[] = $statusFiltro; }
 if ($ccustoFiltro !== '') { $where[] = 'ccusto = ?'; $tipos .= 's'; $params[] = $ccustoFiltro; }
 if ($cargoFiltro !== '') { $where[] = 'cargo = ?'; $tipos .= 's'; $params[] = $cargoFiltro; }
-$consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseName}`.`tbfuncionario` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE matricula LIKE '162%' AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbfuncionario` WHERE matricula LIKE '162%' AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseCorp}`.`tbfuncionario` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula LIKE '162%' AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula LIKE '162%' AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 $mensagem = valorRequisicao(['msg']);
 
 function normalizarStatusCondutorPj($status): string
