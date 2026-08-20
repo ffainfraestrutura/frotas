@@ -22,7 +22,7 @@ if ($perfilLogado === '3') {
     exit;
 }
 if ($perfilLogado === '4') {
-    header('Location: combustivel/dashboard_financeiro.php');
+    header('Location: index.php');
     exit;
 }
 if ($perfilLogado === '10') {
