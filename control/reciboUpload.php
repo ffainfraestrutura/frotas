@@ -112,7 +112,7 @@ $nome = $dados['nome'];
 $nomeLimpo = preg_replace('/[^a-zA-Z0-9\-_]/', '', str_replace(' ', '-', $nome));
 $nomeFinal = $autoinfraDb . '-' . $nomeLimpo . '-' . $matricula . '.' . $extensao;
 $destinoCompleto = $pastaUpload . $nomeFinal;
-$caminhoBanco = '/autofrota/docs/multas/' . $nomeFinal;
+$caminhoBanco = '//multas/' . $nomeFinal;
 
 // Remove arquivo antigo se existir (substituição)
 $isSubstituicao = false;

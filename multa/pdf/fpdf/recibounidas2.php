@@ -242,7 +242,7 @@ $pdf = new PDF();
 $pdf->AliasNbPages();
 $pdf->AddPage();
 
-$pdf->Image('../../src/images/logo.png', 10, 6, 20);
+$pdf->Image('../../../src/logo/logo.png', 10, 6, 20);
 $pdf->SetFont('Arial', 'B', 12);
 $pdf->SetFillColor(215);
 $pdf->Ln(0.1);
