@@ -76,7 +76,7 @@ function carregarOpcoes(mysqli $conn, string $sql, string $valueField, string $l
 
 $colaboradores = carregarOpcoes(
     $conn,
-    'SELECT matricula, nome FROM tbfuncionario WHERE status = "Ativo" ORDER BY nome',
+    'SELECT matricula, nome FROM bdcorp.tbfuncionario WHERE status = "Ativo" ORDER BY nome',
     'matricula',
     'nome'
 );
@@ -84,14 +84,14 @@ $colaboradores = carregarOpcoes(
 
 $filiais = carregarOpcoes(
     $conn,
-    'SELECT idtbfilial, descricao AS nome FROM tbfilial ORDER BY descricao',
+    'SELECT idtbfilial, descricao AS nome FROM bdcorp.tbfilial ORDER BY descricao',
     'idtbfilial',
     'nome'
 );
 
 $centrosCusto = carregarOpcoes(
     $conn,
-    "SELECT descricao as ccusto FROM tbccusto WHERE visivel = 1 ORDER BY descricao",
+    "SELECT descricao as ccusto FROM bdcorp.tbccusto WHERE visivel = 1 ORDER BY descricao",
     'ccusto',
     'ccusto'
 );
