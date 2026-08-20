@@ -5,6 +5,7 @@ session_start();
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? null;
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$usuariof = (string) ($_SESSION['usuario'] ?? '');
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['usuario']) || $_SESSION['usuario'] == null) {

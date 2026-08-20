@@ -76,7 +76,7 @@ function carregarOpcoes(mysqli $conn, string $sql, string $valueField, string $l
 
 $colaboradores = carregarOpcoes(
     $conn,
-    'SELECT matricula, nome FROM bdcorp.tbfuncionario WHERE status = "Ativo" ORDER BY nome',
+    'SELECT matricula, nome FROM tbcondutor WHERE status = "Ativo" ORDER BY nome',
     'matricula',
     'nome'
 );
