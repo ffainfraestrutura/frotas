@@ -69,7 +69,7 @@ if ($locadora == '') {
 $sql2 = "SELECT 
     fi.CNPJ, fi.estado
 FROM
-    bdaniel.tbfuncionario f
+    bdcorp.tbfuncionario f
         JOIN
     BdPonto.tbfilial fi ON fi.idtbfilial = f.codfilial
 WHERE
@@ -218,13 +218,13 @@ $dia = $datah[2];
 
 $hojef = $datah[2] . "/" . $datah[1] . "/" . $datah[0];
 
-$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
+$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
 $resultado2a = mysqli_query($conn, $sql2a) or die(mysqli_error($conn));
 $row2a = mysqli_fetch_array($resultado2a, MYSQLI_BOTH);
 $idtbfuncionario = $row2a['idtbfuncionario'];
 
-//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
+//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $rg = $row2['rg'];
@@ -254,7 +254,7 @@ $resultado5 = mysqli_query($conn, $sql5) or die(mysqli_error($conn));
 $row5 = mysqli_fetch_array($resultado5, MYSQLI_BOTH);
 $modelof = $row5['modelo'];
 
-$sql6 = "SELECT tel_corp FROM bdaniel.tbfuncionario WHERE matricula='$matricula'; ";
+$sql6 = "SELECT tel_corp FROM bdcorp.tbfuncionario WHERE matricula='$matricula'; ";
 $resultado6 = mysqli_query($conn, $sql6) or die(mysqli_error($conn));
 $row6 = mysqli_fetch_array($resultado6, MYSQLI_BOTH);
 $telefone = $row6['tel_corp'];

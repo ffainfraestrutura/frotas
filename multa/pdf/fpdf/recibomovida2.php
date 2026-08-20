@@ -72,7 +72,7 @@ if ($locadora == '') {
 $sql2 = "SELECT 
     fi.CNPJ, fi.estado
 FROM
-    bdaniel.tbfuncionario f
+    bdcorp.tbfuncionario f
         JOIN
     BdPonto.tbfilial fi ON fi.estado = f.uf_trabalho
 WHERE
@@ -221,13 +221,13 @@ switch ($mes) {
 
 $dia = $datah[2];
 
-$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
+$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
 $resultado2a = mysqli_query($conn, $sql2a) or die(mysqli_error($conn));
 $row2a = mysqli_fetch_array($resultado2a, MYSQLI_BOTH);
 $idtbfuncionario = $row2a['idtbfuncionario'];
 
-//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE matricula = '$matricula'; ";
+//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE matricula = '$matricula'; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $rg = $row2['rg'];

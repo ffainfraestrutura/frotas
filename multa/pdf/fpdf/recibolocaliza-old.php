@@ -80,7 +80,7 @@ if ($mes == 1) {
 }
 $dia = $datah[2];
 
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE matricula = '$matricula'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE matricula = '$matricula'; ";
 $resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 
