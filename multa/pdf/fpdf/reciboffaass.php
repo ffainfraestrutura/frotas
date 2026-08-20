@@ -2,11 +2,10 @@
 require '../181/fpdf.php';
 require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
-
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
-
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 $hoje = date('Y-m-d');
 
 $id = $_POST['id'];
@@ -56,7 +55,7 @@ if ($locadora == '') {
 	$locadora = $row2['idlocador'];
 }
 
-$sql2 = "SELECT cnpj, Estado FROM bdffa.tbfilial WHERE idtbfilial = '$filial'; ";
+$sql2 = "SELECT cnpj, Estado FROM bdcorp.tbfilial WHERE idtbfilial = '$filial'; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $cnpj = $row2['cnpj'];

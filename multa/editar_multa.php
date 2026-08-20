@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 date_default_timezone_set('America/Sao_Paulo');
 
-const APP_DEBUG = true;
+const APP_DEBUG = false;
 
 if (APP_DEBUG) {
     ini_set('display_errors', '1');
@@ -139,7 +139,7 @@ $filiais = carregarOpcoes(
 
 $centrosCusto = carregarOpcoes(
     $conn,
-    "SELECT descricao as ccusto FROM bdffa.tbccusto WHERE visivel = 1 ORDER BY descricao",
+    "SELECT descricao as ccusto FROM bdcorp.tbccusto WHERE visivel = 1 ORDER BY descricao",
     'ccusto',
     'ccusto'
 );

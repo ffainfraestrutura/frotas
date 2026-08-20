@@ -2,9 +2,9 @@
 require '../181/fpdf.php';
 require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
-// ini_set('display_errors', '1');
-// ini_set('display_startup_errors', '1');
-// error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
 ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 
@@ -80,7 +80,7 @@ $sql2 = "SELECT
 FROM
     bdcorp.tbfuncionario f
         JOIN
-    BdPonto.tbfilial fi ON fi.idtbfilial = f.codfilial
+    bdcorp.tbfilial fi ON fi.idtbfilial = f.codfilial
 WHERE
     f.matricula = '$matricula'";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
