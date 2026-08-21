@@ -1,10 +1,13 @@
 <?php
-require 'fpdf.php';
-require('../../conecta.php');
-require('../../conecta2.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
-$id = $_POST['id'] ?? '';
+$id = $_GET['id'] ?? '';
 
 if (empty($id)) {
     die('ID não informado');
@@ -50,18 +53,18 @@ $sql = "
 
         fi.cnpj,
         fi.Estado AS estado_filial_bd
-    FROM bdfrota.tbmovidatramite t
-    LEFT JOIN bdfrota.tbmulta m ON 
+    FROM bdautofrotas.tbmovidatramite t
+    LEFT JOIN bdautofrotas.tbmulta m ON 
         (t.idmulta = m.idtbmulta OR (t.idmulta IS NULL AND m.placa = t.placa AND m.autoinfracao = t.autoinfra))
-    LEFT JOIN bdfrota.tbveiculo v ON v.placa = t.placa
-    LEFT JOIN bdaniel.tbfuncionario f ON f.nome = t.nome
-    LEFT JOIN bdfrota.tbcnh c ON c.matricula = f.matricula
-    LEFT JOIN BdPonto.tbfilial fi ON fi.idtbfilial = f.codfilial
-    WHERE t.idtbmovidatramite = '".mysqli_real_escape_string($conexao, $id)."'
+    LEFT JOIN bdautofrotas.tbveiculo v ON v.placa = t.placa
+    LEFT JOIN bdcorp.tbfuncionario f ON f.nome = t.nome
+    LEFT JOIN bdautofrotas.tbcnh c ON c.matricula = f.matricula
+    LEFT JOIN bdcorp.tbfilial fi ON fi.idtbfilial = f.codfilial
+    WHERE t.idtbmovidatramite = '".mysqli_real_escape_string($conn, $id)."'
     LIMIT 1;
 ";
 
-$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
 $row = mysqli_fetch_assoc($resultado);
 
 if (!$row) {
@@ -224,7 +227,7 @@ class PDF extends FPDF
     /*
     function Header()
     {
-        $this->Image('../../img/logo.png', 10, 6, 20);
+        $this->Image('../../img/logo_hallen.png', 10, 6, 20);
         $this->SetFont('Arial', 'B', 12);
         $this->SetFillColor(215);
         $this->Ln(0.1);
@@ -239,7 +242,7 @@ $pdf = new PDF();
 $pdf->AliasNbPages();
 $pdf->AddPage();
 
-$pdf->Image('../../src/images/logo.png', 10, 6, 20);
+$pdf->Image('../../../src/logo/logo_hallen.png', 10, 6, 20);
 $pdf->SetFont('Arial', 'B', 12);
 $pdf->SetFillColor(215);
 $pdf->Ln(0.1);

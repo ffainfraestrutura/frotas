@@ -1,8 +1,11 @@
 <?php
-require'fpdf.php';
-require('../../conecta.php');
-require('../../conecta2.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 
 
@@ -15,8 +18,8 @@ $id=$_POST['id'];
 
 //echo $id;
 //$id='2759';
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite= '$id';";
-$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite= '$id';";
+$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
 $nome= $row['nome'];
@@ -35,12 +38,12 @@ $valortotal2 = $valordesc+80;
 $valortotal = sprintf('%0.2f', round($valortotal2, 2));*/
 
 if($idmulta !=''){
-	$sql1 = "SELECT * FROM bdfrota.tbmulta where idtbmulta= '$idmulta';";
+	$sql1 = "SELECT * FROM bdautofrota.tbmulta where idtbmulta= '$idmulta';";
 }else{
-	$sql1 = "SELECT * FROM bdfrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
+	$sql1 = "SELECT * FROM bdautofrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
 }
 
-$resultado1 = mysqli_query($conexao, $sql1) or die(mysqli_error($conexao));
+$resultado1 = mysqli_query($conn, $sql1) or die(mysqli_error($conn));
 $row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
 	$valor1= $row1['valor'];
 	$valdesconto1= $row1['valdesconto'];
@@ -50,15 +53,15 @@ $row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
 	$valparcelas= $row1['valparcelas'];
 
 if($locadora==''){
-	$sql2="SELECT idlocador FROM bdfrota.tbveiculo WHERE placa='$placa';";
-	$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+	$sql2="SELECT idlocador FROM bdautofrota.tbveiculo WHERE placa='$placa';";
+	$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 		$locadora= $row2['idlocador'];
 }
 
 if($filial ==''){
-	$sql3="SELECT unidade FROM bdfrota.tbveiculo WHERE placa='$placa';";
-	$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+	$sql3="SELECT unidade FROM bdautofrota.tbveiculo WHERE placa='$placa';";
+	$resultado3 = mysqli_query($conn, $sql3) or die(mysqli_error($conn));
 	$row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 		$filial= $row3['unidade'];
 }
@@ -146,7 +149,7 @@ class PDF extends FPDF
 function Header()
 {
 	// Logo
-	$this->Image('../../img/logo.png',10,6,30);
+	$this->Image('../../img/logo_hallen.png',10,6,30);
 	// Arial bold 15
 	$this->SetFont('Arial','B',12);
 	// Cor de fundo

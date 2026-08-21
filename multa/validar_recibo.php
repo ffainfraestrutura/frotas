@@ -5,6 +5,7 @@ session_start();
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? null;
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$usuariof = (string) ($_SESSION['usuario'] ?? '');
 
 // Verificar se o usuário está logado
 if (!isset($_SESSION['usuario']) || $_SESSION['usuario'] == null) {
@@ -123,7 +124,7 @@ if ($conn instanceof mysqli && $id > 0) {
 
       // Buscar status do funcionário
       if (!empty($dadosMulta['matricula'])) {
-        $sqlStatus = "SELECT status FROM bdaniel.tbfuncionario WHERE matricula = ? LIMIT 1";
+        $sqlStatus = "SELECT status FROM bdcorp.tbfuncionario WHERE matricula = ? LIMIT 1";
         $stmtStatus = mysqli_prepare($conn, $sqlStatus);
         if ($stmtStatus) {
           mysqli_stmt_bind_param($stmtStatus, 's', $dadosMulta['matricula']);

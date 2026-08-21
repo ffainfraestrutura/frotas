@@ -1,12 +1,15 @@
 <?php
-require 'fpdf.php';
-require('../../conecta.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
-
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 $link = "$_SERVER[REQUEST_URI]";
 $idaux = explode("=", $link);
 $id = $idaux[1];
-$sql = "SELECT * FROM bdfrota.tbsmultas where id=" . $id . "";
+$sql = "SELECT * FROM bdautofrota.tbsmultas where id=" . $id . "";
 $resultado = mysql_query($sql) or die(mysql_error());
 $row = mysql_fetch_array($resultado);
 $valordescaux = $row[6] * 8 / 10;
@@ -61,7 +64,7 @@ if ($taxaadm1 == '' || $taxaadm1 == '0') {
 }
 
 if ($taxaadm1 == '') {
-    $sql4 = "SELECT tipoposse FROM bdfrota.tbveiculo WHERE placa='$placa';";
+    $sql4 = "SELECT tipoposse FROM bdautofrota.tbveiculo WHERE placa='$placa';";
     $resultado4 = mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
     $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
     $tipoposse = $row4['tipoposse'];
@@ -83,7 +86,7 @@ class PDF extends FPDF
 	function Header()
 	{
 		// Logo
-		$this->Image('../../src/images/logo.png', 10, 6, 20);
+		$this->Image('../../src/images/logo_hallen.png', 10, 6, 20);
 		// Arial bold 15
 		$this->SetFont('Arial', 'B', 12);
 		// Cor de fundo
@@ -114,7 +117,7 @@ $pdf->MultiCell(177, 5, utf8_decode("Nome do Empregado: $nome\nCPF: $cpf\n"), 1,
 $pdf->Ln(2);
 $pdf->Cell(5);//R$ 15,62
 $pdf->MultiCell(177, 5, utf8_decode("Adiantamento Salarial para pagamento de MULTA DO VEÍCULO $row[1]\n\nAuto de infração: $row[4]\nValor da multa: R$ $valordesc\nValor Taxa Administração Locadora: R$ $taxaadmf\n\nTotal: R$ $valortotal\nQuantidade de Parcelas: $row[26]\nValor das Parcelas: R$ $row[27]\n\nDeclaro, para os devidos fins, que recebi da empresa, a título de Adiantamento Salarial para pagamento de multa, a importância de R$ $valortotal, em espécie.\nEm conformidade com o disposto no artigo 462, caput, da Consolidação das Leis do Trabalho (CLT), estou ciente de que o referido valor será integralmente descontado da minha remuneração mensal, por meio de $row[26] parcelas de R$ $row[27], a serem abatidas diretamente na folha de pagamento, até a quitação total do valor antecipado..\n\nRio de Janeiro, $dia de $mesd de $ano. \n\n\n\n\n______________________________________________________\n     Assinatura do Empregado\n\n\n\n\n\n"), 1, 1);
-//$pdf->Image('../../src/images/logo.png',10,6,20);
+//$pdf->Image('../../src/images/logo_hallen.png',10,6,20);
 $pdf->Image("../../../assinaturas/docs/colass/$matricula.png", 20, 160, 80);
 
 $pdf->Output();

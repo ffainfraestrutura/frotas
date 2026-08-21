@@ -2,11 +2,10 @@
 require '../181/fpdf.php';
 require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
-
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
 error_reporting(E_ALL);
-
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 $hoje = date('Y-m-d');
 
 $id = $_POST['id'];
@@ -56,7 +55,7 @@ if ($locadora == '') {
 	$locadora = $row2['idlocador'];
 }
 
-$sql2 = "SELECT cnpj, Estado FROM bdffa.tbfilial WHERE idtbfilial = '$filial'; ";
+$sql2 = "SELECT cnpj, Estado FROM bdcorp.tbfilial WHERE idtbfilial = '$filial'; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $cnpj = $row2['cnpj'];
@@ -314,7 +313,7 @@ if (!file_exists("../../../assinaturas/docs/colass/$matricula.png")) {
 		function Header()
 		{
 			// Logo
-			$this->Image('../../src/images/logo.png', 10, 6, 20);
+			$this->Image('../../src/images/logo_hallen.png', 10, 6, 20);
 			// Arial bold 15
 			$this->SetFont('Arial', 'B', 12);
 			// Cor de fundo
@@ -346,7 +345,7 @@ if (!file_exists("../../../assinaturas/docs/colass/$matricula.png")) {
 	$pdf->Cell(5);//R$ 15,62
 	$pdf->MultiCell(177, 5, utf8_decode("Adiantamento Salarial para pagamento de MULTA DO VEÍCULO $placa\n\nAuto de infração: $autoinfra\nValor da multa: R$ $valor1\nValor Taxa Administração Locadora: R$ $taxaadmf\n\nValor desconto: $valdesconto1\nTotal: R$ $valortotal\nQuantidade de Parcelas: $numparcelas\nValor das Parcelas: R$ $valorparcelas\n\nDeclaro, para os devidos fins, que recebi da empresa, a título de Adiantamento Salarial para pagamento de multa, a importância de R$ $valortotal, em espécie.\nEm conformidade com o disposto no artigo 462, caput, da Consolidação das Leis do Trabalho (CLT), estou ciente de que o referido valor será integralmente descontado da minha remuneração mensal, por meio de $numparcelas parcelas de R$ $valorparcelas, a serem abatidas diretamente na folha de pagamento, até a quitação total do valor antecipado..\n\n$cidadeass, $dia de $mesd de $ano. \n\n\n\n\n______________________________________________________\n     Assinatura do Empregado\n\n\n\n\n\n"), 1, 1);
 
-	//$pdf->Image('../../src/images/logo.png',10,6,20);
+	//$pdf->Image('../../src/images/logo_hallen.png',10,6,20);
 	$pdf->Image("../../../assinaturas/docs/colass/$matricula.png", 20, 160, 80);
 
 	$pdf->Output();

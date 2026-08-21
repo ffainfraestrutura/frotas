@@ -1,10 +1,11 @@
 <?php
-// ini_set('display_errors', '1');
-// ini_set('display_startup_errors', '1');
-// error_reporting(E_ALL);
 require '../181/fpdf.php';
 require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 
 class PDF extends FPDF
@@ -78,7 +79,7 @@ $meses = [
 $mesd = $meses[(int)$mes] ?? '';
 $dia = $datah[2];
 
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome' /*AND status<>'Demitido'*/; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE nome = '$nome' /*AND status<>'Demitido'*/; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 
@@ -134,7 +135,7 @@ $enderecoinfra = isset($row5[2]) ? utf8_encode($row5[2]) : '';
 $cidadeinfra = isset($row5[3]) ? utf8_encode($row5[3]) : '';
 $filial = $row5['filial'] ?? '';
 
-$sql2 = "SELECT cnpj, Estado FROM bdaniel.tbfilial WHERE nome='$filial'; ";
+$sql2 = "SELECT cnpj, Estado FROM bdcorp.tbfilial WHERE nome='$filial'; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $cnpj = $row2['cnpj'] ?? '';

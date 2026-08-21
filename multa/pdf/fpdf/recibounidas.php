@@ -1,15 +1,18 @@
 <?php
-require'fpdf.php';
-require('../../conecta.php');
-require('../../conecta2.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 $id=$_POST['id'];
 
 //echo $id;
 
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite='$id';";
-$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$sql = "SELECT * FROM bdautofrotas.tbmovidatramite where idtbmovidatramite='$id';";
+$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
 $nome= $row['nome'];
@@ -60,14 +63,14 @@ if ($mes == 1) {
 }
 $dia = $datah[2];
 
-$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
-$resultado2a = mysqli_query($conexao, $sql2a) or die(mysqli_error($conexao));
+$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
+$resultado2a = mysqli_query($conn, $sql2a) or die(mysqli_error($conn));
 $row2a = mysqli_fetch_array($resultado2a, MYSQLI_BOTH);
 	$idtbfuncionario = $row2a['idtbfuncionario'];
 
-//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
-$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
+$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 
 $rg = $row2['rg'];
@@ -79,15 +82,15 @@ $estado = $row2['estado'];
 $cep = $row2['cep'];
 $matricula = $row2['matricula'];
 
-$sql3 = "SELECT renavam, chassi FROM bdfrota.tbveiculo WHERE placa='$placa'; ";
-$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+$sql3 = "SELECT renavam, chassi FROM bdautofrotas.tbveiculo WHERE placa='$placa'; ";
+$resultado3 = mysqli_query($conn, $sql3) or die(mysqli_error($conn));
 $row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 
 $chassi = $row3['chassi'];
 $renavam = $row3['renavam'];
 
-$sql4 = "SELECT numcnh FROM bdfrota.tbcnh WHERE matricula='$matricula'; ";
-$resultado4 =  mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
+$sql4 = "SELECT numcnh FROM bdautofrotas.tbcnh WHERE matricula='$matricula'; ";
+$resultado4 =  mysqli_query($conn, $sql4) or die(mysqli_error($conn));
 $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
 
 $cnh = $row4['numcnh'];
@@ -95,16 +98,16 @@ $cnh = $row4['numcnh'];
 
 
 if($idmovida != ''){
-	$sql5 = "SELECT dataInfra, descricao, endereco, cidade, uf, renavam FROM bdfrota.tbmovidamultas WHERE idmovida = '$idmovida' ; ";
+	$sql5 = "SELECT dataInfra, descricao, endereco, cidade, uf, renavam FROM bdautofrotas.tbmovidamultas WHERE idmovida = '$idmovida' ; ";
 } else{
 	if($idmulta == ''){
-		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdfrota.tbmulta WHERE placa='$placa' AND autoinfracao='$autoinfracao'";
+		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdautofrotas.tbmulta WHERE placa='$placa' AND autoinfracao='$autoinfracao'";
 	} else{
-		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdfrota.tbmulta WHERE idtbmulta='$idmulta'";
+		$sql5 = "SELECT datainfracao, descricaoinfra, endereco, municipio  FROM bdautofrotas.tbmulta WHERE idtbmulta='$idmulta'";
 	}
 }
 
-$resultado5 = mysqli_query($conexao, $sql5) or die(mysqli_error($conexao));
+$resultado5 = mysqli_query($conn, $sql5) or die(mysqli_error($conn));
 $row5 = mysqli_fetch_array($resultado5, MYSQLI_BOTH);
 
 $dataInfra = $row5[0];

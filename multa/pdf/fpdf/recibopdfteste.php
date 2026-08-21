@@ -1,15 +1,18 @@
 <?php
-require'fpdf.php';
-require('../../conecta.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
-
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 class PDF extends FPDF
 {
 // Page header
 function Header()
 {
 	// Logo
-	$this->Image('../../img/logo.png',10,6,30);
+	$this->Image('../../img/logo_hallen.png',10,6,30);
 	// Arial bold 15
 	$this->SetFont('Arial','B',12);
 	// Cor de fundo

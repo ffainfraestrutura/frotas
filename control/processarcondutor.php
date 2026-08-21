@@ -96,8 +96,8 @@ if (strlen($telefoneInformado) > 11) {
 }
 
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
-$colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseCorp}`.`tbfuncionario`");
-$colunasExistentes = array_column($colsInfo['linhas'], 'Field');
+$colsInfo = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbfuncionario'", 's', [$databaseName]);
+$colunasExistentes = array_column($colsInfo['linhas'], 'COLUMN_NAME');
 $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
