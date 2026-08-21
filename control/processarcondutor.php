@@ -96,8 +96,8 @@ if (strlen($telefoneInformado) > 11) {
 }
 
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
-$colsInfo = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbfuncionario'", 's', [$databaseName]);
-$colunasExistentes = array_column($colsInfo['linhas'], 'COLUMN_NAME');
+$colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseCorp}`.`tbfuncionario`");
+$colunasExistentes = array_column($colsInfo['linhas'], 'Field');
 $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
@@ -159,18 +159,18 @@ if ($editando) {
         redirecionarComMensagem('../cadastrar_condutorespj.php', 'Erro ao cadastrar: ' . $consulta['erro']);
     }
 
-    $usuarioExistente = buscarUmaLinha($conn, "SELECT id FROM `{$databaseName}`.`tbusuario` WHERE usuario = ? OR matricula = ? LIMIT 1", 'ss', [$matricula, $matricula]);
+    $usuarioExistente = buscarUmaLinha($conn, "SELECT id_usuario FROM `{$databaseCorp}`.`tbusuario` WHERE usuario = ? OR matricula = ? LIMIT 1", 'ss', [$matricula, $matricula]);
     if ($usuarioExistente !== []) {
         $consultaUsuario = consultaPreparada(
             $conn,
-            "UPDATE `{$databaseName}`.`tbusuario` SET usuario = ?, matricula = ?, senha = ?, perfil = '1' WHERE id = ?",
+            "UPDATE `{$databaseCorp}`.`tbusuario` SET usuario = ?, matricula = ?, senha = ?, perfil = '1', autofrota = 1 WHERE id_usuario = ?",
             'sssi',
-            [$matricula, $matricula, $matricula, (int) $usuarioExistente['id']]
+            [$matricula, $matricula, $matricula, (int) $usuarioExistente['id_usuario']]
         );
     } else {
         $consultaUsuario = consultaPreparada(
             $conn,
-            "INSERT INTO `{$databaseName}`.`tbusuario` (usuario, matricula, senha, perfil) VALUES (?, ?, ?, '1')",
+            "INSERT INTO `{$databaseCorp}`.`tbusuario` (usuario, matricula, senha, perfil, autofrota) VALUES (?, ?, ?, '1', 1)",
             'sss',
             [$matricula, $matricula, $matricula]
         );
@@ -182,7 +182,7 @@ if ($editando) {
 }
 
 if ($editando && $matricula !== $matriculaOriginal) {
-    consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbusuario` SET matricula = ? WHERE matricula = ?", 'ss', [$matricula, $matriculaOriginal]);
+    consultaPreparada($conn, "UPDATE `{$databaseCorp}`.`tbusuario` SET usuario = ?, matricula = ? WHERE matricula = ?", 'sss', [$matricula, $matricula, $matriculaOriginal]);
 }
 
 $mensagemSucesso = $editando ? 'Condutor PJ atualizado com sucesso.' : 'Funcionário e usuário criados com sucesso. Primeiro acesso via matrícula/matrícula.';

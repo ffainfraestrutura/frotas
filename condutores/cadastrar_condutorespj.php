@@ -292,9 +292,9 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
         </form>
 
         <div class="action-buttons-fixed">
-            <a class="btn btn-danger rounded-circle" href="listar_condutorespj.php" title="Voltar" aria-label="Voltar">
+            <button class="btn btn-danger rounded-circle" type="button" onclick="window.history.back()" title="Voltar" aria-label="Voltar">
                 <i class="fa-solid fa-arrow-left fa-xl"></i>
-            </a>
+            </button>
             <button class="btn btn-success rounded-circle" type="submit" form="formCondutor" title="Salvar" aria-label="Salvar">
                 <i class="fa-solid fa-floppy-disk fa-xl"></i>
             </button>

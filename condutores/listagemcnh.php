@@ -2,8 +2,14 @@
 require_once __DIR__ . '/../includes/autofrota_common.php';
 
 $autofrotaSessao = autofrotaInit();
-$matriculaLogada = $autofrotaSessao['matricula'];
-$perfilLogado = $autofrotaSessao['perfil'];
+$conn = $autofrotaSessao['conn'] ?? null;
+$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
+$matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? '');
+$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? '');
 $unidades = ['RJ', 'PR', 'SP', 'ES', 'TODOS'];
 $colaboradores = [];
 
@@ -17,7 +23,7 @@ function buscarEstadoFuncionarioCnh(mysqli $conn, string $databaseName, string $
         SELECT estado
         FROM `{$databaseName}`.`tbfuncionario`
         WHERE matricula = ?
-          AND status = 'Ativo'
+          AND idtbempresa = 2
         LIMIT 1
     ";
     $stmt = mysqli_prepare($conn, $sql);
@@ -37,14 +43,14 @@ function buscarEstadoFuncionarioCnh(mysqli $conn, string $databaseName, string $
 
 $estadoFuncionario = '';
 if (isset($conn) && $conn instanceof mysqli) {
-    $estadoFuncionario = buscarEstadoFuncionarioCnh($conn, $databaseName, $matriculaLogada);
+    $estadoFuncionario = buscarEstadoFuncionarioCnh($conn, $databaseCorp, $matriculaLogada);
 }
 
 $unidadePostada = (string) ($_POST['unidade'] ?? '');
-$unidadeSelecionada = in_array($unidadePostada, $unidades, true) ? $unidadePostada : ($estadoFuncionario ?: 'RJ');
+$unidadeSelecionada = in_array($unidadePostada, $unidades, true) ? $unidadePostada : ($estadoFuncionario ?: 'TODOS');
 
 if (!in_array($unidadeSelecionada, $unidades, true)) {
-    $unidadeSelecionada = 'RJ';
+    $unidadeSelecionada = 'TODOS';
 }
 
 $sqlCnh = "
@@ -53,9 +59,12 @@ $sqlCnh = "
         f.nome,
         f.estado
     FROM `{$databaseName}`.`tbcnh` cn
-    INNER JOIN `{$databaseName}`.`tbfuncionario` f
+    INNER JOIN `{$databaseCorp}`.`tbfuncionario` f
         ON f.matricula = cn.matricula
-    WHERE f.status = 'Ativo'
+    WHERE f.idtbempresa = 2
+      AND f.matricula LIKE '16%'
+      AND CHAR_LENGTH(f.matricula) = 7
+      AND f.status <> 'Demitido'
 ";
 
 if ($unidadeSelecionada !== 'TODOS') {
@@ -157,7 +166,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
-                                    <th>Associar Veículo</th> <!-- NOVO -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -185,17 +193,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                                 </button>
                                             </form>
                                         </td>
-                                        <!-- NOVA COLUNA: Associar Veículo -->
-                                        <td class="text-center">
-                                            <form method="post" action="cadastro-veiculo-condutor.php">
-                                                <input type="hidden" name="matricula" value="<?= htmlspecialchars($colaborador['matricula']) ?>">
-                                                <input type="hidden" name="matr_autor" value="<?= htmlspecialchars($matriculaLogada) ?>">
-                                                <input type="hidden" name="perfil" value="<?= htmlspecialchars($perfilLogado) ?>">
-                                                <button class="btn-icon" type="submit" title="Associar Veículo">
-                                                    <span class="material-symbols-outlined">directions_car</span>
-                                                </button>
-                                            </form>
-                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -206,7 +203,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
-                                    <th>Associar Veículo</th> <!-- NOVO -->
                                 </tr>
                             </tfoot>
                         </table>
@@ -214,7 +210,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
                     <div class="mt-5 text-rigth d-flex justify-content-between">
                         <div>
-                            <button class="btn btn-secondary" type="button" onclick="window.location.href = 'listagem-condutor.php';">Voltar</button>
+                            <button class="btn btn-secondary" type="button" onclick="window.history.back()">Voltar</button>
                         </div>
 
                         <div>
