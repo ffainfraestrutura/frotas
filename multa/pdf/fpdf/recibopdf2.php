@@ -86,7 +86,7 @@ if ($filial == '') {
 
 
 /*if($filial == 'FFA Sao Paulo' || $filial=='SP' || $filial=='FFA SP'){
-    $cnpj='08.375.450/0005-02';
+    $cnpj='01.307.399/0001-10';
     $cidadeass='SÃO PAULO/SP';
 }else{
     $cnpj='01.307.399/0001-10';
@@ -95,7 +95,7 @@ if ($filial == '') {
 
 // if ($estadofilial == 'SP') {
 //     if (empty($cnpj)) {
-//         $cnpj = '08.375.450/0005-02';
+//         $cnpj = '01.307.399/0001-10';
 //     }
 
 //     $cidadeass = 'SÃO PAULO/SP';
@@ -109,7 +109,7 @@ if ($filial == '') {
 
 // } elseif ($estadofilial == 'PR') {
 //     if (empty($cnpj)) {
-//         $cnpj = '08.375.450/0017-38';
+//         $cnpj = '01.307.399/0001-10';
 //     }
 
 //     $cidadeass = 'CURITIBA/PR';
@@ -333,7 +333,7 @@ $pdf->Cell(160, 20, 'RECIBO DE ADIANTAMENTO SALARIAL', 1, 1, 'C', 'true');
 $pdf->SetFont('Arial', '', 10);
 $pdf->Ln(2);
 $pdf->Cell(5);
-$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: HALLEN TELECOM\nCNPJ n.º $cnpj\n"), 1, 1);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: Hallen Instalacoes de Equipamentos de Telecomunicacoes LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
 
 $pdf->Ln(2);
 $pdf->Cell(5);

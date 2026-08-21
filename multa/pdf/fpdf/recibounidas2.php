@@ -127,7 +127,7 @@ if (empty($estadofilial)) {
 // Ajustes padrão para CNPJ e cidade conforme estado da filial
 if ($estadofilial == 'SP') {
     if (empty($cnpj)) {
-        $cnpj = '08.375.450/0005-02';
+        $cnpj = '01.307.399/0001-10';
     }
     $cidadeass = 'SÃO PAULO/SP';
 
@@ -139,7 +139,7 @@ if ($estadofilial == 'SP') {
 
 } elseif ($estadofilial == 'PR') {
     if (empty($cnpj)) {
-        $cnpj = '08.375.450/0017-38';
+        $cnpj = '01.307.399/0001-10';
     }
     $cidadeass = 'CURITIBA/PR';
 } else {
@@ -252,7 +252,7 @@ $pdf->Ln(2);
 
 $pdf->SetFont('Arial', '', 10);
 $pdf->Cell(5);
-$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: HALLEN TELECOM\nCNPJ n.º $cnpj\n"), 1, 1);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: Hallen Instalacoes de Equipamentos de Telecomunicacoes LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
 
 $pdf->Ln(2);
 $pdf->Cell(5);

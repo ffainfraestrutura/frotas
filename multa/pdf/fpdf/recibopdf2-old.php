@@ -68,7 +68,7 @@ if($filial ==''){
 
 
 if($filial == 'FFA Sao Paulo' || $filial=='SP' || $filial=='FFA SP'){
-	$cnpj='08.375.450/0005-02';
+	$cnpj='01.307.399/0001-10';
 	$cidadeass='SÃO PAULO/SP';
 }else{
 	$cnpj='01.307.399/0001-10';
@@ -172,7 +172,7 @@ $pdf->AliasNbPages();
 $pdf->AddPage();
 $pdf->SetFont('Arial','',10);
 $pdf->Cell(40);
-$pdf->MultiCell(120,5,utf8_decode("\nNome do Empregador: HALLEN TELECOM\n\nCNPJ n.º $cnpj\n\n"),1,1);
+$pdf->MultiCell(120,5,utf8_decode("\nNome do Empregador: Hallen Instalacoes de Equipamentos de Telecomunicacoes LTDA\n\nCNPJ n.º $cnpj\n\n"),1,1);
 $pdf->Ln(2);
 $pdf->Cell(40);
 $pdf->MultiCell(120,5,utf8_decode("\nNome do Empregado: $nome\n\nCPF: $cpf\n\n"),1,1);
