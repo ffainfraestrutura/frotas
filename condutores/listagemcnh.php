@@ -166,7 +166,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
-                                    <th>Associar Veículo</th> <!-- NOVO -->
                                 </tr>
                             </thead>
                             <tbody>
@@ -194,17 +193,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                                 </button>
                                             </form>
                                         </td>
-                                        <!-- NOVA COLUNA: Associar Veículo -->
-                                        <td class="text-center">
-                                            <form method="post" action="cadastro-veiculo-condutor.php">
-                                                <input type="hidden" name="matricula" value="<?= htmlspecialchars($colaborador['matricula']) ?>">
-                                                <input type="hidden" name="matr_autor" value="<?= htmlspecialchars($matriculaLogada) ?>">
-                                                <input type="hidden" name="perfil" value="<?= htmlspecialchars($perfilLogado) ?>">
-                                                <button class="btn-icon" type="submit" title="Associar Veículo">
-                                                    <span class="material-symbols-outlined">directions_car</span>
-                                                </button>
-                                            </form>
-                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>
@@ -215,7 +203,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                                     <th>Unidade do Colaborador</th>
                                     <th>Editar CNH</th>
                                     <th>Anexar documentos</th>
-                                    <th>Associar Veículo</th> <!-- NOVO -->
                                 </tr>
                             </tfoot>
                         </table>
