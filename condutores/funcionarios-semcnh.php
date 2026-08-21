@@ -192,7 +192,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
 
                 <div class="mt-3">
-                    <button type="button" class="btn btn-secondary" onclick="history.back();">Voltar</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">Voltar</button>
                 </div>
             </div>
         </main>
