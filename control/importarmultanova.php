@@ -311,7 +311,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
         
         // 11. Validar NOME CONDUTOR (se informado, deve existir no sistema)
         if (!empty($nomecond)) {
-            $sql2 = "SELECT nome FROM bdaniel.tbfuncionario WHERE nome = '" . mysqli_real_escape_string($con, $nomecond) . "'";
+            $sql2 = "SELECT nome FROM bdcorp.tbfuncionario WHERE nome = '" . mysqli_real_escape_string($con, $nomecond) . "'";
             $resultado2 = mysqli_query($con, $sql2);
             if (!$resultado2 || mysqli_num_rows($resultado2) <= 0) {
                 $gravar = FALSE;
@@ -358,7 +358,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
         
         // 16. Validar CENTRO DE CUSTO (se informado, deve existir)
         if (!empty($ccustoplan)) {
-            $sql3 = "SELECT ccusto FROM bdaniel.tbfuncionario WHERE ccusto = '" . mysqli_real_escape_string($con, $ccustoplan) . "' LIMIT 1";
+            $sql3 = "SELECT ccusto FROM bdcorp.tbfuncionario WHERE ccusto = '" . mysqli_real_escape_string($con, $ccustoplan) . "' LIMIT 1";
             $resultado3 = mysqli_query($con, $sql3);
             if (!$resultado3 || mysqli_num_rows($resultado3) <= 0) {
                 $motivosErro[] = "Centro de Custo '$ccustoplan' não encontrado no sistema";
