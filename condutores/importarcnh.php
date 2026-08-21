@@ -50,7 +50,7 @@ $matricula = $autofrotaSessao['matricula'];
                                 </div>
 
                                 <div class="ms-5">
-                                    <a class="btn btn-secondary" href="listagem-condutor.php">Voltar</a>
+                                    <button class="btn btn-secondary" type="button" onclick="window.history.back()">Voltar</button>
                                 </div>
 
                                 <div class="ms-5">
