@@ -72,7 +72,7 @@ $pdf->AliasNbPages();
 $pdf->AddPage();
 $pdf->SetFont('Times','',10);
 $pdf->Cell(40);
-$pdf->MultiCell(120,5,utf8_decode("\nNome do Empregador: FFA INFRAESTRUTURA E SERVIÇOS LTDA\n\nCNPJ n.º 08.375.450/0001-70\n\n"),1,1);
+$pdf->MultiCell(120,5,utf8_decode("\nNome do Empregador: HALLEN TELECOM\n\nCNPJ n.º 01.307.399/0001-10\n\n"),1,1);
 $pdf->Ln(2);
 $pdf->Cell(40);
 $pdf->MultiCell(120,5,utf8_decode("\nNome do Empregado: Lucas\n\nCPF: 15780987777\n\n"),1,1);

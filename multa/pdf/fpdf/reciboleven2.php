@@ -97,7 +97,7 @@ if ($estadofilial == 'SP') {
 
 } elseif ($estadofilial == 'RJ') {
 	if (empty($cnpj)) {
-		$cnpj = '08.375.450/0001-70';
+		$cnpj = '01.307.399/0001-10';
 	}
 
 	$cidadeass = 'RIO DE JANEIRO/RJ';
@@ -285,7 +285,7 @@ $pdf->SetFont('Arial', '', 10);
 $pdf->SetFillColor(255);
 $pdf->Ln(2);
 $pdf->Cell(5);
-$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: FFA INFRAESTRUTURA E SERVIÇOS LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: HALLEN TELECOM\nCNPJ n.º $cnpj\n"), 1, 1);
 
 $pdf->Ln(2);
 $pdf->Cell(5);

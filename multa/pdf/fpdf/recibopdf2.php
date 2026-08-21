@@ -89,7 +89,7 @@ if ($filial == '') {
     $cnpj='08.375.450/0005-02';
     $cidadeass='SÃO PAULO/SP';
 }else{
-    $cnpj='08.375.450/0001-70';
+    $cnpj='01.307.399/0001-10';
     $cidadeass='RIO DE JANEIRO/RJ';
 }*/
 
@@ -102,7 +102,7 @@ if ($filial == '') {
 
 // } elseif ($estadofilial == 'RJ') {
 //     if (empty($cnpj)) {
-//         $cnpj = '08.375.450/0001-70';
+//         $cnpj = '01.307.399/0001-10';
 //     }
 
 //     $cidadeass = 'RIO DE JANEIRO/RJ';
@@ -333,7 +333,7 @@ $pdf->Cell(160, 20, 'RECIBO DE ADIANTAMENTO SALARIAL', 1, 1, 'C', 'true');
 $pdf->SetFont('Arial', '', 10);
 $pdf->Ln(2);
 $pdf->Cell(5);
-$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: FFA INFRAESTRUTURA E SERVIÇOS LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: HALLEN TELECOM\nCNPJ n.º $cnpj\n"), 1, 1);
 
 $pdf->Ln(2);
 $pdf->Cell(5);
