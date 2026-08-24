@@ -99,6 +99,30 @@ if (strlen($telefoneInformado) > 11) {
     redirecionarComMensagem($retornoFormulario, 'Telefone deve conter no máximo 11 dígitos.');
 }
 
+$cnhNumero = preg_replace('/\D+/', '', (string) ($_POST['cnh_numero'] ?? ''));
+$cnhValidade = trim((string) ($_POST['cnh_validade'] ?? ''));
+$cnhUf = mb_strtoupper(trim((string) ($_POST['cnh_uf'] ?? '')), 'UTF-8');
+$cnhCategoria = mb_strtoupper(trim((string) ($_POST['cnh_categoria'] ?? '')), 'UTF-8');
+$cnhPontos = preg_replace('/\D+/', '', (string) ($_POST['cnh_pontos'] ?? ''));
+$cnhConsulta = trim((string) ($_POST['cnh_consulta'] ?? ''));
+$cnhSuspensa = (string) ($_POST['cnh_suspensa'] ?? '0');
+$cnhInformada = $cnhNumero !== '';
+
+if ($cnhInformada) {
+    if ($cnhValidade === '' || $cnhUf === '' || $cnhCategoria === '' || $cnhConsulta === '') {
+        redirecionarComMensagem($retornoFormulario, 'Ao informar a CNH, preencha validade, UF, categoria e data da consulta ao DETRAN.');
+    }
+    if (strlen($cnhNumero) > 12 || preg_match('/^\d{4}-\d{2}-\d{2}$/D', $cnhValidade) !== 1 || preg_match('/^\d{4}-\d{2}-\d{2}$/D', $cnhConsulta) !== 1) {
+        redirecionarComMensagem($retornoFormulario, 'Confira o número e as datas informadas para a CNH.');
+    }
+    if (!in_array($cnhSuspensa, ['0', '1'], true)) {
+        $cnhSuspensa = '0';
+    }
+    if ($cnhPontos === '') {
+        $cnhPontos = '0';
+    }
+}
+
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
 $colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseName}`.`tbcondutor`");
 $colunasExistentes = array_column($colsInfo['linhas'], 'Field');
@@ -202,6 +226,34 @@ if ($editando) {
 
 if ($editando && $matricula !== $matriculaOriginal) {
     consultaPreparada($conn, "UPDATE `{$databaseCorp}`.`tbusuario` SET usuario = ?, matricula = ? WHERE matricula = ?", 'sss', [$matricula, $matricula, $matriculaOriginal]);
+}
+
+if ($cnhInformada) {
+    $matriculaBuscaCnh = $editando ? $matriculaOriginal : $matricula;
+    $cnhExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
+    $dadosCnh = [$cnhNumero, $cnhValidade, $cnhUf, $cnhCategoria, $matricula, $cnhPontos, $cnhConsulta, $cnhSuspensa];
+
+    if ($cnhExistente !== []) {
+        $consultaCnh = consultaPreparada(
+            $conn,
+            "UPDATE `{$databaseName}`.`tbcnh` SET numcnh = ?, validade = ?, uf = ?, categoria = ?, matricula = ?, pontos = ?, consulta = ?, suspensa = ? WHERE matricula = ?",
+            'sssssssss',
+            array_merge($dadosCnh, [$matriculaBuscaCnh])
+        );
+    } else {
+        $consultaCnh = consultaPreparada(
+            $conn,
+            "INSERT INTO `{$databaseName}`.`tbcnh` (numcnh, validade, uf, categoria, matricula, pontos, consulta, suspensa) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            'ssssssss',
+            $dadosCnh
+        );
+    }
+
+    if ($consultaCnh['erro'] !== '') {
+        redirecionarComMensagem($retornoFormulario, 'Condutor salvo, mas não foi possível salvar a CNH: ' . $consultaCnh['erro']);
+    }
+} elseif ($editando && $matricula !== $matriculaOriginal) {
+    consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbcnh` SET matricula = ? WHERE matricula = ?", 'ss', [$matricula, $matriculaOriginal]);
 }
 
 $mensagemSucesso = $editando ? 'Condutor PJ atualizado com sucesso.' : 'Condutor e usuário criados com sucesso. Primeiro acesso via matrícula/matrícula.';

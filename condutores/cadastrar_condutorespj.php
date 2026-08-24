@@ -18,6 +18,7 @@ $proximaMatricula = '1620001';
 $ccustos = ['erro' => '', 'linhas' => []];
 $cargos = ['erro' => '', 'linhas' => []];
 $projetos = ['erro' => '', 'linhas' => []];
+$cnh = [];
 
 if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
     $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseName}`.`tbcondutor` WHERE matricula REGEXP '^16[0-9]{5}$'");
@@ -25,7 +26,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
         $proximaMatricula = str_pad(((int) $linhaMax['max_mat']) + 1, 7, '0', STR_PAD_LEFT);
     }
 
-    $ccustos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(ccusto)) AS ccusto FROM `{$databaseName}`.`tbcondutor` WHERE ccusto IS NOT NULL AND TRIM(ccusto) <> '' ORDER BY ccusto");
+    $ccustos = consultaPreparada($conn, "SELECT * FROM `{$databaseCorp}`.`tbccusto`");
     $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
     $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseName}`.`tbcondutor` WHERE projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
 }
@@ -47,6 +48,19 @@ function renderizarOpcoesCondutor(array $linhas, string $campo): void
         }
         $exibidos[$chave] = true;
         echo '<option value="' . esc($chave) . '">' . esc($chave) . '</option>';
+    }
+}
+
+function renderizarOpcoesCentroCusto(array $linhas): void
+{
+    $exibidos = [];
+    foreach ($linhas as $linha) {
+        $valor = trim((string) ($linha['descricao'] ?? $linha['ccusto'] ?? $linha['nome'] ?? $linha['idtbccusto'] ?? ''));
+        if ($valor === '' || isset($exibidos[$valor])) {
+            continue;
+        }
+        $exibidos[$valor] = true;
+        echo '<option value="' . esc($valor) . '">' . esc($valor) . '</option>';
     }
 }
 
@@ -129,7 +143,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
     <?php endif; ?>
 
     <div class="form-container">
-        <form id="formCondutor" method="post" action="control/processarcondutor.php" class="mb-3" novalidate>
+        <form id="formCondutor" method="post" action="control/processarcondutor.php" class="mb-3" enctype="multipart/form-data" novalidate>
             <p style="font-size: 10px;"><span class="text-danger">*</span> Campos obrigatórios.</p>
 
             <div id="dadoscadastrais">
@@ -260,7 +274,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
                             <div class="col-md-3">
                                 <label for="ccusto" class="form-label">Departamento/Centro de Custo:<span class="text-danger">*</span></label>
                                 <input class="form-control form-control-sm text-uppercase" name="ccusto" id="ccusto" list="listaCcusto" required>
-                                <datalist id="listaCcusto"><?php renderizarOpcoesCondutor($ccustos['linhas'], 'ccusto'); ?></datalist>
+                                <datalist id="listaCcusto"><?php renderizarOpcoesCentroCusto($ccustos['linhas']); ?></datalist>
                             </div>
                             <div class="col-md-3">
                                 <label for="cargo" class="form-label">Cargo:<span class="text-danger">*</span></label>
@@ -287,6 +301,8 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
                     </div>
                 </div>
             </div>
+
+            <?php require __DIR__ . '/includes/form_cnh_opcional.php'; ?>
         </form>
 
         <div class="action-buttons-fixed">
@@ -301,7 +317,7 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const onlyDigits = ['cpf', 'rg', 'cep', 'telefone'];
+    const onlyDigits = ['cpf', 'rg', 'cep', 'telefone', 'cnh_numero', 'cnh_pontos'];
     onlyDigits.forEach(function (id) {
         const field = document.getElementById(id);
         if (!field) {
