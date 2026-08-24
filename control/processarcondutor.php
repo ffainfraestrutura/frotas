@@ -124,7 +124,7 @@ if ($cnhInformada) {
 }
 
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
-$colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseName}`.`tbcondutor`");
+$colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseCorp}`.`tbfuncionario`");
 $colunasExistentes = array_column($colsInfo['linhas'], 'Field');
 $dados = [];
 foreach ($permitidos as $coluna) {

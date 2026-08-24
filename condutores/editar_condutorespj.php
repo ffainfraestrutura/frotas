@@ -30,9 +30,8 @@ if ($condutor === []) {
     exit;
 }
 
-$ccustos = consultaPreparada($conn, "SELECT * FROM `{$databaseCorp}`.`tbccusto`");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
-$cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 
 function valorCondutorPj(array $condutor, string $campo): string
 {
