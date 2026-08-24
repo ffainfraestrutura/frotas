@@ -107,6 +107,11 @@ $cnhPontos = preg_replace('/\D+/', '', (string) ($_POST['cnh_pontos'] ?? ''));
 $cnhConsulta = trim((string) ($_POST['cnh_consulta'] ?? ''));
 $cnhSuspensa = (string) ($_POST['cnh_suspensa'] ?? '0');
 $cnhInformada = $cnhNumero !== '';
+$arquivoCnhInformado = isset($_FILES['cnh_arquivo']) && (int) ($_FILES['cnh_arquivo']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+
+if ($arquivoCnhInformado && !$cnhInformada) {
+    redirecionarComMensagem($retornoFormulario, 'Informe o número da CNH para anexar a habilitação.');
+}
 
 if ($cnhInformada) {
     if ($cnhValidade === '' || $cnhUf === '' || $cnhCategoria === '' || $cnhConsulta === '') {
@@ -121,6 +126,44 @@ if ($cnhInformada) {
     if ($cnhPontos === '') {
         $cnhPontos = '0';
     }
+}
+
+function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario): string
+{
+    if (!isset($_FILES['cnh_arquivo']) || (int) ($_FILES['cnh_arquivo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return '';
+    }
+    if ((int) $_FILES['cnh_arquivo']['error'] !== UPLOAD_ERR_OK) {
+        redirecionarComMensagem($retornoFormulario, 'Não foi possível fazer o upload da habilitação.');
+    }
+
+    $extensao = strtolower((string) pathinfo((string) $_FILES['cnh_arquivo']['name'], PATHINFO_EXTENSION));
+    if (!in_array($extensao, ['jpg', 'jpeg', 'png', 'gif', 'pdf'], true)) {
+        redirecionarComMensagem($retornoFormulario, 'A habilitação deve estar nos formatos JPG, JPEG, PNG, GIF ou PDF.');
+    }
+    if ((int) ($_FILES['cnh_arquivo']['size'] ?? 0) > 4 * 1024 * 1024) {
+        redirecionarComMensagem($retornoFormulario, 'O arquivo da habilitação deve ter no máximo 4 MB.');
+    }
+
+    $temporario = (string) ($_FILES['cnh_arquivo']['tmp_name'] ?? '');
+    if ($temporario === '' || !is_uploaded_file($temporario)) {
+        redirecionarComMensagem($retornoFormulario, 'Arquivo temporário inválido para upload da habilitação.');
+    }
+
+    $diretorio = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: '/tmp/frotas_docs/cnhs'), '/\\') . DIRECTORY_SEPARATOR;
+    if ((!is_dir($diretorio) && !@mkdir($diretorio, 0775, true)) || !is_writable($diretorio)) {
+        redirecionarComMensagem($retornoFormulario, 'Não foi possível preparar a pasta de upload da habilitação.');
+    }
+
+    $nome = 'cnh-' . preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '-' . date('YmdHis') . '.' . $extensao;
+    if (!move_uploaded_file($temporario, $diretorio . $nome)) {
+        redirecionarComMensagem($retornoFormulario, 'Não foi possível salvar o arquivo da habilitação.');
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+    $esquema = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443 ? 'https' : 'http';
+    $urlBase = (string) (getenv('FROTAS_UPLOAD_URL') ?: $esquema . '://' . $host . '/diagnostico-uploads.php?abrir=');
+    return rtrim($urlBase, '/') . rawurlencode($nome);
 }
 
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
@@ -231,21 +274,29 @@ if ($editando && $matricula !== $matriculaOriginal) {
 if ($cnhInformada) {
     $matriculaBuscaCnh = $editando ? $matriculaOriginal : $matricula;
     $cnhExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
+    $anexoCnh = salvarAnexoCnhCondutor($matricula, $retornoFormulario);
     $dadosCnh = [$cnhNumero, $cnhValidade, $cnhUf, $cnhCategoria, $matricula, $cnhPontos, $cnhConsulta, $cnhSuspensa];
 
     if ($cnhExistente !== []) {
+        $campoAnexo = '';
+        if ($anexoCnh !== '') {
+            $documentosCnh = buscarUmaLinha($conn, "SELECT doc1, doc2 FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
+            $campoAnexo = empty($documentosCnh['doc1']) ? ', doc1 = ?' : ', doc2 = ?';
+        }
         $consultaCnh = consultaPreparada(
             $conn,
-            "UPDATE `{$databaseName}`.`tbcnh` SET numcnh = ?, validade = ?, uf = ?, categoria = ?, matricula = ?, pontos = ?, consulta = ?, suspensa = ? WHERE matricula = ?",
-            'sssssssss',
-            array_merge($dadosCnh, [$matriculaBuscaCnh])
+            "UPDATE `{$databaseName}`.`tbcnh` SET numcnh = ?, validade = ?, uf = ?, categoria = ?, matricula = ?, pontos = ?, consulta = ?, suspensa = ?{$campoAnexo} WHERE matricula = ?",
+            str_repeat('s', 9 + ($anexoCnh !== '' ? 1 : 0)),
+            array_merge($dadosCnh, $anexoCnh !== '' ? [$anexoCnh, $matriculaBuscaCnh] : [$matriculaBuscaCnh])
         );
     } else {
+        $campoAnexo = $anexoCnh !== '' ? ', doc1' : '';
+        $placeholderAnexo = $anexoCnh !== '' ? ', ?' : '';
         $consultaCnh = consultaPreparada(
             $conn,
-            "INSERT INTO `{$databaseName}`.`tbcnh` (numcnh, validade, uf, categoria, matricula, pontos, consulta, suspensa) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            'ssssssss',
-            $dadosCnh
+            "INSERT INTO `{$databaseName}`.`tbcnh` (numcnh, validade, uf, categoria, matricula, pontos, consulta, suspensa{$campoAnexo}) VALUES (?, ?, ?, ?, ?, ?, ?, ?{$placeholderAnexo})",
+            str_repeat('s', 8 + ($anexoCnh !== '' ? 1 : 0)),
+            array_merge($dadosCnh, $anexoCnh !== '' ? [$anexoCnh] : [])
         );
     }
 

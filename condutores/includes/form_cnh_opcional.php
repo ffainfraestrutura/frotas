@@ -7,6 +7,7 @@ if ($ufs === [] && isset($conn) && $conn instanceof mysqli && function_exists('b
 $valorCnh = static function (string $campo) use ($cnh): string {
     return (string) ($cnh[$campo] ?? '');
 };
+$documentoCnhAtual = $valorCnh('doc2') !== '' ? $valorCnh('doc2') : $valorCnh('doc1');
 ?>
 <div class="card mt-3">
     <div class="card-header">
@@ -51,6 +52,18 @@ $valorCnh = static function (string $campo) use ($cnh): string {
                 <label class="form-label" for="cnh_consulta">Consulta ao DETRAN</label>
                 <input class="form-control" type="date" id="cnh_consulta" name="cnh_consulta" value="<?= esc(formatarDataPortal($valorCnh('consulta'), 'Y-m-d')) ?>">
             </div>
+            <div class="col-md-5">
+                <label class="form-label" for="cnh_arquivo">Anexar habilitação</label>
+                <input class="form-control" type="file" id="cnh_arquivo" name="cnh_arquivo" accept=".jpg,.jpeg,.png,.gif,.pdf">
+                <small class="text-muted">Opcional. Formatos aceitos: JPG, JPEG, PNG, GIF ou PDF (até 4 MB).</small>
+            </div>
+            <?php if ($documentoCnhAtual !== ''): ?>
+                <div class="col-md-3 d-flex align-items-center">
+                    <a class="btn btn-outline-secondary btn-sm" href="<?= esc($documentoCnhAtual) ?>" target="_blank" rel="noopener">
+                        <i class="fa-solid fa-paperclip me-1"></i>Última CNH anexada
+                    </a>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
