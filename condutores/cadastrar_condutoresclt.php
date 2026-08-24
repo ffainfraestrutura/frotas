@@ -6,7 +6,7 @@ $conn = $sessao['conn'] ?? null;
 $databaseCorp = trim((string) ($sessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp')));
 $funcionarios = consultaPreparada(
     $conn,
-    "SELECT matricula, nome, status, cargo, ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 ORDER BY nome"
+    "SELECT matricula, nome, status, cargo, ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY nome"
 );
 $mensagem = valorRequisicao(['msg']);
 $cnh = [];
