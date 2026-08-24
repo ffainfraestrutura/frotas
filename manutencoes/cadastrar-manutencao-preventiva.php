@@ -13,8 +13,22 @@ $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? '');
 $bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
 $podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
 $nomeSolicitante = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? 'Usuário');
+$ccustoSolicitante = '';
 if ($conn instanceof mysqli && $databaseCorp !== '') {
     $nomeSolicitante = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeSolicitante);
+
+    $stmtSolicitante = mysqli_prepare(
+        $conn,
+        "SELECT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE matricula = ? LIMIT 1"
+    );
+    if ($stmtSolicitante) {
+        mysqli_stmt_bind_param($stmtSolicitante, 's', $matriculaLogada);
+        mysqli_stmt_execute($stmtSolicitante);
+        $resSolicitante = mysqli_stmt_get_result($stmtSolicitante);
+        $dadosSolicitante = $resSolicitante ? mysqli_fetch_assoc($resSolicitante) : null;
+        $ccustoSolicitante = trim((string) ($dadosSolicitante['ccusto'] ?? ''));
+        mysqli_stmt_close($stmtSolicitante);
+    }
 }
 
 $database = (isset($databaseName) && preg_match('/^[A-Za-z0-9_]+$/', (string) $databaseName))
@@ -77,8 +91,12 @@ if (!$man) {
 $man['atualizadoem'] = date('Y-m-d');
 <<<<<<< HEAD
 $man['solicitante'] = $nomeSolicitante;
+<<<<<<< HEAD
 =======
 >>>>>>> 823e57e57f2273f65b4a417756117138f93a3915
+=======
+$man['ccusto'] = $ccustoSolicitante;
+>>>>>>> 87c42997d246f7de229c528937796f06fa63c8ea
 if ($oficinaRecebida !== '') {
     $man['oficina'] = $oficinaRecebida;
 }
@@ -153,6 +171,11 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
     if ($centrosCusto !== []) {
         break;
     }
+}
+
+if ($ccustoSolicitante !== '') {
+    $centrosCusto[$ccustoSolicitante] = $ccustoSolicitante;
+    natcasesort($centrosCusto);
 }
 
 $oficinas = [];
@@ -427,6 +450,11 @@ if ($oficinaAtual !== '') {
                 <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar cadastro de manutenção</button>
             </div>
         <?php endif; ?>
+        <div class="ms-5">
+            <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php">
+                <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Voltar
+            </a>
+        </div>
         <div class="ms-5">
             <a class="btn btn-danger" href="solicitar-manutencao-preventiva.php">Cancelar cadastro</a>
         </div>

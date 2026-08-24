@@ -55,6 +55,10 @@ $databaseCorp = trim((string) ($databaseCorp ?? ($GLOBALS['databaseCorp'] ?? '')
 if ($databaseCorp === '') {
     $databaseCorp = 'bdcorp';
 }
+$databaseName = trim((string) ($databaseName ?? ($database ?? ($GLOBALS['databaseName'] ?? ($GLOBALS['database'] ?? '')))));
+if ($databaseName === '') {
+    die('Banco de dados do Autofrota não configurado.');
+}
 
 $acao = trim((string) ($_POST['acao'] ?? 'cadastrar'));
 $editando = $acao === 'editar';
@@ -95,9 +99,33 @@ if (strlen($telefoneInformado) > 11) {
     redirecionarComMensagem($retornoFormulario, 'Telefone deve conter no máximo 11 dígitos.');
 }
 
+$cnhNumero = preg_replace('/\D+/', '', (string) ($_POST['cnh_numero'] ?? ''));
+$cnhValidade = trim((string) ($_POST['cnh_validade'] ?? ''));
+$cnhUf = mb_strtoupper(trim((string) ($_POST['cnh_uf'] ?? '')), 'UTF-8');
+$cnhCategoria = mb_strtoupper(trim((string) ($_POST['cnh_categoria'] ?? '')), 'UTF-8');
+$cnhPontos = preg_replace('/\D+/', '', (string) ($_POST['cnh_pontos'] ?? ''));
+$cnhConsulta = trim((string) ($_POST['cnh_consulta'] ?? ''));
+$cnhSuspensa = (string) ($_POST['cnh_suspensa'] ?? '0');
+$cnhInformada = $cnhNumero !== '';
+
+if ($cnhInformada) {
+    if ($cnhValidade === '' || $cnhUf === '' || $cnhCategoria === '' || $cnhConsulta === '') {
+        redirecionarComMensagem($retornoFormulario, 'Ao informar a CNH, preencha validade, UF, categoria e data da consulta ao DETRAN.');
+    }
+    if (strlen($cnhNumero) > 12 || preg_match('/^\d{4}-\d{2}-\d{2}$/D', $cnhValidade) !== 1 || preg_match('/^\d{4}-\d{2}-\d{2}$/D', $cnhConsulta) !== 1) {
+        redirecionarComMensagem($retornoFormulario, 'Confira o número e as datas informadas para a CNH.');
+    }
+    if (!in_array($cnhSuspensa, ['0', '1'], true)) {
+        $cnhSuspensa = '0';
+    }
+    if ($cnhPontos === '') {
+        $cnhPontos = '0';
+    }
+}
+
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
-$colsInfo = consultaPreparada($conn, "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'tbfuncionario'", 's', [$databaseName]);
-$colunasExistentes = array_column($colsInfo['linhas'], 'COLUMN_NAME');
+$colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseName}`.`tbcondutor`");
+$colunasExistentes = array_column($colsInfo['linhas'], 'Field');
 $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
@@ -114,19 +142,27 @@ foreach ($permitidos as $coluna) {
 if (in_array('estado', $colunasExistentes, true) && !isset($dados['estado']) && isset($dados['uf_trabalho'])) {
     $dados['estado'] = $dados['uf_trabalho'];
 }
+if (isset($dados['status'])) {
+    if (in_array('ativo', $colunasExistentes, true)) {
+        $dados['ativo'] = strcasecmp($dados['status'], 'ATIVO') === 0 ? '1' : '0';
+    }
+    if (in_array('statuscond', $colunasExistentes, true)) {
+        $dados['statuscond'] = $dados['status'];
+    }
+}
 
 if ($editando) {
     if ($matriculaOriginal === '') {
         redirecionarComMensagem('../listar_condutorespj.php', 'Matrícula original não informada.');
     }
 
-    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1", 's', [$matriculaOriginal]);
+    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1", 's', [$matriculaOriginal]);
     if ($condutorExistente === []) {
         redirecionarComMensagem('../listar_condutorespj.php', 'Condutor PJ não encontrado.');
     }
 
     if ($matricula !== $matriculaOriginal) {
-        $matriculaEmUso = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? LIMIT 1", 's', [$matricula]);
+        $matriculaEmUso = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
         if ($matriculaEmUso !== []) {
             redirecionarComMensagem($retornoFormulario, 'Matrícula já cadastrada.');
         }
@@ -137,7 +173,7 @@ if ($editando) {
         $atribuicoes[] = "`{$coluna}` = ?";
     }
 
-    $sql = "UPDATE `{$databaseCorp}`.`tbfuncionario` SET " . implode(', ', $atribuicoes) . " WHERE idtbempresa = 2 AND matricula = ?";
+    $sql = "UPDATE `{$databaseName}`.`tbcondutor` SET " . implode(', ', $atribuicoes) . " WHERE matricula = ?";
     $parametros = array_values($dados);
     $parametros[] = $matriculaOriginal;
     $consulta = consultaPreparada($conn, $sql, str_repeat('s', count($parametros)), $parametros);
@@ -145,32 +181,39 @@ if ($editando) {
         redirecionarComMensagem($retornoFormulario, 'Erro ao atualizar: ' . $consulta['erro']);
     }
 } else {
-    $existe = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? LIMIT 1", 's', [$matricula]);
+    $existe = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
     if ($existe !== []) {
         redirecionarComMensagem('../cadastrar_condutorespj.php', 'Matrícula já cadastrada.');
     }
 
-    $dados['idtbempresa'] = '2';
+    // Esta tela cadastra exclusivamente condutores PJ e já os libera como ativos.
+    if (in_array('regime', $colunasExistentes, true)) {
+        $dados['regime'] = '0';
+    }
+    if (in_array('ativo', $colunasExistentes, true)) {
+        $dados['ativo'] = '1';
+    }
+
     $colunas = array_keys($dados);
     $placeholders = implode(',', array_fill(0, count($colunas), '?'));
-    $sql = "INSERT INTO `{$databaseCorp}`.`tbfuncionario` (`" . implode('`,`', $colunas) . "`) VALUES ({$placeholders})";
+    $sql = "INSERT INTO `{$databaseName}`.`tbcondutor` (`" . implode('`,`', $colunas) . "`) VALUES ({$placeholders})";
     $consulta = consultaPreparada($conn, $sql, str_repeat('s', count($dados)), array_values($dados));
     if ($consulta['erro'] !== '') {
         redirecionarComMensagem('../cadastrar_condutorespj.php', 'Erro ao cadastrar: ' . $consulta['erro']);
     }
 
-    $usuarioExistente = buscarUmaLinha($conn, "SELECT id FROM `{$databaseName}`.`tbusuario` WHERE usuario = ? OR matricula = ? LIMIT 1", 'ss', [$matricula, $matricula]);
+    $usuarioExistente = buscarUmaLinha($conn, "SELECT id_usuario FROM `{$databaseCorp}`.`tbusuario` WHERE usuario = ? OR matricula = ? LIMIT 1", 'ss', [$matricula, $matricula]);
     if ($usuarioExistente !== []) {
         $consultaUsuario = consultaPreparada(
             $conn,
-            "UPDATE `{$databaseName}`.`tbusuario` SET usuario = ?, matricula = ?, senha = ?, perfil = '1' WHERE id = ?",
+            "UPDATE `{$databaseCorp}`.`tbusuario` SET usuario = ?, matricula = ?, senha = ?, perfil = '1', autofrota = 1 WHERE id_usuario = ?",
             'sssi',
-            [$matricula, $matricula, $matricula, (int) $usuarioExistente['id']]
+            [$matricula, $matricula, $matricula, (int) $usuarioExistente['id_usuario']]
         );
     } else {
         $consultaUsuario = consultaPreparada(
             $conn,
-            "INSERT INTO `{$databaseName}`.`tbusuario` (usuario, matricula, senha, perfil) VALUES (?, ?, ?, '1')",
+            "INSERT INTO `{$databaseCorp}`.`tbusuario` (usuario, matricula, senha, perfil, autofrota) VALUES (?, ?, ?, '1', 1)",
             'sss',
             [$matricula, $matricula, $matricula]
         );
@@ -182,8 +225,36 @@ if ($editando) {
 }
 
 if ($editando && $matricula !== $matriculaOriginal) {
-    consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbusuario` SET matricula = ? WHERE matricula = ?", 'ss', [$matricula, $matriculaOriginal]);
+    consultaPreparada($conn, "UPDATE `{$databaseCorp}`.`tbusuario` SET usuario = ?, matricula = ? WHERE matricula = ?", 'sss', [$matricula, $matricula, $matriculaOriginal]);
 }
 
-$mensagemSucesso = $editando ? 'Condutor PJ atualizado com sucesso.' : 'Funcionário e usuário criados com sucesso. Primeiro acesso via matrícula/matrícula.';
+if ($cnhInformada) {
+    $matriculaBuscaCnh = $editando ? $matriculaOriginal : $matricula;
+    $cnhExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
+    $dadosCnh = [$cnhNumero, $cnhValidade, $cnhUf, $cnhCategoria, $matricula, $cnhPontos, $cnhConsulta, $cnhSuspensa];
+
+    if ($cnhExistente !== []) {
+        $consultaCnh = consultaPreparada(
+            $conn,
+            "UPDATE `{$databaseName}`.`tbcnh` SET numcnh = ?, validade = ?, uf = ?, categoria = ?, matricula = ?, pontos = ?, consulta = ?, suspensa = ? WHERE matricula = ?",
+            'sssssssss',
+            array_merge($dadosCnh, [$matriculaBuscaCnh])
+        );
+    } else {
+        $consultaCnh = consultaPreparada(
+            $conn,
+            "INSERT INTO `{$databaseName}`.`tbcnh` (numcnh, validade, uf, categoria, matricula, pontos, consulta, suspensa) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            'ssssssss',
+            $dadosCnh
+        );
+    }
+
+    if ($consultaCnh['erro'] !== '') {
+        redirecionarComMensagem($retornoFormulario, 'Condutor salvo, mas não foi possível salvar a CNH: ' . $consultaCnh['erro']);
+    }
+} elseif ($editando && $matricula !== $matriculaOriginal) {
+    consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbcnh` SET matricula = ? WHERE matricula = ?", 'ss', [$matricula, $matriculaOriginal]);
+}
+
+$mensagemSucesso = $editando ? 'Condutor PJ atualizado com sucesso.' : 'Condutor e usuário criados com sucesso. Primeiro acesso via matrícula/matrícula.';
 redirecionarComMensagem('../listar_condutorespj.php', $mensagemSucesso);

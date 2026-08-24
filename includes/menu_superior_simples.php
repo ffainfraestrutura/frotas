@@ -264,7 +264,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCadastros">
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Condutor</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
@@ -282,11 +282,8 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCondutores">
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cadastrar condutores</a></li>
-                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem de condutores</a></li>
+                                    target="_self">Cadastrar condutor</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem geral de condutores com veículos</a></li>
@@ -497,8 +494,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://hierarquia.painel-telecom.com/login.php" target="_blank"
-                            rel="noopener noreferrer">
+                        <a class="nav-link"
+                            href="https://hierarquia.painel-telecom.com/login.php" target="_blank" rel="noopener noreferrer"
+                            title="Abrir Equipe em uma nova aba">
                             <i class="fas fa-users-gear me-1"></i>Equipe
                         </a>
                     </li>
@@ -559,7 +557,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 
             var href = link.getAttribute('href') || '';
 
-            if (href === '' || href === '#' || href.indexOf('javascript:') === 0 || link.hasAttribute('data-bs-toggle')) {
+            if (href === '' || href === '#' || href.indexOf('javascript:') === 0 || link.hasAttribute('data-bs-toggle') || link.target === '_blank') {
                 return;
             }
 

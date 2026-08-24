@@ -20,7 +20,7 @@ if ($matricula === '') {
 
 $condutor = buscarUmaLinha(
     $conn,
-    "SELECT * FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1",
+    "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1",
     's',
     [$matricula]
 );
@@ -30,12 +30,18 @@ if ($condutor === []) {
     exit;
 }
 
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbfuncionario` WHERE ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbfuncionario` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$ccustos = consultaPreparada($conn, "SELECT * FROM `{$databaseCorp}`.`tbccusto`");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
 
 function valorCondutorPj(array $condutor, string $campo): string
 {
     return (string) ($condutor[$campo] ?? '');
+}
+
+function valorCentroCustoPj(array $linha): string
+{
+    return trim((string) ($linha['descricao'] ?? $linha['ccusto'] ?? $linha['nome'] ?? $linha['idtbccusto'] ?? ''));
 }
 
 renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
@@ -57,7 +63,7 @@ renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
 
     <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
 
-    <form method="post" action="control/processarcondutor.php" class="card">
+    <form method="post" action="control/processarcondutor.php" class="card" enctype="multipart/form-data">
         <input type="hidden" name="acao" value="editar">
         <input type="hidden" name="matricula_original" value="<?= esc($matricula) ?>">
         <div class="card-header condutor-card-header"><i class="fa fa-id-card me-2"></i>Cadastro Funcionário</div>
@@ -88,7 +94,7 @@ renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
                 <div class="col-md-3"><label class="form-label">RG</label><input class="form-control" name="rg" value="<?= esc(valorCondutorPj($condutor, 'rg')) ?>"></div>
                 <div class="col-md-3"><label class="form-label">Data nascimento</label><input class="form-control" type="date" name="dtnasc" value="<?= esc(formatarDataPortal(valorCondutorPj($condutor, 'dtnasc'), 'Y-m-d')) ?>"></div>
                 <div class="col-md-3"><label class="form-label">UF trabalho</label><input class="form-control text-uppercase" name="uf_trabalho" maxlength="2" value="<?= esc(valorCondutorPj($condutor, 'uf_trabalho') ?: valorCondutorPj($condutor, 'estado')) ?>"></div>
-                <div class="col-md-4"><label class="form-label">Centro de custo</label><input class="form-control" name="ccusto" list="listaCcusto" value="<?= esc(valorCondutorPj($condutor, 'ccusto')) ?>"><datalist id="listaCcusto"><?php foreach ($ccustos['linhas'] as $linha): ?><option value="<?= esc($linha['ccusto'] ?? '') ?>"><?php endforeach; ?></datalist></div>
+                <div class="col-md-4"><label class="form-label">Centro de custo</label><input class="form-control" name="ccusto" list="listaCcusto" value="<?= esc(valorCondutorPj($condutor, 'ccusto')) ?>"><datalist id="listaCcusto"><?php foreach ($ccustos['linhas'] as $linha): $valorCcusto = valorCentroCustoPj($linha); if ($valorCcusto !== ''): ?><option value="<?= esc($valorCcusto) ?>"><?php endif; endforeach; ?></datalist></div>
                 <div class="col-md-4"><label class="form-label">Cargo</label><input class="form-control text-uppercase" name="cargo" list="listaCargo" value="<?= esc(valorCondutorPj($condutor, 'cargo')) ?>"><datalist id="listaCargo"><?php foreach ($cargos['linhas'] as $linha): ?><option value="<?= esc($linha['cargo'] ?? '') ?>"><?php endforeach; ?></datalist></div>
                 <div class="col-md-4"><label class="form-label">Projeto</label><input class="form-control text-uppercase" name="projeto" value="<?= esc(valorCondutorPj($condutor, 'projeto')) ?>"></div>
                 <div class="col-md-5"><label class="form-label">Endereço</label><input class="form-control text-uppercase" name="endereco" value="<?= esc(valorCondutorPj($condutor, 'endereco')) ?>"></div>
@@ -98,6 +104,7 @@ renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
                 <div class="col-md-4"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" maxlength="99" value="<?= esc(valorCondutorPj($condutor, 'email')) ?>"></div>
                 <div class="col-md-3"><label class="form-label">Telefone</label><input class="form-control" name="tel_corp" inputmode="numeric" maxlength="11" pattern="[0-9]*" value="<?= esc(valorCondutorPj($condutor, 'tel_corp')) ?>"></div>
             </div>
+            <?php require __DIR__ . '/includes/form_cnh_opcional.php'; ?>
         </div>
         <div class="card-footer d-flex justify-content-end gap-2">
             <a class="btn btn-secondary" href="listar_condutorespj.php"><i class="fa fa-xmark me-1"></i>Cancelar</a>

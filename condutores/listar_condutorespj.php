@@ -12,15 +12,15 @@ if ($databaseCorp === '') {
 $statusFiltro = valorRequisicao(['status']);
 $ccustoFiltro = valorRequisicao(['ccusto']);
 $cargoFiltro = valorRequisicao(['cargo']);
-$where = ["idtbempresa = 2", "matricula LIKE '16%'", "CHAR_LENGTH(matricula) = 7"];
+$where = ["matricula LIKE '16%'", "CHAR_LENGTH(matricula) = 7"];
 $tipos = '';
 $params = [];
 if ($statusFiltro !== '') { $where[] = 'status = ?'; $tipos .= 's'; $params[] = $statusFiltro; }
 if ($ccustoFiltro !== '') { $where[] = 'ccusto = ?'; $tipos .= 's'; $params[] = $ccustoFiltro; }
 if ($cargoFiltro !== '') { $where[] = 'cargo = ?'; $tipos .= 's'; $params[] = $cargoFiltro; }
-$consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseCorp}`.`tbfuncionario` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula LIKE '16%' AND CHAR_LENGTH(matricula) = 7 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula LIKE '16%' AND CHAR_LENGTH(matricula) = 7 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseName}`.`tbcondutor` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbcondutor` WHERE matricula LIKE '16%' AND CHAR_LENGTH(matricula) = 7 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE matricula LIKE '16%' AND CHAR_LENGTH(matricula) = 7 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 $mensagem = valorRequisicao(['msg']);
 
 function normalizarStatusCondutorPj($status): string
@@ -51,7 +51,9 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
         <div class="d-flex gap-2">
             <a href="funcionarios-semcnh.php" class="btn btn-secondary"><i class="fa fa-user-times me-1"></i>Condutores sem CNH</a>
             <a href="listagemcnh.php" class="btn btn-secondary"><i class="fa fa-id-card me-1"></i>CNHs cadastradas</a>
-            <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor</a>
+            <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor PJ</a>
+            <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor Colaborador</a>
+
         </div>
     </div>
     <style>

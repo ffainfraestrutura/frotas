@@ -10,7 +10,7 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_POST['matr_autor'] ?? '');
 $matriculaFuncionario = trim((string) ($_POST['matricula'] ?? $_GET['matricula'] ?? ''));
-$ufs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+$ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 $mensagemErro = '';
 $cnh = null;
 

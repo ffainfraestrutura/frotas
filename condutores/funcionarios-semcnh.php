@@ -5,7 +5,13 @@ $autofrotaSessao = autofrotaInit();
 
 header('Content-Type: text/html; charset=utf-8');
 
-$matriculaLogada = $autofrotaSessao['matricula'];
+$conn = $autofrotaSessao['conn'] ?? null;
+$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
+$matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? '');
 $unidades = ['RJ', 'PR', 'SP', 'ES', 'TODOS'];
 $funcionarios = [];
 
@@ -19,6 +25,7 @@ function buscarEstadoFuncionario(mysqli $conn, string $databaseName, string $mat
         SELECT estado
         FROM `{$databaseName}`.`tbfuncionario`
         WHERE matricula = ?
+          AND idtbempresa = 2
         LIMIT 1
     ";
     $stmt = mysqli_prepare($conn, $sql);
@@ -36,16 +43,18 @@ function buscarEstadoFuncionario(mysqli $conn, string $databaseName, string $mat
     return $funcionario['estado'] ?? '';
 }
 
-function buscarFuncionariosSemCnh(mysqli $conn, string $databaseName, string $unidadeSelecionada): array
+function buscarFuncionariosSemCnh(mysqli $conn, string $databaseCorp, string $databaseAutofrota, string $unidadeSelecionada): array
 {
     $funcionarios = [];
     $sql = "
         SELECT f.idtbfuncionario, f.matricula, f.nome, f.ccusto, f.estado
-        FROM `{$databaseName}`.`tbfuncionario` AS f
-        LEFT JOIN `{$databaseName}`.`tbcnh` AS c
+        FROM `{$databaseCorp}`.`tbfuncionario` AS f
+        LEFT JOIN `{$databaseAutofrota}`.`tbcnh` AS c
             ON c.matricula = f.matricula
-        WHERE f.status <> 'Demitido'
-          AND f.matricula <> '999999'
+        WHERE f.idtbempresa = 2
+          AND f.matricula LIKE '16%'
+          AND CHAR_LENGTH(f.matricula) = 7
+          AND f.status <> 'Demitido'
           AND c.matricula IS NULL
     ";
 
@@ -83,7 +92,7 @@ function buscarFuncionariosSemCnh(mysqli $conn, string $databaseName, string $un
 
 $estadoFuncionario = '';
 if (isset($conn) && $conn instanceof mysqli) {
-    $estadoFuncionario = buscarEstadoFuncionario($conn, $databaseName, (string) $matriculaLogada);
+    $estadoFuncionario = buscarEstadoFuncionario($conn, $databaseCorp, $matriculaLogada);
 }
 
 $unidadePostada = $_POST['unidade'] ?? '';
@@ -94,7 +103,7 @@ if (!in_array($unidadeSelecionada, $unidades, true)) {
 }
 
 if (isset($conn) && $conn instanceof mysqli) {
-    $funcionarios = buscarFuncionariosSemCnh($conn, $databaseName, $unidadeSelecionada);
+    $funcionarios = buscarFuncionariosSemCnh($conn, $databaseCorp, $databaseName, $unidadeSelecionada);
 }
 ?>
 <!DOCTYPE html>
@@ -192,7 +201,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 </div>
 
                 <div class="mt-3">
-                    <button type="button" class="btn btn-secondary" onclick="history.back();">Voltar</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">Voltar</button>
                 </div>
             </div>
         </main>

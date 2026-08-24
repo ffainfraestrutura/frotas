@@ -8,6 +8,11 @@ if (function_exists('mysqli_report')) {
 require_once __DIR__ . '/../control/conecta.php';
 exigirLogin();
 
+$databaseCorp = trim((string) ($databaseCorp ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
+
 date_default_timezone_set('America/Sao_Paulo');
 
 $matriculaLogada = (string) ($_POST['matr_autor'] ?? $_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
@@ -192,8 +197,11 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     $funcionarios = consultarOpcoes($conn, "
         SELECT matricula, nome, ccusto
-        FROM `{$databaseName}`.`tbfuncionario`
-        WHERE matricula IS NOT NULL AND matricula <> ''
+        FROM `{$databaseCorp}`.`tbfuncionario`
+        WHERE idtbempresa = 2
+          AND matricula LIKE '16%'
+          AND CHAR_LENGTH(matricula) = 7
+          AND status <> 'Demitido'
         ORDER BY nome
         LIMIT 5000
     ");
@@ -214,8 +222,13 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     $centrosCusto = consultarOpcoes($conn, "
         SELECT DISTINCT ccusto
-        FROM `{$databaseName}`.`tbfuncionario`
-        WHERE ccusto IS NOT NULL AND ccusto <> ''
+        FROM `{$databaseCorp}`.`tbfuncionario`
+        WHERE idtbempresa = 2
+          AND matricula LIKE '16%'
+          AND CHAR_LENGTH(matricula) = 7
+          AND status <> 'Demitido'
+          AND ccusto IS NOT NULL
+          AND ccusto <> ''
         ORDER BY ccusto
     ");
 
@@ -458,7 +471,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
 
                 <div class="d-flex gap-3 pb-4">
                     <button class="btn btn-success" type="submit">Confirmar</button>
-                    <a class="btn btn-danger" href="listagem-veiculo.php" onclick="if (window.opener && !window.opener.closed) { window.close(); return false; }">Voltar</a>
+                    <a class="btn btn-danger" href="#" onclick="if (window.history.length > 1) { window.history.back(); } else if (window.opener && !window.opener.closed) { window.close(); } else { window.location.href = 'index.php'; } return false;">Voltar</a>
                     <a class="btn btn-secondary" href="inventario-veiculo.php">Inventário de veículos</a>
                 </div>
             </form>

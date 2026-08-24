@@ -12,7 +12,7 @@ $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_POST['matr_autor
 $matriculaFuncionario = trim((string) ($_POST['matcondutor'] ?? $_POST['matricula'] ?? $_GET['matcondutor'] ?? $_GET['matricula'] ?? ''));
 $mensagemErro = '';
 $dados = null;
-$ufs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+$ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 
 function buscarDocumentosCondutor(mysqli $conn, string $databaseName, string $matricula): ?array
 {
