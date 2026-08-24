@@ -11,7 +11,6 @@ if ($matricula === '' || $funcionario === []) {
     exit;
 }
 $cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
-$cnhObrigatoria = true;
 $ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 $mensagem = valorRequisicao(['msg']);
 renderCabecalhoAutofrota('Editar CNH de Colaborador');
@@ -29,7 +28,7 @@ renderCabecalhoAutofrota('Editar CNH de Colaborador');
                 <div class="col-md-2"><label class="form-label">Status</label><input class="form-control" value="<?= esc($funcionario['status'] ?? '') ?>" readonly></div>
                 <div class="col-md-3"><label class="form-label">Cargo</label><input class="form-control" value="<?= esc($funcionario['cargo'] ?? '') ?>" readonly></div>
             </div>
-            <?php require __DIR__ . '/includes/form_cnh_opcional.php'; ?>
+            <?php require __DIR__ . '/includes/form_cnh_opcional_clt.php'; ?>
         </div>
         <div class="card-footer d-flex justify-content-end gap-2"><a class="btn btn-secondary" href="listar_condutoresclt.php">Cancelar</a><button class="btn btn-success"><i class="fa fa-save me-1"></i>Salvar CNH</button></div>
     </form>
