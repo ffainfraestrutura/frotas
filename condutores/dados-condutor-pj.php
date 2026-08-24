@@ -1,10 +1,11 @@
 <?php
-require_once __DIR__ . '/../auth.php';
-require_once __DIR__ . '/../control/conecta.php';
-require_once __DIR__ . '/../includes/portal_helpers.php';
-exigirLogin();
+require_once __DIR__ . '/../includes/autofrota_common.php';
 
-$databaseCorp = trim((string) ($databaseCorp ?? ($GLOBALS['databaseCorp'] ?? '')));
+$autofrotaSessao = autofrotaInit();
+$conn = $autofrotaSessao['conn'] ?? null;
+$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
 if ($databaseCorp === '') {
     $databaseCorp = 'bdcorp';
 }
@@ -47,7 +48,7 @@ if (!function_exists('normalizarDataInput')) {
 }
 
 if ($matriculaCondutor !== '' && isset($conn) && $conn instanceof mysqli) {
-    $condutor = buscarUmaLinha($conn, "SELECT * FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1", 's', [$matriculaCondutor]);
+    $condutor = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1", 's', [$matriculaCondutor]);
     $cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaCondutor]);
     $usuario = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbusuario` WHERE matricula = ? LIMIT 1", 's', [$matriculaCondutor]);
 

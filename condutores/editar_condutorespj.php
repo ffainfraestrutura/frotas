@@ -20,7 +20,7 @@ if ($matricula === '') {
 
 $condutor = buscarUmaLinha(
     $conn,
-    "SELECT * FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1",
+    "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1",
     's',
     [$matricula]
 );
@@ -30,8 +30,8 @@ if ($condutor === []) {
     exit;
 }
 
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbcondutor` WHERE ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 
 function valorCondutorPj(array $condutor, string $campo): string
 {

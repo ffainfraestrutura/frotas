@@ -12,24 +12,22 @@ if ($databaseCorp === '') {
 if (!isset($conn) && isset($con) && $con instanceof mysqli) {
     $conn = $con;
 }
-if (!isset($databaseName) && isset($database) && is_string($database) && $database !== '') {
-    $databaseName = $database;
-}
+$databaseName = trim((string) ($autofrotaSessao['databaseName'] ?? ''));
 
 $proximaMatricula = '1620001';
 $ccustos = ['erro' => '', 'linhas' => []];
 $cargos = ['erro' => '', 'linhas' => []];
 $projetos = ['erro' => '', 'linhas' => []];
 
-if (isset($conn) && $conn instanceof mysqli && $databaseCorp !== '') {
-    $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND matricula REGEXP '^16[0-9]{5}$'");
+if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
+    $linhaMax = buscarUmaLinha($conn, "SELECT MAX(CAST(matricula AS UNSIGNED)) AS max_mat FROM `{$databaseName}`.`tbcondutor` WHERE matricula REGEXP '^16[0-9]{5}$'");
     if (!empty($linhaMax['max_mat'])) {
         $proximaMatricula = str_pad(((int) $linhaMax['max_mat']) + 1, 7, '0', STR_PAD_LEFT);
     }
 
-    $ccustos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(ccusto)) AS ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND ccusto IS NOT NULL AND TRIM(ccusto) <> '' ORDER BY ccusto");
-    $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
-    $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
+    $ccustos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(ccusto)) AS ccusto FROM `{$databaseName}`.`tbcondutor` WHERE ccusto IS NOT NULL AND TRIM(ccusto) <> '' ORDER BY ccusto");
+    $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
+    $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseName}`.`tbcondutor` WHERE projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
 }
 
 $mensagem = valorRequisicao(['msg']);
