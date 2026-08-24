@@ -76,11 +76,15 @@ function carregarOpcoes(mysqli $conn, string $sql, string $valueField, string $l
 
 $colaboradores = carregarOpcoes(
     $conn,
-    'SELECT f.matricula, f.nome FROM tbcondutor c LEFT JOIN bdcorp.tbfuncionario f ON c.matricula = f.matricula WHERE f.status = "Ativo" ORDER BY f.nome',
+    'SELECT c.matricula, c.nome 
+     FROM tbcondutor c 
+     LEFT JOIN bdcorp.tbfuncionario f 
+         ON c.matricula COLLATE utf8mb4_unicode_ci = f.matricula 
+     WHERE f.status = "Ativo" 
+     ORDER BY f.nome',
     'matricula',
     'nome'
 );
-
 
 $filiais = carregarOpcoes(
     $conn,
