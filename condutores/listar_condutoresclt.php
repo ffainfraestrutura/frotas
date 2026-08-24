@@ -41,11 +41,11 @@ function classeBadgeStatusCondutorPj($status): string
     return 'text-bg-success';
 }
 
-renderCabecalhoAutofrota('Condutores Colaboradores Cadastrados');
+renderCabecalhoAutofrota('Colaboradores Cadastrados');
 ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div><h1 class="h3 mb-1">Condutores Colaboradores Cadastrados</h1></div>
+        <div><h1 class="h3 mb-1">Colaboradores Cadastrados</h1></div>
         <div class="d-flex gap-2">
             <!-- <a href="funcionarios-semcnh.php" class="btn btn-secondary"><i class="fa fa-user-times me-1"></i>Condutores sem CNH</a> -->
             <a href="listagemcnh.php" class="btn btn-secondary"><i class="fa fa-id-card me-1"></i>CNHs cadastradas</a>
