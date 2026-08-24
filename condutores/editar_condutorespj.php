@@ -44,7 +44,7 @@ function valorCentroCustoPj(array $linha): string
     return trim((string) ($linha['descricao'] ?? $linha['ccusto'] ?? $linha['nome'] ?? $linha['idtbccusto'] ?? ''));
 }
 
-renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
+renderCabecalhoAutofrota('Editar Condutor');
 ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
