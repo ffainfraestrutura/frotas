@@ -73,6 +73,23 @@ if (!function_exists('buscarUmaLinha')) {
     }
 }
 
+if (!function_exists('buscarUfsPortal')) {
+    function buscarUfsPortal(mysqli $conn): array
+    {
+        $consulta = consultaPreparada($conn, 'SELECT uf FROM `bdautofrotas`.`tb_ufs` WHERE uf IS NOT NULL AND TRIM(uf) <> \'\' ORDER BY uf');
+        $ufs = [];
+
+        foreach ($consulta['linhas'] as $linha) {
+            $uf = strtoupper(trim((string) ($linha['uf'] ?? '')));
+            if ($uf !== '') {
+                $ufs[] = $uf;
+            }
+        }
+
+        return array_values(array_unique($ufs));
+    }
+}
+
 if (!function_exists('badgeStatusAtivo')) {
     function badgeStatusAtivo($ativo): string
     {

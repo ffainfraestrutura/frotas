@@ -1,5 +1,9 @@
 <?php
 $cnh = isset($cnh) && is_array($cnh) ? $cnh : [];
+$ufs = isset($ufs) && is_array($ufs) ? $ufs : [];
+if ($ufs === [] && isset($conn) && $conn instanceof mysqli && function_exists('buscarUfsPortal')) {
+    $ufs = buscarUfsPortal($conn);
+}
 $valorCnh = static function (string $campo) use ($cnh): string {
     return (string) ($cnh[$campo] ?? '');
 };
@@ -9,7 +13,7 @@ $valorCnh = static function (string $campo) use ($cnh): string {
         <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>CNH <small class="text-muted fw-normal">(opcional)</small></h6>
     </div>
     <div class="card-body">
-        <p class="small text-muted">A CNH somente será salva quando o número for informado. Os dados permanecem armazenados em <code>tbcnh</code>.</p>
+        <!-- <p class="small text-muted">A CNH somente será salva quando o número for informado. Os dados permanecem armazenados em <code>tbcnh</code>.</p> -->
         <div class="row g-3">
             <div class="col-md-3">
                 <label class="form-label" for="cnh_numero">Número da CNH</label>

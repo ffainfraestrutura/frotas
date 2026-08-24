@@ -12,7 +12,7 @@ $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? '');
 $matriculaFuncionario = trim((string) ($_POST['matricula'] ?? $_GET['matricula'] ?? ''));
 $funcionario = null;
 $mensagemErro = '';
-$ufs = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+$ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 
 function colunaExisteCnh(mysqli $conn, string $databaseName, string $tabela, string $coluna): bool
 {

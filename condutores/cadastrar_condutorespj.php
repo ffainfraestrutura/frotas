@@ -32,7 +32,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
 }
 
 $mensagem = valorRequisicao(['msg']);
-$ufs = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+$ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 
 function renderizarOpcoesCondutor(array $linhas, string $campo): void
 {
