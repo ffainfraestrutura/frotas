@@ -15,7 +15,7 @@ $tramites = array('Inserir infrator', 'Imprimir Recibo DP', 'Confirmar Desconto'
 $pontosarray = array(3, 4, 5, 7);
 
 $nome_base_arquivo = "multas";
-$_UP['pasta'] = '../docs/multas/';
+$_UP['pasta'] = '/opt/apps/files/storage/frotas/';
 
 // Criar diretório se não existir
 if (!file_exists($_UP['pasta'])) {
@@ -25,7 +25,7 @@ if (!file_exists($_UP['pasta'])) {
 
 $matr_autor = $_POST['matr_autor'] ?? '';
 
-include '../../vendor/autoload.php';
+include '/opt/shared/vendor/autoload.php';
 require_once "../includes/autofrota_common.php";
 $autofrotaSessao = autofrotaInit();
 $con = $autofrotaSessao["conn"] ?? null;
@@ -38,16 +38,17 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
-function validarENormalizarData($dataString, &$erro, $horaObrigatoria = true) {
+function validarENormalizarData($dataString, &$erro, $horaObrigatoria = true)
+{
     if (empty($dataString) || trim($dataString) == '' || $dataString == '--') {
         $erro = "vazio";
         return false;
     }
-    
+
     $dataString = str_replace("'", "", trim($dataString));
-    
+
     $parts = explode(' ', $dataString);
-    
+
     // Se hora não é obrigatória e só tem data
     if (!$horaObrigatoria && count($parts) == 1) {
         $datePart = $parts[0];
@@ -62,7 +63,7 @@ function validarENormalizarData($dataString, &$erro, $horaObrigatoria = true) {
         $datePart = $parts[0];
         $timePart = "00:00:00";
     }
-    
+
     // Validar hora
     $timeComponents = explode(':', $timePart);
     if (count($timeComponents) == 2) {
@@ -71,45 +72,45 @@ function validarENormalizarData($dataString, &$erro, $horaObrigatoria = true) {
         $erro = "formato de hora inválido (use HH:MM ou HH:MM:SS)";
         return false;
     }
-    
+
     // Validar hora (0-23)
-    $hora = (int)$timeComponents[0];
-    $minuto = (int)$timeComponents[1];
+    $hora = (int) $timeComponents[0];
+    $minuto = (int) $timeComponents[1];
     if ($hora < 0 || $hora > 23 || $minuto < 0 || $minuto > 59) {
         $erro = "hora inválida ($hora:$minuto)";
         return false;
     }
-    
+
     // Validar data
     $dateComponents = explode('/', $datePart);
     if (count($dateComponents) != 3) {
         $erro = "formato de data inválido (use DD/MM/AAAA)";
         return false;
     }
-    
+
     $dia = intval($dateComponents[0]);
     $mes = intval($dateComponents[1]);
     $ano = intval($dateComponents[2]);
-    
+
     if ($ano < 1900 || $ano > 2100) {
         $erro = "ano inválido ($ano)";
         return false;
     }
-    
+
     if (!checkdate($mes, $dia, $ano)) {
         $erro = "data inválida ($dia/$mes/$ano)";
         return false;
     }
-    
+
     $dia = str_pad($dia, 2, '0', STR_PAD_LEFT);
     $mes = str_pad($mes, 2, '0', STR_PAD_LEFT);
-    
+
     return "$ano-$mes-$dia $timePart";
 }
 
 if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
     $file_extension = strtolower(pathinfo($_FILES["arquivo"]["name"], PATHINFO_EXTENSION));
-    
+
     if ($file_extension != 'xlsx') {
         echo "<script>
             Swal.fire({
@@ -121,12 +122,12 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
         </script>";
         exit;
     }
-    
+
     try {
         $reader = IOFactory::createReader('Xlsx');
         $spreadsheet = $reader->load($_FILES['arquivo']['tmp_name']);
         $data = $spreadsheet->getActiveSheet()->toArray();
-        
+
         // Validar limite de registros
         $totalRegistros = count($data) - 1; // Desconsiderando cabeçalho
         if ($totalRegistros > 1000) {
@@ -140,41 +141,59 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             </script>";
             exit;
         }
-        
+
     } catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
         die("Erro ao carregar arquivo: " . $e->getMessage());
     }
-    
+
     $respostageral = "";
     $totalLinhas = 0;
     $totalImportados = 0;
     $totalErros = 0;
-    
+
     // Array para armazenar linhas com erro (para exportar em Excel)
     $linhasComErro = [];
-    
+
     // Cabeçalho das colunas originais
-    $colunas = ['PLACA', 'DATA/HORA CADASTRO', 'DATA/HORA INFRAÇÃO', 'AUTO INFRAÇÃO', 'AUTO INFRAÇÃO 2', 
-                'AIT ORIGINÁRIA', 'ORGÃO', 'ENDEREÇO', 'MUNICÍPIO', 'UF', 'CÓDIGO MULTA', 
-                'DESCRIÇÃO INFRAÇÃO', 'VALOR', 'AP CONDUTOR DATA VENCIMENTO', 'NOME CONDUTOR', 
-                'PONTUAÇÃO', 'GRAVIDADE', 'ETAPA', 'TRÂMITE', 'CENTRO DE CUSTO PLANO'];
-    
+    $colunas = [
+        'PLACA',
+        'DATA/HORA CADASTRO',
+        'DATA/HORA INFRAÇÃO',
+        'AUTO INFRAÇÃO',
+        'AUTO INFRAÇÃO 2',
+        'AIT ORIGINÁRIA',
+        'ORGÃO',
+        'ENDEREÇO',
+        'MUNICÍPIO',
+        'UF',
+        'CÓDIGO MULTA',
+        'DESCRIÇÃO INFRAÇÃO',
+        'VALOR',
+        'AP CONDUTOR DATA VENCIMENTO',
+        'NOME CONDUTOR',
+        'PONTUAÇÃO',
+        'GRAVIDADE',
+        'ETAPA',
+        'TRÂMITE',
+        'CENTRO DE CUSTO PLANO'
+    ];
+
     foreach ($data as $rowIndex => $row) {
         // Pular cabeçalho
         if ($rowIndex == 0 && strtoupper(trim($row[0])) == 'PLACA') {
             continue;
         }
-        
+
         // Pular linhas vazias
         if (empty(array_filter($row))) {
             continue;
         }
-        
+
         $totalLinhas++;
         $gravar = TRUE;
         $resposta = "";
         $motivosErro = [];
-        
+
         // Mapeamento dos campos
         $placa = isset($row[0]) ? trim(strtoupper($row[0])) : null;
         $datahoracadastro = isset($row[1]) ? trim($row[1]) : null;
@@ -196,9 +215,9 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
         $etapa = isset($row[17]) ? trim(strtoupper($row[17])) : null;
         $tramite = isset($row[18]) ? trim($row[18]) : null;
         $ccustoplan = isset($row[19]) ? trim($row[19]) : null;
-        
+
         // ========== VALIDAÇÕES ==========
-        
+
         // 1. Validar PLACA
         if (empty($placa)) {
             $gravar = FALSE;
@@ -211,7 +230,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Placa '$placa' não cadastrada no sistema";
             }
         }
-        
+
         // 2. Validar DATA/HORA CADASTRO (com hora obrigatória)
         $erro_data_cadastro = "";
         $datahoracadastrof_temp = validarENormalizarData($datahoracadastro, $erro_data_cadastro, true);
@@ -223,7 +242,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Data/Hora Cadastro inválida: $erro_data_cadastro (valor: '$datahoracadastro')";
             }
         }
-        
+
         // 3. Validar DATA/HORA INFRAÇÃO (com hora obrigatória - formato HH:MM)
         $erro_data_infracao = "";
         $datahorainfracaof_temp = validarENormalizarData($datahorainfracao, $erro_data_infracao, true);
@@ -235,7 +254,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Data/Hora Infração inválida: $erro_data_infracao (valor: '$datahorainfracao')";
             }
         }
-        
+
         // 4. Validar AUTO INFRAÇÃO (mínimo 8 dígitos)
         if (empty($autoinfracao)) {
             $gravar = FALSE;
@@ -244,19 +263,19 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             $gravar = FALSE;
             $motivosErro[] = "Auto de Infração deve ter no mínimo 8 dígitos (valor: '$autoinfracao')";
         }
-        
+
         // 5. Validar AUTO INFRAÇÃO 2 (se informado, mínimo 8 dígitos)
         if (!empty($autoinfracao2) && strlen(preg_replace('/[^0-9]/', '', $autoinfracao2)) < 8) {
             $gravar = FALSE;
             $motivosErro[] = "Auto de Infração 2 deve ter no mínimo 8 dígitos (valor: '$autoinfracao2')";
         }
-        
+
         // 6. Validar AIT ORIGINÁRIA (se informado, mínimo 8 dígitos)
         if (!empty($originario) && strlen(preg_replace('/[^0-9]/', '', $originario)) < 8) {
             $gravar = FALSE;
             $motivosErro[] = "AIT Originária deve ter no mínimo 8 dígitos (valor: '$originario')";
         }
-        
+
         // 7. Validar UF (2 dígitos, estado brasileiro)
         if (empty($uf)) {
             $gravar = FALSE;
@@ -265,7 +284,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             $gravar = FALSE;
             $motivosErro[] = "UF '$uf' inválida. Use UF com 2 dígitos (ex: SP, RJ, MG)";
         }
-        
+
         // 8. Validar CÓDIGO MULTA (5 dígitos)
         if (empty($codigom)) {
             $gravar = FALSE;
@@ -277,7 +296,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Código Multa deve ter 5 dígitos (valor: '$codigom')";
             }
         }
-        
+
         // 9. Validar VALOR (sem formatação contábil, sem ponto de milhar)
         $valor = 0;
         if (!empty($valor_excel)) {
@@ -292,12 +311,12 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                     $gravar = FALSE;
                     $motivosErro[] = "VALOR inválido. Use formato numérico com vírgula para decimal (valor: '$valor_excel')";
                 } else {
-                    $valor = (float)$valor_limpo;
+                    $valor = (float) $valor_limpo;
                 }
             }
         }
         // Se valor vazio, não é erro pois pode ser buscado do banco
-        
+
         // 10. Validar AP CONDUTOR DATA VENCIMENTO (se informado, formato correto)
         $datalimitecondf_temp = null;
         if (!empty($datalimitecond) && $datalimitecond != '--') {
@@ -308,7 +327,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "AP Condutor Data Vencimento inválida: $erro_data_limite (valor: '$datalimitecond')";
             }
         }
-        
+
         // 11. Validar NOME CONDUTOR (se informado, deve existir no sistema)
         if (!empty($nomecond)) {
             $sql2 = "SELECT nome FROM bdcorp.tbfuncionario WHERE nome = '" . mysqli_real_escape_string($con, $nomecond) . "'";
@@ -318,7 +337,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Nome do condutor '$nomecond' não encontrado no sistema. Verifique a grafia";
             }
         }
-        
+
         // 12. Validar PONTUAÇÃO (3, 4, 5 ou 7)
         if (!empty($pontos)) {
             if (!is_numeric($pontos)) {
@@ -332,7 +351,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 }
             }
         }
-        
+
         // 13. Validar GRAVIDADE (LEVE, MEDIA, GRAVE, GRAVISSIMA - sem acentos)
         if (!empty($gravidade_excel) && $gravidade_excel != '-') {
             if (!in_array($gravidade_excel, $gravs, true)) {
@@ -340,7 +359,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Gravidade '$gravidade_excel' inválida. Use: LEVE, MEDIA, GRAVE ou GRAVISSIMA (sem acentos)";
             }
         }
-        
+
         // 14. Validar ETAPA
         if (empty($etapa)) {
             $gravar = FALSE;
@@ -349,13 +368,13 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             $gravar = FALSE;
             $motivosErro[] = "Etapa '$etapa' inválida. Valores válidos: " . implode(', ', $etapas);
         }
-        
+
         // 15. Validar TRÂMITE (se informado)
         if (!empty($tramite) && !in_array($tramite, $tramites, true)) {
             $gravar = FALSE;
             $motivosErro[] = "Trâmite '$tramite' inválido. Valores válidos: " . implode(', ', $tramites);
         }
-        
+
         // 16. Validar CENTRO DE CUSTO (se informado, deve existir)
         if (!empty($ccustoplan)) {
             $sql3 = "SELECT ccusto FROM bdcorp.tbfuncionario WHERE ccusto = '" . mysqli_real_escape_string($con, $ccustoplan) . "' LIMIT 1";
@@ -365,7 +384,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 // Não é erro fatal, apenas aviso
             }
         }
-        
+
         // 17. Verificar se há apóstrofos nos dados textuais
         $camposTexto = [$orgao, $endereco, $municipio, $descricaoinfra, $tramite];
         foreach ($camposTexto as $campo) {
@@ -375,7 +394,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 break;
             }
         }
-        
+
         // 18. Verificar campos com ' - ' (traço espaço espaço)
         $todosCampos = [$placa, $datahoracadastro, $datahorainfracao, $autoinfracao, $autoinfracao2, $originario, $orgao, $endereco, $municipio, $uf, $codigom, $descricaoinfra, $valor_excel, $datalimitecond, $nomecond, $pontos, $gravidade_excel, $etapa, $tramite, $ccustoplan];
         foreach ($todosCampos as $campo) {
@@ -385,7 +404,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 break;
             }
         }
-        
+
         // 19. Verificar se já existe no sistema (duplicado)
         if ($gravar && !empty($autoinfracao)) {
             $sql_duplicado = "SELECT autoinfracao FROM `{$databaseName}`.tbmulta WHERE autoinfracao = '" . mysqli_real_escape_string($con, $autoinfracao) . "'";
@@ -395,12 +414,12 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 $motivosErro[] = "Auto de Infração já existe no sistema (duplicado não será atualizado)";
             }
         }
-        
+
         // Se não gravou, adiciona à lista de erros
         if (!$gravar) {
             $totalErros++;
             $motivoCompleto = implode("; ", $motivosErro);
-            
+
             $linhasComErro[] = [
                 'linha' => $rowIndex + 1,
                 'placa' => $placa,
@@ -425,7 +444,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 'ccustoplan' => $ccustoplan,
                 'motivo' => $motivoCompleto
             ];
-            
+
             $respostageral .= ">>> NAO IMPORTADO - Linha " . ($rowIndex + 1) . " - Auto: $autoinfracao - Placa: $placa\n";
             $respostageral .= "Motivos: $motivoCompleto\n\n";
         } else {
@@ -434,22 +453,39 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             $totalImportados++;
         }
     }
-    
+
     // ========== GERAR EXCEL COM LINHAS NÃO IMPORTADAS ==========
     if ($totalErros > 0) {
         $spreadsheet_erros = new Spreadsheet();
         $sheet_erros = $spreadsheet_erros->getActiveSheet();
         $sheet_erros->setTitle('Linhas Não Importadas');
-        
+
         // Cabeçalho do relatório de erros
         $cabecalhoErros = [
-            'Linha Original', 'PLACA', 'Data/Hora Cadastro', 'Data/Hora Infração', 
-            'Auto Infração', 'Auto Infração 2', 'AIT Originária', 'Orgão', 
-            'Endereço', 'Município', 'UF', 'Código Multa', 'Descrição Infração', 
-            'Valor', 'AP Condutor Vencimento', 'Nome Condutor', 'Pontuação', 
-            'Gravidade', 'Etapa', 'Trâmite', 'Centro de Custo', 'MOTIVO DA NÃO IMPORTAÇÃO'
+            'Linha Original',
+            'PLACA',
+            'Data/Hora Cadastro',
+            'Data/Hora Infração',
+            'Auto Infração',
+            'Auto Infração 2',
+            'AIT Originária',
+            'Orgão',
+            'Endereço',
+            'Município',
+            'UF',
+            'Código Multa',
+            'Descrição Infração',
+            'Valor',
+            'AP Condutor Vencimento',
+            'Nome Condutor',
+            'Pontuação',
+            'Gravidade',
+            'Etapa',
+            'Trâmite',
+            'Centro de Custo',
+            'MOTIVO DA NÃO IMPORTAÇÃO'
         ];
-        
+
         // Aplicar cabeçalho
         foreach ($cabecalhoErros as $colIndex => $titulo) {
             $coluna = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1);
@@ -458,7 +494,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             $sheet_erros->getStyle($coluna . '1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFE0E0E0');
             $sheet_erros->getStyle($coluna . '1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
         }
-        
+
         // Preencher dados das linhas com erro
         $linhaAtual = 2;
         foreach ($linhasComErro as $erro) {
@@ -484,35 +520,38 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             $sheet_erros->setCellValue('T' . $linhaAtual, $erro['tramite']);
             $sheet_erros->setCellValue('U' . $linhaAtual, $erro['ccustoplan']);
             $sheet_erros->setCellValue('V' . $linhaAtual, $erro['motivo']);
-            
+
             // Destacar linha com erro (fundo vermelho claro)
             $sheet_erros->getStyle('A' . $linhaAtual . ':V' . $linhaAtual)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFFFCCCC');
-            
+
             $linhaAtual++;
         }
-        
+
         // Ajustar largura das colunas automaticamente
         foreach (range('A', 'V') as $coluna) {
             $sheet_erros->getColumnDimension($coluna)->setAutoSize(true);
         }
-        
+
         // Salvar arquivo de erros
         $errosFileName = "erros_importacao_" . $hoje1 . ".xlsx";
         $errosFilepath = $_UP['pasta'] . $errosFileName;
-        
+
         $writer = new Xlsx($spreadsheet_erros);
         $writer->save($errosFilepath);
-        
-        $downloadLink = "../docs/multas/{$errosFileName}";
+
+        // Link para o script de download com URL completa
+        $protocol = 'https';
+        $host = $_SERVER['HTTP_HOST'];
+        $downloadLink = $protocol . '://' . $host . '/download.php?arquivo=' . urlencode($errosFileName);
     } else {
         $downloadLink = null;
     }
-    
+
     // Mover arquivo original
     $arquivo_nome_final = "$nome_base_arquivo-$hoje1.xlsx";
     $caminho_completo = $_UP['pasta'] . $arquivo_nome_final;
     move_uploaded_file($_FILES['arquivo']['tmp_name'], $caminho_completo);
-    
+
     // ========== EXIBIR RESULTADO COM SWEETALERT ==========
     $resumo = "========================================\n";
     $resumo .= "     RESUMO DA IMPORTAÇÃO DE MULTAS\n";
@@ -521,9 +560,9 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
     $resumo .= "✅ Registros importados com sucesso: $totalImportados\n";
     $resumo .= "❌ Registros NÃO importados: $totalErros\n";
     $resumo .= "========================================\n\n";
-    
+
     $mensagemFinal = nl2br(htmlspecialchars($resumo));
-    
+
     echo '<!DOCTYPE html>
     <html>
     <head>
@@ -577,7 +616,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                     htmlContent += `
                         <hr>
                         <div style="text-align: center; margin-top: 15px;">
-                            <a href="${downloadLink}" download style="
+                            <a href="${downloadLink}" target="_blank" style="
                                 display: inline-block;
                                 background: #d33;
                                 color: white;
@@ -617,7 +656,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
     </script>
     </body>
     </html>';
-    
+
 } else {
     echo '<!DOCTYPE html>
     <html>
