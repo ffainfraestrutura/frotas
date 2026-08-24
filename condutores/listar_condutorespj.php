@@ -49,7 +49,7 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div><h1 class="h3 mb-1">Condutores Cadastrados</h1></div>
         <div class="d-flex gap-2">
-            <a href="funcionarios-semcnh.php" class="btn btn-secondary"><i class="fa fa-user-times me-1"></i>Condutores sem CNH</a>
+            <!-- <a href="funcionarios-semcnh.php" class="btn btn-secondary"><i class="fa fa-user-times me-1"></i>Condutores sem CNH</a> -->
             <a href="listagemcnh.php" class="btn btn-secondary"><i class="fa fa-id-card me-1"></i>CNHs cadastradas</a>
             <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor PJ</a>
             <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor Colaborador</a>
