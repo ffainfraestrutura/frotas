@@ -18,7 +18,7 @@ renderCabecalhoAutofrota('Editar CNH de Colaborador');
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3"><div><h1 class="h3 mb-1">Editar CNH de Colaborador</h1><p class="text-muted mb-0"><?= esc($funcionario['nome'] ?? '') ?> — <?= esc($matricula) ?></p></div><a class="btn btn-secondary" href="listar_condutoresclt.php"><i class="fa fa-arrow-left me-1"></i>Voltar</a></div>
     <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
-    <form method="post" action="control/processarcondutorclt.php" class="card">
+    <form method="post" action="../control/processarcondutorclt.php" class="card">
         <input type="hidden" name="matricula" value="<?= esc($matricula) ?>">
         <div class="card-header fw-semibold">Dados vindos de tbfuncionario</div>
         <div class="card-body">

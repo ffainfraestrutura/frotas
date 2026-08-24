@@ -1,56 +1,54 @@
 <?php
-$cnh = isset($cnh) && is_array($cnh) ? $cnh : [];
-$ufs = isset($ufs) && is_array($ufs) ? $ufs : [];
-if ($ufs === [] && isset($conn) && $conn instanceof mysqli && function_exists('buscarUfsPortal')) {
-    $ufs = buscarUfsPortal($conn);
-}
-$valorCnh = static function (string $campo) use ($cnh): string {
-    return (string) ($cnh[$campo] ?? '');
-};
+require_once __DIR__ . '/../includes/autofrota_common.php';
+
+$sessao = autofrotaInit();
+$conn = $sessao['conn'] ?? null;
+$databaseCorp = trim((string) ($sessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp')));
+$funcionarios = consultaPreparada(
+    $conn,
+    "SELECT matricula, nome, status, cargo, ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY nome"
+);
+$mensagem = valorRequisicao(['msg']);
+$cnh = [];
+$ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
+
+renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
 ?>
-<div class="card mt-3">
-    <div class="card-header">
-        <h6 class="mb-0"><i class="fas fa-id-card me-2"></i>CNH do colaborador</h6>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div><h1 class="h3 mb-1">Cadastrar CNH de Colaborador</h1><p class="text-muted mb-0">Selecione um funcionário da empresa 2 e informe somente os dados da CNH.</p></div>
+        <a class="btn btn-secondary" href="listar_condutoresclt.php"><i class="fa fa-arrow-left me-1"></i>Voltar</a>
     </div>
-    <div class="card-body">
-        <!-- <p class="small text-muted">A CNH somente será salva quando o número for informado. Os dados permanecem armazenados em <code>tbcnh</code>.</p> -->
-        <div class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label" for="cnh_numero">Número da CNH</label>
-                <input class="form-control" id="cnh_numero" name="cnh_numero" inputmode="numeric" pattern="[0-9]*" maxlength="12" value="<?= esc($valorCnh('numcnh')) ?>" required>
+    <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
+    <?php if ($funcionarios['erro'] !== ''): ?><div class="alert alert-danger"><?= esc($funcionarios['erro']) ?></div><?php endif; ?>
+    <form method="post" action="../control/processarcondutorclt.php" class="card">
+        <div class="card-header fw-semibold">Funcionário</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="matricula">Funcionário</label>
+                    <select class="form-select" id="matricula" name="matricula" required>
+                        <option value="">Selecione</option>
+                        <?php foreach ($funcionarios['linhas'] as $funcionario): ?>
+                            <option value="<?= esc($funcionario['matricula'] ?? '') ?>" data-status="<?= esc($funcionario['status'] ?? '') ?>" data-cargo="<?= esc($funcionario['cargo'] ?? '') ?>" data-ccusto="<?= esc($funcionario['ccusto'] ?? '') ?>"><?= esc(($funcionario['nome'] ?? '') . ' — ' . ($funcionario['matricula'] ?? '')) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2"><label class="form-label">Status</label><input class="form-control" id="funcionario-status" readonly></div>
+                <div class="col-md-2"><label class="form-label">Cargo</label><input class="form-control" id="funcionario-cargo" readonly></div>
+                <div class="col-md-2"><label class="form-label">Centro de custo</label><input class="form-control" id="funcionario-ccusto" readonly></div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label" for="cnh_validade">Validade</label>
-                <input class="form-control" type="date" id="cnh_validade" name="cnh_validade" value="<?= esc(formatarDataPortal($valorCnh('validade'), 'Y-m-d')) ?>" required>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="cnh_uf">UF de emissão</label>
-                <select class="form-select" id="cnh_uf" name="cnh_uf" required>
-                    <option value="">Selecione</option>
-                    <?php foreach ($ufs as $ufCnh): ?>
-                        <option value="<?= esc($ufCnh) ?>" <?= $valorCnh('uf') === $ufCnh ? 'selected' : '' ?>><?= esc($ufCnh) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="cnh_categoria">Categoria</label>
-                <input class="form-control text-uppercase" id="cnh_categoria" name="cnh_categoria" maxlength="5" value="<?= esc($valorCnh('categoria')) ?>" required>
-            </div>
-            <div class="col-md-1">
-                <label class="form-label" for="cnh_pontos">Pontos</label>
-                <input class="form-control" id="cnh_pontos" name="cnh_pontos" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="<?= esc($valorCnh('pontos')) ?>">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label" for="cnh_suspensa">Suspensa</label>
-                <select class="form-select" id="cnh_suspensa" name="cnh_suspensa">
-                    <option value="0" <?= $valorCnh('suspensa') !== '1' ? 'selected' : '' ?>>Não</option>
-                    <option value="1" <?= $valorCnh('suspensa') === '1' ? 'selected' : '' ?>>Sim</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label" for="cnh_consulta">Consulta ao DETRAN</label>
-                <input class="form-control" type="date" id="cnh_consulta" name="cnh_consulta" value="<?= esc(formatarDataPortal($valorCnh('consulta'), 'Y-m-d')) ?>" required>
-            </div>
+            <?php require __DIR__ . '/includes/form_cnh_opcional_clt.php'; ?>
         </div>
-    </div>
+        <div class="card-footer d-flex justify-content-end gap-2"><a class="btn btn-secondary" href="listar_condutoresclt.php">Cancelar</a><button class="btn btn-success"><i class="fa fa-save me-1"></i>Salvar CNH</button></div>
+    </form>
 </div>
+<script>
+document.getElementById('matricula').addEventListener('change', function () {
+    const option = this.options[this.selectedIndex];
+    document.getElementById('funcionario-status').value = option.dataset.status || '';
+    document.getElementById('funcionario-cargo').value = option.dataset.cargo || '';
+    document.getElementById('funcionario-ccusto').value = option.dataset.ccusto || '';
+});
+</script>
+<?php renderRodapeAutofrota(); ?>
