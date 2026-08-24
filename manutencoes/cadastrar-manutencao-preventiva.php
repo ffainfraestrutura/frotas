@@ -415,6 +415,11 @@ if ($oficinaAtual !== '') {
             </div>
         <?php endif; ?>
         <div class="ms-5">
+            <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php">
+                <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Voltar
+            </a>
+        </div>
+        <div class="ms-5">
             <a class="btn btn-danger" href="solicitar-manutencao-preventiva.php">Cancelar cadastro</a>
         </div>
     </div>
