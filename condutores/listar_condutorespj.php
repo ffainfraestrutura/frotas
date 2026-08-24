@@ -12,15 +12,17 @@ if ($databaseCorp === '') {
 $statusFiltro = valorRequisicao(['status']);
 $ccustoFiltro = valorRequisicao(['ccusto']);
 $cargoFiltro = valorRequisicao(['cargo']);
-$where = ["matricula LIKE '16%'", "CHAR_LENGTH(matricula) = 7"];
+$regimeFiltro = valorRequisicao(['regime']);
+$where = ['1=1'];
 $tipos = '';
 $params = [];
 if ($statusFiltro !== '') { $where[] = 'status = ?'; $tipos .= 's'; $params[] = $statusFiltro; }
 if ($ccustoFiltro !== '') { $where[] = 'ccusto = ?'; $tipos .= 's'; $params[] = $ccustoFiltro; }
 if ($cargoFiltro !== '') { $where[] = 'cargo = ?'; $tipos .= 's'; $params[] = $cargoFiltro; }
+if ($regimeFiltro === '0' || $regimeFiltro === '1') { $where[] = 'regime = ?'; $tipos .= 's'; $params[] = $regimeFiltro; }
 $consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseName}`.`tbcondutor` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbcondutor` WHERE matricula LIKE '16%' AND CHAR_LENGTH(matricula) = 7 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE matricula LIKE '16%' AND CHAR_LENGTH(matricula) = 7 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbcondutor` WHERE ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 $mensagem = valorRequisicao(['msg']);
 
 function normalizarStatusCondutorPj($status): string
@@ -66,6 +68,7 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
         <div class="col-md-3"><label class="form-label">Status</label><select class="form-select" name="status"><option value="">Todos</option><?php foreach (['Ativo','Inativo','Afastado','Ferias','Demitido'] as $status): ?><option value="<?= esc($status) ?>" <?= $statusFiltro===$status?'selected':'' ?>><?= esc($status) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-3"><label class="form-label">Centro de custo</label><select class="form-select" name="ccusto"><option value="">Todos</option><?php foreach ($ccustos['linhas'] as $linha): $valor=$linha['ccusto']??''; ?><option value="<?= esc($valor) ?>" <?= $ccustoFiltro===$valor?'selected':'' ?>><?= esc($valor) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-3"><label class="form-label">Cargo</label><select class="form-select" name="cargo"><option value="">Todos</option><?php foreach ($cargos['linhas'] as $linha): $valor=$linha['cargo']??''; ?><option value="<?= esc($valor) ?>" <?= $cargoFiltro===$valor?'selected':'' ?>><?= esc($valor) ?></option><?php endforeach; ?></select></div>
+        <div class="col-md-3"><label class="form-label">Regime</label><select class="form-select" name="regime"><option value="">Todos</option><option value="0" <?= $regimeFiltro==='0'?'selected':'' ?>>PJ</option><option value="1" <?= $regimeFiltro==='1'?'selected':'' ?>>CLT</option></select></div>
         <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary flex-fill"><i class="fa fa-filter me-1"></i>Filtrar</button><a class="btn btn-secondary flex-fill" href="listar_condutorespj.php">Limpar</a></div>
     </div></form>
     <div class="card"><div class="card-body table-responsive"><table class="table table-striped table-hover" data-datatable="1"><thead class="table-dark"><tr><th>Matrícula</th><th>Nome</th><th>Centro de custo</th><th>Cargo</th><th>UF</th><th>Data admissão</th><th>Status</th><th>Ações</th></tr></thead><tbody>
