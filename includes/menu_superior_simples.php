@@ -230,7 +230,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCadastros">
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Condutor</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
@@ -248,11 +248,8 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuCondutores">
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/cadastrar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cadastrar condutores</a></li>
-                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem de condutores</a></li>
+                                    target="_self">Cadastrar condutor</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Listagem geral de condutores com veículos</a></li>
