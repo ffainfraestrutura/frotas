@@ -464,7 +464,8 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                     <li class="nav-item">
                         <a class="nav-link"
-                            href="https://hierarquia.painel-telecom.com/login.php" target="_blank" rel="noopener noreferrer">
+                            href="https://hierarquia.painel-telecom.com/login.php" target="_blank" rel="noopener noreferrer"
+                            title="Abrir Equipe em uma nova aba">
                             <i class="fas fa-users-gear me-1"></i>Equipe
                         </a>
                     </li>
@@ -525,7 +526,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 
             var href = link.getAttribute('href') || '';
 
-            if (href === '' || href === '#' || href.indexOf('javascript:') === 0 || link.hasAttribute('data-bs-toggle')) {
+            if (href === '' || href === '#' || href.indexOf('javascript:') === 0 || link.hasAttribute('data-bs-toggle') || link.target === '_blank') {
                 return;
             }
 

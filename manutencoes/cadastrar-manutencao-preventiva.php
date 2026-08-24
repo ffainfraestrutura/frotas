@@ -13,8 +13,22 @@ $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? '');
 $bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
 $podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
 $nomeSolicitante = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? 'Usuário');
+$ccustoSolicitante = '';
 if ($conn instanceof mysqli && $databaseCorp !== '') {
     $nomeSolicitante = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeSolicitante);
+
+    $stmtSolicitante = mysqli_prepare(
+        $conn,
+        "SELECT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE matricula = ? LIMIT 1"
+    );
+    if ($stmtSolicitante) {
+        mysqli_stmt_bind_param($stmtSolicitante, 's', $matriculaLogada);
+        mysqli_stmt_execute($stmtSolicitante);
+        $resSolicitante = mysqli_stmt_get_result($stmtSolicitante);
+        $dadosSolicitante = $resSolicitante ? mysqli_fetch_assoc($resSolicitante) : null;
+        $ccustoSolicitante = trim((string) ($dadosSolicitante['ccusto'] ?? ''));
+        mysqli_stmt_close($stmtSolicitante);
+    }
 }
 
 $database = (isset($databaseName) && preg_match('/^[A-Za-z0-9_]+$/', (string) $databaseName))
@@ -76,6 +90,7 @@ if (!$man) {
 
 $man['atualizadoem'] = date('Y-m-d');
 $man['solicitante'] = $nomeSolicitante;
+$man['ccusto'] = $ccustoSolicitante;
 if ($oficinaRecebida !== '') {
     $man['oficina'] = $oficinaRecebida;
 }
@@ -150,6 +165,11 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
     if ($centrosCusto !== []) {
         break;
     }
+}
+
+if ($ccustoSolicitante !== '') {
+    $centrosCusto[$ccustoSolicitante] = $ccustoSolicitante;
+    natcasesort($centrosCusto);
 }
 
 $oficinas = [];
