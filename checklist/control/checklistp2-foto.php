@@ -44,7 +44,7 @@ if (!move_uploaded_file($arquivo['tmp_name'], $destino)) {
     $responder(500, 'Não foi possível salvar a imagem.');
 }
 
-$caminho = $baseScheme . '://' . $baseHost . '/diagnostico-uploads.php?abrir=' . rawurlencode($nome);
+$caminho = $baseScheme . '://' . $baseHost . '/visualizar-upload.php?abrir=' . rawurlencode($nome);
 $stmt = mysqli_prepare($con, "UPDATE `{$databaseName}`.`tbvistoriafotos` SET `$campo` = ? WHERE idtbvistoria = ?");
 mysqli_stmt_bind_param($stmt, 'si', $caminho, $id);
 if (!mysqli_stmt_execute($stmt) || mysqli_stmt_affected_rows($stmt) < 1) {

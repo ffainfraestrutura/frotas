@@ -105,7 +105,7 @@ if (!function_exists('urlDocumentoUploadPortal')) {
             return $documento;
         }
 
-        return '/diagnostico-uploads.php?abrir=' . rawurlencode(basename(str_replace('\\', '/', $documento)));
+        return '/visualizar-upload.php?abrir=' . rawurlencode(basename(str_replace('\\', '/', $documento)));
     }
 }
 
