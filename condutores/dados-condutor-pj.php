@@ -80,26 +80,9 @@ if ($docCnh === '') {
 $docCnhLink = '';
 if ($docCnh !== '') {
     $docCnhNormalizado = str_replace('\\', '/', trim($docCnh));
-    if (!preg_match('~^(?:https?:)?//~i', $docCnhNormalizado)) {
-        $docCnhNormalizado = ltrim($docCnhNormalizado, '/');
-        $baseCnh = 'autofrota/condutores/docs/cnh/';
-
-        if (strpos($docCnhNormalizado, $baseCnh) === 0) {
-            $arquivoCnh = substr($docCnhNormalizado, strlen($baseCnh));
-            while (strpos($arquivoCnh, 'docs/cnh/') === 0) {
-                $arquivoCnh = substr($arquivoCnh, strlen('docs/cnh/'));
-            }
-            $docCnhNormalizado = $baseCnh . $arquivoCnh;
-        } elseif (strpos($docCnhNormalizado, 'autofrota/condutores/') !== 0) {
-            while (strpos($docCnhNormalizado, 'docs/cnh/') === 0) {
-                $docCnhNormalizado = substr($docCnhNormalizado, strlen('docs/cnh/'));
-            }
-            $docCnhNormalizado = $baseCnh . $docCnhNormalizado;
-        }
-
-        $docCnhNormalizado = '/' . ltrim($docCnhNormalizado, '/');
-    }
-    $docCnhLink = $docCnhNormalizado;
+    $docCnhLink = preg_match('~^(?:https?:)?//~i', $docCnhNormalizado)
+        ? $docCnhNormalizado
+        : '../diagnostico-uploads.php?abrir=' . rawurlencode(basename($docCnhNormalizado));
 }
 
 renderCabecalhoAutofrota('Dados do Condutor');

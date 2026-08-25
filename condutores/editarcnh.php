@@ -87,7 +87,7 @@ function caminhoDownloadCnh(?string $caminho): string
         return $caminho;
     }
 
-    return '.' . '/' . ltrim($caminho, '/');
+    return '../diagnostico-uploads.php?abrir=' . rawurlencode(basename(str_replace('\\', '/', $caminho)));
 }
 
 if ($matriculaFuncionario === '') {
