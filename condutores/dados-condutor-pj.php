@@ -48,7 +48,7 @@ if (!function_exists('normalizarDataInput')) {
 }
 
 if ($matriculaCondutor !== '' && isset($conn) && $conn instanceof mysqli) {
-    $condutor = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1", 's', [$matriculaCondutor]);
+    $condutor = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY idtbcondutor DESC LIMIT 1", 's', [$matriculaCondutor]);
     $cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaCondutor]);
     $usuario = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbusuario` WHERE matricula = ? LIMIT 1", 's', [$matriculaCondutor]);
 

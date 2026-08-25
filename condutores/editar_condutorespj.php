@@ -18,12 +18,12 @@ if ($matricula === '') {
 
 $condutor = buscarUmaLinha(
     $conn,
-    "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1",
+    "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY idtbcondutor DESC LIMIT 1",
     's',
     [$matricula]
 );
 if ($condutor === []) {
-    header('Location: listar_condutorespj.php?msg=' . urlencode('Condutor PJ não encontrado.'));
+    header('Location: listar_condutorespj.php?msg=' . urlencode('Condutor ativo não encontrado.'));
     exit;
 }
 
@@ -264,8 +264,8 @@ renderCabecalhoAutofrota('Editar Condutor PJ');
                         <div class="row g-3 mb-3">
                             <div class="col-md-2">
                                 <label for="matricula" class="form-label">Matrícula:<span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" inputmode="numeric" minlength="7" maxlength="7" pattern="16[0-9]{5}" readonly required style="background-color: #e9ecef;">
-                                <small class="text-muted">Auto-gerada (7 dígitos)</small>
+                                <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" readonly required style="background-color: #e9ecef;">
+                                <small class="text-muted">Matrícula do cadastro</small>
                             </div>
                             <div class="col-md-2">
                                 <label for="status" class="form-label">Situação:</label>

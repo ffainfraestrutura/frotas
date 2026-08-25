@@ -80,7 +80,7 @@ if ($matricula === '' || $nome === '') {
     redirecionarComMensagem($retornoFormulario, 'Informe matrícula e nome.');
 }
 
-if (preg_match('/^16[0-9]{5}$/D', $matricula) !== 1) {
+if (!$editando && preg_match('/^16[0-9]{5}$/D', $matricula) !== 1) {
     redirecionarComMensagem($retornoFormulario, 'A matrícula deve começar com 16 e conter exatamente 7 dígitos.');
 }
 
@@ -128,7 +128,7 @@ if ($cnhInformada) {
     }
 }
 
-function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario): string
+function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario, bool $segundoDocumento = false): string
 {
     if (!isset($_FILES['cnh_arquivo']) || (int) ($_FILES['cnh_arquivo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
         return '';
@@ -150,20 +150,20 @@ function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario): s
         redirecionarComMensagem($retornoFormulario, 'Arquivo temporário inválido para upload da habilitação.');
     }
 
-    $diretorio = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: '/tmp/frotas_docs/cnhs'), '/\\') . DIRECTORY_SEPARATOR;
+    $diretorio = '/tmp/frotas_docs/cnhs' . DIRECTORY_SEPARATOR;
     if ((!is_dir($diretorio) && !@mkdir($diretorio, 0775, true)) || !is_writable($diretorio)) {
         redirecionarComMensagem($retornoFormulario, 'Não foi possível preparar a pasta de upload da habilitação.');
     }
 
-    $nome = 'cnh-' . preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . '-' . date('YmdHis') . '.' . $extensao;
+    $sufixo = $segundoDocumento ? '-2' : '';
+    $nome = 'cnh-' . preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . $sufixo . '.' . $extensao;
     if (!move_uploaded_file($temporario, $diretorio . $nome)) {
         redirecionarComMensagem($retornoFormulario, 'Não foi possível salvar o arquivo da habilitação.');
     }
 
-    $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
-    $esquema = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443 ? 'https' : 'http';
-    $urlBase = (string) (getenv('FROTAS_UPLOAD_URL') ?: $esquema . '://' . $host . '/diagnostico-uploads.php?abrir=');
-    return rtrim($urlBase, '/') . rawurlencode($nome);
+    // tbcnh.doc1/doc2 possuem tamanho reduzido. O diagnóstico resolve este nome
+    // diretamente em /tmp/frotas_docs/cnhs, portanto não grave a URL completa.
+    return $nome;
 }
 
 $permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
@@ -199,9 +199,9 @@ if ($editando) {
         redirecionarComMensagem('../listar_condutorespj.php', 'Matrícula original não informada.');
     }
 
-    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' LIMIT 1", 's', [$matriculaOriginal]);
+    $condutorExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND UPPER(TRIM(status)) = 'ATIVO' LIMIT 1", 's', [$matriculaOriginal]);
     if ($condutorExistente === []) {
-        redirecionarComMensagem('../listar_condutorespj.php', 'Condutor PJ não encontrado.');
+        redirecionarComMensagem('../listar_condutorespj.php', 'Condutor ativo não encontrado.');
     }
 
     if ($matricula !== $matriculaOriginal) {
@@ -273,15 +273,14 @@ if ($editando && $matricula !== $matriculaOriginal) {
 
 if ($cnhInformada) {
     $matriculaBuscaCnh = $editando ? $matriculaOriginal : $matricula;
-    $cnhExistente = buscarUmaLinha($conn, "SELECT matricula FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
-    $anexoCnh = salvarAnexoCnhCondutor($matricula, $retornoFormulario);
+    $cnhExistente = buscarUmaLinha($conn, "SELECT matricula, doc1, doc2 FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
+    $anexoCnh = salvarAnexoCnhCondutor($matricula, $retornoFormulario, $cnhExistente !== [] && !empty($cnhExistente['doc1']));
     $dadosCnh = [$cnhNumero, $cnhValidade, $cnhUf, $cnhCategoria, $matricula, $cnhPontos, $cnhConsulta, $cnhSuspensa];
 
     if ($cnhExistente !== []) {
         $campoAnexo = '';
         if ($anexoCnh !== '') {
-            $documentosCnh = buscarUmaLinha($conn, "SELECT doc1, doc2 FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaBuscaCnh]);
-            $campoAnexo = empty($documentosCnh['doc1']) ? ', doc1 = ?' : ', doc2 = ?';
+            $campoAnexo = empty($cnhExistente['doc1']) ? ', doc1 = ?' : ', doc2 = ?';
         }
         $consultaCnh = consultaPreparada(
             $conn,
