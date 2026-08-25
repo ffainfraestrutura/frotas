@@ -2,12 +2,13 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/includes/portal_helpers.php';
 exigirLogin();
 
 header('Content-Type: text/html; charset=utf-8');
 
 $portalRoot = realpath(__DIR__) ?: __DIR__;
-$uploadDirPreferida = '/tmp/frotas_docs';
+$uploadDirPreferida = diretorioUploadsPortal();
 $baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
 $baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
 $uploadDir = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: (is_dir($uploadDirPreferida) && is_writable($uploadDirPreferida) ? $uploadDirPreferida : '/var/www/html/files/frotas')), '/\\');

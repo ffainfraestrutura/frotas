@@ -79,10 +79,7 @@ if ($docCnh === '') {
 
 $docCnhLink = '';
 if ($docCnh !== '') {
-    $docCnhNormalizado = str_replace('\\', '/', trim($docCnh));
-    $docCnhLink = preg_match('~^(?:https?:)?//~i', $docCnhNormalizado)
-        ? $docCnhNormalizado
-        : '../diagnostico-uploads.php?abrir=' . rawurlencode(basename($docCnhNormalizado));
+    $docCnhLink = urlDocumentoUploadPortal($docCnh);
 }
 
 renderCabecalhoAutofrota('Dados do Condutor');

@@ -8,6 +8,7 @@ $valorCnh = static function (string $campo) use ($cnh): string {
     return (string) ($cnh[$campo] ?? '');
 };
 $documentoCnhAtual = $valorCnh('doc2') !== '' ? $valorCnh('doc2') : $valorCnh('doc1');
+$urlDocumentoCnh = urlDocumentoUploadPortal($documentoCnhAtual);
 ?>
 <div class="card mt-3">
     <div class="card-header">
@@ -57,9 +58,9 @@ $documentoCnhAtual = $valorCnh('doc2') !== '' ? $valorCnh('doc2') : $valorCnh('d
                 <input class="form-control" type="file" id="cnh_arquivo" name="cnh_arquivo" accept=".jpg,.jpeg,.png,.gif,.pdf">
                 <small class="text-muted">Opcional. Formatos aceitos: JPG, JPEG, PNG, GIF ou PDF (até 4 MB).</small>
             </div>
-            <?php if ($documentoCnhAtual !== ''): ?>
+            <?php if ($urlDocumentoCnh !== ''): ?>
                 <div class="col-md-3 d-flex align-items-center">
-                    <a class="btn btn-outline-secondary btn-sm" href="<?= esc($documentoCnhAtual) ?>" target="_blank" rel="noopener">
+                    <a class="btn btn-outline-secondary btn-sm" href="<?= esc($urlDocumentoCnh) ?>" target="_blank" rel="noopener">
                         <i class="fa-solid fa-paperclip me-1"></i>Última CNH anexada
                     </a>
                 </div>

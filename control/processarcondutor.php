@@ -150,9 +150,7 @@ function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario, bo
         redirecionarComMensagem($retornoFormulario, 'Arquivo temporário inválido para upload da habilitação.');
     }
 
-    // Use exatamente a pasta atendida pelo upload principal de
-    // diagnostico-uploads.php, para que ?abrir=<arquivo> encontre o anexo.
-    $diretorio = '/tmp/frotas_docs' . DIRECTORY_SEPARATOR;
+    $diretorio = diretorioUploadsPortal() . DIRECTORY_SEPARATOR;
     if ((!is_dir($diretorio) && !@mkdir($diretorio, 0775, true)) || !is_writable($diretorio)) {
         redirecionarComMensagem($retornoFormulario, 'Não foi possível preparar a pasta de upload da habilitação.');
     }
@@ -163,8 +161,7 @@ function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario, bo
         redirecionarComMensagem($retornoFormulario, 'Não foi possível salvar o arquivo da habilitação.');
     }
 
-    // tbcnh.doc1/doc2 possuem tamanho reduzido. O diagnóstico resolve este nome
-    // diretamente em /tmp/frotas_docs, portanto não grave a URL completa.
+    // tbcnh.doc1/doc2 possuem tamanho reduzido; grave somente o nome do arquivo.
     return $nome;
 }
 
