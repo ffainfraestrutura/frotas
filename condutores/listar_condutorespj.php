@@ -51,7 +51,7 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div><h1 class="h3 mb-1">Condutores Cadastrados</h1></div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-success" id="exportarNomesExcel"><i class="fa fa-file-excel me-1"></i>Exportar nomes</button>
+            <button type="button" class="btn btn-success" id="exportarCondutoresExcel"><i class="fa fa-file-excel me-1"></i>Exportar Excel</button>
             <!-- <a href="funcionarios-semcnh.php" class="btn btn-secondary"><i class="fa fa-user-times me-1"></i>Condutores sem CNH</a> -->
             <a href="listagemcnh.php" class="btn btn-secondary"><i class="fa fa-id-card me-1"></i>Anexar Documentos</a>
             <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor PJ</a>
@@ -78,7 +78,7 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const botaoExportar = document.getElementById('exportarNomesExcel');
+    const botaoExportar = document.getElementById('exportarCondutoresExcel');
     const tabela = document.getElementById('tabelaCondutoresPj');
 
     botaoExportar.addEventListener('click', function () {
@@ -88,12 +88,17 @@ document.addEventListener('DOMContentLoaded', function () {
             linhas = jQuery(tabela).DataTable().rows({search: 'applied'}).nodes().toArray();
         }
 
-        const nomes = linhas
-            .map(function (linha) { return linha.cells[1] ? linha.cells[1].textContent.trim() : ''; })
-            .filter(function (nome) { return nome !== ''; });
+        const cabecalhos = Array.from(tabela.tHead.rows[0].cells)
+            .slice(0, 7)
+            .map(function (celula) { return celula.textContent.trim(); });
+        const dados = linhas.map(function (linha) {
+            return Array.from(linha.cells)
+                .slice(0, 7)
+                .map(function (celula) { return celula.textContent.trim(); });
+        });
 
-        if (nomes.length === 0) {
-            window.alert('Não há nomes para exportar.');
+        if (dados.length === 0) {
+            window.alert('Não há condutores para exportar.');
             return;
         }
 
@@ -102,13 +107,20 @@ document.addEventListener('DOMContentLoaded', function () {
                 return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'}[caractere];
             });
         };
-        const conteudo = '<html><head><meta charset="UTF-8"></head><body><table><thead><tr><th>Nome</th></tr></thead><tbody>'
-            + nomes.map(function (nome) { return '<tr><td>' + escaparHtml(nome) + '</td></tr>'; }).join('')
+        const criarCelula = function (tag, valor) {
+            return '<' + tag + ' style="mso-number-format:\'\\@\';">' + escaparHtml(valor) + '</' + tag + '>';
+        };
+        const conteudo = '<html><head><meta charset="UTF-8"></head><body><table><thead><tr>'
+            + cabecalhos.map(function (cabecalho) { return criarCelula('th', cabecalho); }).join('')
+            + '</tr></thead><tbody>'
+            + dados.map(function (linha) {
+                return '<tr>' + linha.map(function (valor) { return criarCelula('td', valor); }).join('') + '</tr>';
+            }).join('')
             + '</tbody></table></body></html>';
         const url = URL.createObjectURL(new Blob(['\ufeff' + conteudo], {type: 'application/vnd.ms-excel;charset=utf-8'}));
         const link = document.createElement('a');
         link.href = url;
-        link.download = 'nomes_condutores_' + new Date().toISOString().slice(0, 10) + '.xls';
+        link.download = 'condutores_' + new Date().toISOString().slice(0, 10) + '.xls';
         document.body.appendChild(link);
         link.click();
         link.remove();
