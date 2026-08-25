@@ -141,9 +141,9 @@ renderCabecalhoAutofrota('Editar Condutor PJ');
             <h1 class="h3 mb-1">Editar Condutor</h1>
             <p class="text-muted mb-0">Atualize as informações pessoais, documentos, endereço e dados contratuais do condutor.</p>
         </div>
-        <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
+        <!-- <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
             <i class="fa-solid fa-list me-1"></i>Listar Condutores
-        </a>
+        </a> -->
     </div>
 
     <?php if ($mensagem !== ''): ?>
