@@ -110,4 +110,4 @@ if ($resultado['erro'] !== '') {
 }
 
 mysqli_commit($conn);
-retornarCnhClt('../condutores/listar_condutoresclt.php', 'CNH do colaborador salva com sucesso.');
+retornarCnhClt('../condutores/listar_condutorespj.php', 'CNH do colaborador salva com sucesso.');
