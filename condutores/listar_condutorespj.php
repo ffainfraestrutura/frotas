@@ -20,7 +20,7 @@ if ($statusFiltro !== '') { $where[] = 'status = ?'; $tipos .= 's'; $params[] = 
 if ($ccustoFiltro !== '') { $where[] = 'ccusto = ?'; $tipos .= 's'; $params[] = $ccustoFiltro; }
 if ($cargoFiltro !== '') { $where[] = 'cargo = ?'; $tipos .= 's'; $params[] = $cargoFiltro; }
 if ($regimeFiltro === '0' || $regimeFiltro === '1') { $where[] = 'regime = ?'; $tipos .= 's'; $params[] = $regimeFiltro; }
-$consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status FROM `{$databaseName}`.`tbcondutor` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
+$consulta = consultaPreparada($conn, "SELECT matricula, nome, ccusto, cargo, uf_trabalho, estado, dtadmissao, status, regime, placaassoc FROM `{$databaseName}`.`tbcondutor` WHERE " . implode(' AND ', $where) . " ORDER BY nome", $tipos, $params);
 $ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseName}`.`tbcondutor` WHERE ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
 $cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
 $mensagem = valorRequisicao(['msg']);
@@ -43,6 +43,11 @@ function classeBadgeStatusCondutorPj($status): string
         return 'text-bg-info';
     }
     return 'text-bg-success';
+}
+
+function descricaoRegimeCondutor($regime): string
+{
+    return (string) $regime === '1' ? 'Colab' : 'PJ';
 }
 
 renderCabecalhoAutofrota('Condutores Cadastrados');
@@ -69,11 +74,11 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
         <div class="col-md-3"><label class="form-label">Status</label><select class="form-select" name="status"><option value="">Todos</option><?php foreach (['Ativo','Inativo','Afastado','Ferias','Demitido'] as $status): ?><option value="<?= esc($status) ?>" <?= $statusFiltro===$status?'selected':'' ?>><?= esc($status) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-3"><label class="form-label">Centro de custo</label><select class="form-select" name="ccusto"><option value="">Todos</option><?php foreach ($ccustos['linhas'] as $linha): $valor=$linha['ccusto']??''; ?><option value="<?= esc($valor) ?>" <?= $ccustoFiltro===$valor?'selected':'' ?>><?= esc($valor) ?></option><?php endforeach; ?></select></div>
         <div class="col-md-3"><label class="form-label">Cargo</label><select class="form-select" name="cargo"><option value="">Todos</option><?php foreach ($cargos['linhas'] as $linha): $valor=$linha['cargo']??''; ?><option value="<?= esc($valor) ?>" <?= $cargoFiltro===$valor?'selected':'' ?>><?= esc($valor) ?></option><?php endforeach; ?></select></div>
-        <div class="col-md-3"><label class="form-label">Regime</label><select class="form-select" name="regime"><option value="">Todos</option><option value="0" <?= $regimeFiltro==='0'?'selected':'' ?>>PJ</option><option value="1" <?= $regimeFiltro==='1'?'selected':'' ?>>CLT</option></select></div>
+        <div class="col-md-3"><label class="form-label">Regime</label><select class="form-select" name="regime"><option value="">Todos</option><option value="0" <?= $regimeFiltro==='0'?'selected':'' ?>>PJ</option><option value="1" <?= $regimeFiltro==='1'?'selected':'' ?>>Colab</option></select></div>
         <div class="col-md-3 d-flex gap-2"><button class="btn btn-primary flex-fill"><i class="fa fa-filter me-1"></i>Filtrar</button><a class="btn btn-secondary flex-fill" href="listar_condutorespj.php">Limpar</a></div>
     </div></form>
-    <div class="card"><div class="card-body table-responsive"><table class="table table-striped table-hover" id="tabelaCondutoresPj" data-datatable="1"><thead class="table-dark"><tr><th>Matrícula</th><th>Nome</th><th>Centro de custo</th><th>Cargo</th><th>UF</th><th>Data admissão</th><th>Status</th><th>Ações</th></tr></thead><tbody>
-        <?php foreach ($consulta['linhas'] as $linha): $mat=$linha['matricula']??''; $status=$linha['status'] ?? ''; $condutorAtivo=normalizarStatusCondutorPj($status)==='ATIVO'; ?><tr><td><?= esc($mat) ?></td><td><?= esc($linha['nome'] ?? '') ?></td><td><?= esc($linha['ccusto'] ?? '') ?></td><td><?= esc($linha['cargo'] ?? '') ?></td><td><?= esc(($linha['uf_trabalho'] ?? '') ?: ($linha['estado'] ?? '')) ?></td><td><?= esc(formatarDataPortal($linha['dtadmissao'] ?? '', 'd/m/Y')) ?></td><td><span class="badge rounded-pill condutor-status-badge <?= esc(classeBadgeStatusCondutorPj($status)) ?>"><i class="fa fa-circle"></i><?= esc($status) ?></span></td><td class="text-nowrap"><?php if ($condutorAtivo): ?><a class="btn btn-sm btn-info condutor-action" href="dados-condutor-pj.php?matcond=<?= urlencode((string) $mat) ?>" title="Dados do condutor"><i class="fa fa-eye"></i></a><a class="btn btn-sm btn-warning condutor-action" href="editar_condutorespj.php?matricula=<?= urlencode((string) $mat) ?>" title="Editar condutor"><i class="fa fa-pen-to-square"></i></a><?php else: ?><span class="text-muted" title="Ações disponíveis somente para condutores ativos">—</span><?php endif; ?></td></tr><?php endforeach; ?>
+    <div class="card"><div class="card-body table-responsive"><table class="table table-striped table-hover" id="tabelaCondutoresPj" data-datatable="1"><thead class="table-dark"><tr><th>Matrícula</th><th>Nome</th><th>Regime</th><th>Placa</th><th>Centro de custo</th><th>Cargo</th><th>UF</th><th>Data admissão</th><th>Status</th><th>Ações</th></tr></thead><tbody>
+        <?php foreach ($consulta['linhas'] as $linha): $mat=$linha['matricula']??''; $status=$linha['status'] ?? ''; $condutorAtivo=normalizarStatusCondutorPj($status)==='ATIVO'; ?><tr><td><?= esc($mat) ?></td><td><?= esc($linha['nome'] ?? '') ?></td><td><?= esc(descricaoRegimeCondutor($linha['regime'] ?? '0')) ?></td><td><?= esc($linha['placaassoc'] ?? '') ?></td><td><?= esc($linha['ccusto'] ?? '') ?></td><td><?= esc($linha['cargo'] ?? '') ?></td><td><?= esc(($linha['uf_trabalho'] ?? '') ?: ($linha['estado'] ?? '')) ?></td><td><?= esc(formatarDataPortal($linha['dtadmissao'] ?? '', 'd/m/Y')) ?></td><td><span class="badge rounded-pill condutor-status-badge <?= esc(classeBadgeStatusCondutorPj($status)) ?>"><i class="fa fa-circle"></i><?= esc($status) ?></span></td><td class="text-nowrap"><?php if ($condutorAtivo): ?><a class="btn btn-sm btn-info condutor-action" href="dados-condutor-pj.php?matcond=<?= urlencode((string) $mat) ?>" title="Dados do condutor"><i class="fa fa-eye"></i></a><a class="btn btn-sm btn-warning condutor-action" href="editar_condutorespj.php?matricula=<?= urlencode((string) $mat) ?>" title="Editar condutor"><i class="fa fa-pen-to-square"></i></a><?php else: ?><span class="text-muted" title="Ações disponíveis somente para condutores ativos">—</span><?php endif; ?></td></tr><?php endforeach; ?>
     </tbody></table></div></div>
 </div>
 <script>
@@ -89,11 +94,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         const cabecalhos = Array.from(tabela.tHead.rows[0].cells)
-            .slice(0, 7)
+            .slice(0, -1)
             .map(function (celula) { return celula.textContent.trim(); });
         const dados = linhas.map(function (linha) {
             return Array.from(linha.cells)
-                .slice(0, 7)
+                .slice(0, -1)
                 .map(function (celula) { return celula.textContent.trim(); });
         });
 
