@@ -11,10 +11,12 @@ exigirLogin();
 date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: text/html; charset=utf-8');
 
-$uploadDir = '/tmp/frotas_docs/condutor' . DIRECTORY_SEPARATOR;
-$uploadPathPrefix = '/visualizar-upload.php?abrir=';
+$baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
+$baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
+$uploadDir = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: '/tmp/frotas_docs/condutor'), '/\\') . DIRECTORY_SEPARATOR;
+$uploadUrl = rtrim((string) (getenv('FROTAS_UPLOAD_URL') ?: $baseScheme . '://' . $baseHost . '/visualizar-upload.php?abrir='), '/');
 
-function responderEnvioDocsCondutor(string $mensagem): void
+function responderEnvioDocsCondutorClt(string $mensagem): void
 {
     $mensagemJs = json_encode($mensagem, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS | JSON_HEX_QUOT);
     $recarregarOrigem = stripos($mensagem, 'sucesso') !== false;
@@ -25,17 +27,17 @@ function responderEnvioDocsCondutor(string $mensagem): void
             window.opener.location.reload();
             window.close();
         } else if ({$recarregarOrigemJs}) {
-            window.location.href = '../listar_condutorespj.php';
+            window.location.href = '../listar_condutoresclt.php';
         } else if (window.history.length > 1) {
             window.history.back();
         } else {
-            window.location.href = '../listar_condutorespj.php';
+            window.location.href = '../listar_condutoresclt.php';
         }
     </script>";
     exit;
 }
 
-function mensagemErroPastaUploadCondutor(string $caminho): string
+function mensagemErroPastaUploadCondutorClt(string $caminho): string
 {
     if (file_exists($caminho) && !is_dir($caminho)) {
         return "Não foi possível preparar a pasta de upload: o caminho '{$caminho}' já existe e não é uma pasta.";
@@ -53,7 +55,7 @@ function mensagemErroPastaUploadCondutor(string $caminho): string
     return '';
 }
 
-function colunaExisteDocsCondutor(mysqli $conn, string $databaseName, string $tabela, string $coluna): bool
+function colunaExisteDocsCondutorClt(mysqli $conn, string $databaseName, string $tabela, string $coluna): bool
 {
     $sql = "SHOW COLUMNS FROM `{$databaseName}`.`{$tabela}` LIKE ?";
     $stmt = mysqli_prepare($conn, $sql);
@@ -76,7 +78,7 @@ function colunaExisteDocsCondutor(mysqli $conn, string $databaseName, string $ta
     return $existe;
 }
 
-function registrarLogDocsCondutor(mysqli $conn, string $databaseName, string $matricula, string $matriculaAutor): void
+function registrarLogDocsCondutorClt(mysqli $conn, string $databaseName, string $matricula, string $matriculaAutor): void
 {
     $sql = "
         INSERT INTO `{$databaseName}`.`tblog` (data_e_hora, acao, matricula, mat_autor, tipo, placa)
@@ -94,35 +96,35 @@ function registrarLogDocsCondutor(mysqli $conn, string $databaseName, string $ma
     mysqli_stmt_close($stmt);
 }
 
-function salvarDocumentoCondutor(string $campo, string $matricula, string $sufixo, string $uploadDir, string $uploadPathPrefix): string
+function salvarDocumentoCondutorClt(string $campo, string $matricula, string $sufixo, string $uploadDir, string $uploadUrl): string
 {
     if (empty($_FILES[$campo]['name'])) {
         return '';
     }
 
     if ($_FILES[$campo]['error'] !== UPLOAD_ERR_OK) {
-        responderEnvioDocsCondutor('Não foi possível fazer o upload do arquivo de ' . $sufixo . '.');
+        responderEnvioDocsCondutorClt('Não foi possível fazer o upload do arquivo de ' . $sufixo . '.');
     }
 
     $extensoesPermitidas = ['pdf', 'doc', 'docx'];
     $extensao = strtolower((string) pathinfo($_FILES[$campo]['name'], PATHINFO_EXTENSION));
 
     if (!in_array($extensao, $extensoesPermitidas, true)) {
-        responderEnvioDocsCondutor('Por favor, envie arquivos com as seguintes extensões: pdf, doc ou docx.');
+        responderEnvioDocsCondutorClt('Por favor, envie arquivos com as seguintes extensões: pdf, doc ou docx.');
     }
 
     if ((int) $_FILES[$campo]['size'] > 1024 * 1024 * 32) {
-        responderEnvioDocsCondutor('O arquivo enviado é muito grande. Envie arquivos de até 32MB.');
+        responderEnvioDocsCondutorClt('O arquivo enviado é muito grande. Envie arquivos de até 32MB.');
     }
 
     if (!is_dir($uploadDir)) {
         if (!@mkdir($uploadDir, 0775, true) && !is_dir($uploadDir)) {
-            responderEnvioDocsCondutor(mensagemErroPastaUploadCondutor($uploadDir));
+            responderEnvioDocsCondutorClt(mensagemErroPastaUploadCondutorClt($uploadDir));
         }
     }
 
     if (!is_writable($uploadDir)) {
-        responderEnvioDocsCondutor(mensagemErroPastaUploadCondutor($uploadDir));
+        responderEnvioDocsCondutorClt(mensagemErroPastaUploadCondutorClt($uploadDir));
     }
 
     $timestamp = date('YmdHis');
@@ -130,25 +132,25 @@ function salvarDocumentoCondutor(string $campo, string $matricula, string $sufix
     $nomeFinal = $matriculaLimpa . '-' . $timestamp . '-' . $sufixo . '.' . $extensao;
 
     if (!move_uploaded_file($_FILES[$campo]['tmp_name'], $uploadDir . $nomeFinal)) {
-        responderEnvioDocsCondutor('Não foi possível enviar o arquivo de ' . $sufixo . '.');
+        responderEnvioDocsCondutorClt('Não foi possível enviar o arquivo de ' . $sufixo . '.');
     }
 
-    return $uploadPathPrefix . rawurlencode($nomeFinal);
+    return $uploadUrl . rawurlencode($nomeFinal);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    responderEnvioDocsCondutor('Requisição inválida.');
+    responderEnvioDocsCondutorClt('Requisição inválida.');
 }
 
 if (!isset($conn) || !($conn instanceof mysqli)) {
-    responderEnvioDocsCondutor('Não foi possível conectar ao banco de dados.');
+    responderEnvioDocsCondutorClt('Não foi possível conectar ao banco de dados.');
 }
 
 $matricula = trim((string) ($_POST['matcond'] ?? ''));
 $matriculaAutor = trim((string) ($_POST['mat_autor'] ?? $_SESSION['matricula'] ?? ''));
 
 if ($matricula === '') {
-    responderEnvioDocsCondutor('Matrícula do condutor não informada.');
+    responderEnvioDocsCondutorClt('Matrícula do condutor não informada.');
 }
 
 $arquivos = [
@@ -162,7 +164,7 @@ $arquivos = [
 $enviouAlgum = false;
 
 foreach ($arquivos as $campo => $config) {
-    $caminho = salvarDocumentoCondutor($campo, $matricula, $config['sufixo'], $uploadDir, $uploadPathPrefix);
+    $caminho = salvarDocumentoCondutorClt($campo, $matricula, $config['sufixo'], $uploadDir, $uploadUrl);
 
     if ($caminho === '') {
         continue;
@@ -173,7 +175,7 @@ foreach ($arquivos as $campo => $config) {
     $stmtUpdate = mysqli_prepare($conn, $sqlUpdate);
 
     if (!$stmtUpdate) {
-        responderEnvioDocsCondutor('Não foi possível preparar o envio dos documentos.');
+        responderEnvioDocsCondutorClt('Não foi possível preparar o envio dos documentos.');
     }
 
     mysqli_stmt_bind_param($stmtUpdate, 'ss', $caminho, $matricula);
@@ -181,18 +183,18 @@ foreach ($arquivos as $campo => $config) {
     mysqli_stmt_close($stmtUpdate);
 
     if (!$atualizou) {
-        responderEnvioDocsCondutor('Não foi possível salvar o documento enviado.');
+        responderEnvioDocsCondutorClt('Não foi possível salvar o documento enviado.');
     }
 
     $enviouAlgum = true;
 }
 
 if (!$enviouAlgum) {
-    responderEnvioDocsCondutor('Selecione ao menos um documento para envio.');
+    responderEnvioDocsCondutorClt('Selecione ao menos um documento para envio.');
 }
 
-if (colunaExisteDocsCondutor($conn, $databaseName, 'tblog', 'idtblog')) {
-    registrarLogDocsCondutor($conn, $databaseName, $matricula, $matriculaAutor);
+if (colunaExisteDocsCondutorClt($conn, $databaseName, 'tblog', 'idtblog')) {
+    registrarLogDocsCondutorClt($conn, $databaseName, $matricula, $matriculaAutor);
 }
 
-responderEnvioDocsCondutor('Documentos enviados com sucesso.');
+responderEnvioDocsCondutorClt('Documentos enviados com sucesso.');

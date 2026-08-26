@@ -64,7 +64,7 @@ function renderizarOpcoesCentroCusto(array $linhas): void
     }
 }
 
-renderCabecalhoAutofrota('Cadastrar Condutor');
+renderCabecalhoAutofrota('Cadastrar Condutor PJ');
 ?>
 <style>
     .btn-collapse {
@@ -133,9 +133,9 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
             <h1 class="h3 mb-1">Cadastrar Condutor</h1>
             <p class="text-muted mb-0">Preencha as informações pessoais, documentos, endereço e dados contratuais do condutor.</p>
         </div>
-        <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
+        <!-- <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
             <i class="fa-solid fa-list me-1"></i>Editar Condutores
-        </a>
+        </a> -->
     </div>
 
     <?php if ($mensagem !== ''): ?>
@@ -273,8 +273,10 @@ renderCabecalhoAutofrota('Cadastrar Condutor');
                             </div>
                             <div class="col-md-3">
                                 <label for="ccusto" class="form-label">Departamento/Centro de Custo:<span class="text-danger">*</span></label>
-                                <input class="form-control form-control-sm text-uppercase" name="ccusto" id="ccusto" list="listaCcusto" required>
-                                <datalist id="listaCcusto"><?php renderizarOpcoesCentroCusto($ccustos['linhas']); ?></datalist>
+                                <select class="form-select form-select-sm" name="ccusto" id="ccusto" required>
+                                    <option value="">Selecione</option>
+                                    <?php renderizarOpcoesCentroCusto($ccustos['linhas']); ?>
+                                </select>
                             </div>
                             <div class="col-md-3">
                                 <label for="cargo" class="form-label">Cargo:<span class="text-danger">*</span></label>
