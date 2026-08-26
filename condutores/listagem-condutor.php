@@ -371,10 +371,10 @@ if (isset($conn) && $conn instanceof mysqli) {
             </section>
 
             <section class="d-flex justify-content-start actions flex-wrap">
-                <a class="btn btn-secondary" href="cadastrar_condutorespj.php">Cadastrar Funcionário</a>
-                <a class="btn btn-success" href="funcionarios-semcnh.php">Cadastrar CNH de Colaborador</a>
-                <a class="btn btn-secondary" href="listagemcnh.php">Listagens de CNHs Cadastradas</a>
-                <a class="btn btn-primary" href="importarcnh.php">Importar CNHs em Lote</a>
+                <!-- <a class="btn btn-secondary" href="cadastrar_condutorespj.php">Cadastrar Funcionário</a> -->
+                <!-- <a class="btn btn-success" href="funcionarios-semcnh.php">Cadastrar CNH de Colaborador</a> -->
+                <!-- <a class="btn btn-secondary" href="listagemcnh.php">Listagens de CNHs Cadastradas</a> -->
+                <!-- <a class="btn btn-primary" href="importarcnh.php">Importar CNHs em Lote</a> -->
                 <form action="control/gerarexcelcondutores.php" method="post" class="d-inline">
                     <input type="hidden" name="unidadef" value="<?= esc($unidadeSelecionada) ?>">
                     <input type="hidden" name="status_colaborador" value="<?= esc($statusColaboradorSelecionado) ?>">
