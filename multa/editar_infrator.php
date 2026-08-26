@@ -56,7 +56,12 @@ $usuariof = $_SESSION['matricula'] ?? '';
 
 // Carrega os colaboradores ativos
 $colaboradores = [];
-$sqlColab = "SELECT matricula, nome, cpf FROM tbfuncionario WHERE status = 'Ativo' ORDER BY nome";
+$sqlColab = "SELECT c.matricula, c.nome, c.cpf 
+FROM tbcondutor c 
+LEFT JOIN bdcorp.tbfuncionario f 
+    ON c.matricula COLLATE utf8mb4_unicode_ci = f.matricula 
+WHERE f.status = 'Ativo' 
+ORDER BY c.nome;";
 $resultColab = mysqli_query($conn, $sqlColab);
 while ($row = mysqli_fetch_assoc($resultColab)) {
     $colaboradores[] = [

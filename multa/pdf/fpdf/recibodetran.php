@@ -1,15 +1,18 @@
 <?php
-require'fpdf.php';
-require('../../conecta.php');
-require('../../conecta2.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 $id=$_POST['id'];
 //print $id;
 
 //echo $id;
 
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite = '$id';";
+$sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite = '$id';";
 $resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 	$matricula= $row['matricula'];
@@ -78,7 +81,7 @@ switch ($mes) {
 
 
 
-$sql2 = "SELECT nome, rg, cpf, endereco, bairro, cidade, estado, cep, nome FROM bdaniel.tbfuncionario WHERE matricula = '$matricula'; ";
+$sql2 = "SELECT nome, rg, cpf, endereco, bairro, cidade, estado, cep, nome FROM bdcorp.tbfuncionario WHERE matricula = '$matricula'; ";
 $resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 	$nome = $row2['nome'];
@@ -91,12 +94,12 @@ $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 	$numres = $row2['numres'];
 	$cep = $row2['cep'];
 
-$sql4 = "SELECT numcnh FROM bdfrota.tbcnh WHERE matricula='$matricula'; ";
+$sql4 = "SELECT numcnh FROM bdautofrota.tbcnh WHERE matricula='$matricula'; ";
 $resultado4 =  mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
 $row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
 	$numcnh = $row4['numcnh'];
 
-$sql5 = "SELECT telefone FROM bdfrota.tbusuario WHERE matricula='$matricula'; ";
+$sql5 = "SELECT telefone FROM bdautofrota.tbusuario WHERE matricula='$matricula'; ";
 $resultado5 =  mysqli_query($conexao, $sql5) or die(mysqli_error($conexao));
 $row5 = mysqli_fetch_array($resultado5, MYSQLI_BOTH);
 	$telefonecond = $row5['telefone'];

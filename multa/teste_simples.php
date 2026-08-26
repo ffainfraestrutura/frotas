@@ -7,7 +7,7 @@ $sucesso = false;
 $destino = '';
 
 // Cria a pasta docs/multas na mesma pasta
-$uploadDir = __DIR__ . '/docs/multas/';
+$uploadDir = '/docs/multas/';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Cria a pasta se não existir

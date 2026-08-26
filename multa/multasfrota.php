@@ -22,9 +22,10 @@ $linhasMultas = [];
 
 // CORRIGIDO: Array de tramites corretamente definido
 $tramiteEtapa = [
-    'Inserir infrator'   => 'editar_infrator.php',
-    'Finalizado Frota'   => 'finalizado_frota.php',
+    'Inserir infrator' => 'editar_infrator.php',
+    'Finalizado Frota' => 'finalizado_frota.php',
     'Imprimir Recibo DP' => 'imprimir_recibo.php',
+    'Finalizado DP' => 'finalizado_frota.php',
 ];
 
 // CORRIGIDO: $multaEtapa é o mesmo que $tramiteEtapa
@@ -228,11 +229,11 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                 t.idtbmovidatramite,
                 f.status,
                 f.ccusto
-            FROM `{$databaseName}`.tbmulta m
-            LEFT JOIN `{$databaseName}`.tbmovidatramite t
+            FROM tbmulta m
+            LEFT JOIN tbmovidatramite t
                 ON t.placa = m.placa
                AND t.autoinfra = m.autoinfracao
-            JOIN bdaniel.tbfuncionario f ON f.matricula = t.matricula
+            LEFT JOIN bdcorp.tbfuncionario f ON f.matricula = t.matricula
             WHERE m.datahoracadastro BETWEEN ? AND ?
         ";
 
@@ -285,11 +286,19 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                     }
 
                     // CORRIGIDO: Acesso correto ao array $tramiteEtapa
+                    // CORRIGIDO: Acesso correto ao array $tramiteEtapa
                     $tramiteLink = $tramiteEtapa[$tramite] ?? '';
                     $botaoTramite = '';
-                    if ($idMov !== '' && $tramiteLink !== '') {
-                        $classeBotaoTramite = $tramite === 'Finalizado Frota' ? 'btn-secondary' : 'btn-success';
-                        $botaoTramite = '<a class="btn ' . $classeBotaoTramite . ' btn-sm w-100" href="' . $tramiteLink . '?id=' . $idMov . '">' . $tramite . '</a>';
+
+                    if ($idMov !== '') {
+                        // Se for "Finalizado DP" ou "Finalizado Frota", mostra como texto
+                        if ($tramite === 'Finalizado DP' || $tramite === 'Finalizado Frota') {
+                            $botaoTramite = '<span class="badge bg-secondary w-100 p-2" style="font-size: 12px; font-weight: normal; opacity: 0.8;">' . $tramite . '</span>';
+                        } elseif ($tramiteLink !== '') {
+                            // Para os demais trâmites que têm link
+                            $classeBotaoTramite = 'btn-success';
+                            $botaoTramite = '<a class="btn ' . $classeBotaoTramite . ' btn-sm w-100" href="' . $tramiteLink . '?id=' . $idMov . '">' . $tramite . '</a>';
+                        }
                     }
 
                     $botaoEditarInfrator = '';
@@ -317,11 +326,11 @@ if ($conn instanceof mysqli && $databaseName !== '') {
                             <i class="fa-regular fa-eye"></i>
                         </a>
                     </div>';
-                    
+
                     $htmlAdicionarParecer = $idMov !== ''
                         ? '<form method="post" action="./parecermulta.php" target="_blank"><input type="hidden" name="idtbmovidatramite" value="' . esc($idMov) . '"><button title="Adicionar Parecer" style="border:none;background:transparent;" type="submit"><span class="material-symbols-outlined">edit_note</span></button></form>'
                         : '';
-                    
+
                     $htmlDataEnvio = '<button title="Ver Data Envio" class="btn-icon js-ver-envio" type="button" data-auto="' . esc($autoInfracao) . '" data-placa="' . esc($placa) . '" data-data-envio="' . esc($dataDesconto) . '"><span class="material-symbols-outlined">visibility</span></button>';
 
                     $linhasMultas[] = [
@@ -359,6 +368,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -640,7 +650,7 @@ if ($conn instanceof mysqli && $databaseName !== '') {
             </div>
         </div>
     </div>
-    
+
     <div class="modal fade" id="modalParecer" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

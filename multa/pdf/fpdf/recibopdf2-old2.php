@@ -1,8 +1,11 @@
 <?php
-require'fpdf.php';
-require('../../conecta.php');
-require('../../conecta2.php');
+require '../181/fpdf.php';
+require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 
 
@@ -15,8 +18,8 @@ $id = $_POST['id'];
 
 //echo $id;
 //$id='2759';
-$sql = "SELECT * FROM bdfrota.tbmovidatramite where idtbmovidatramite= '$id';";
-$resultado = mysqli_query($conexao, $sql) or die(mysqli_error($conexao));
+$sql = "SELECT * FROM bdautofrota.tbmovidatramite where idtbmovidatramite= '$id';";
+$resultado = mysqli_query($conn, $sql) or die(mysqli_error($conn));
 $row = mysqli_fetch_array($resultado, MYSQLI_BOTH);
 
 $nome= $row['nome'];
@@ -35,12 +38,12 @@ $valortotal2 = $valordesc+80;
 $valortotal = sprintf('%0.2f', round($valortotal2, 2));*/
 
 if($idmulta !=''){
-	$sql1 = "SELECT * FROM bdfrota.tbmulta where idtbmulta= '$idmulta';";
+	$sql1 = "SELECT * FROM bdautofrota.tbmulta where idtbmulta= '$idmulta';";
 }else{
-	$sql1 = "SELECT * FROM bdfrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
+	$sql1 = "SELECT * FROM bdautofrota.tbmulta where placa= '$placa' AND autoinfracao = '$autoinfra';";
 }
 
-$resultado1 = mysqli_query($conexao, $sql1) or die(mysqli_error($conexao));
+$resultado1 = mysqli_query($conn, $sql1) or die(mysqli_error($conn));
 $row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
 	$valor1= $row1['valor'];
 	$valdesconto1= $row1['valdesconto'];
@@ -51,51 +54,51 @@ $row1 = mysqli_fetch_array($resultado1, MYSQLI_BOTH);
 	$filial = $row1['filial'];
 
 if($locadora==''){
-	$sql2="SELECT idlocador FROM bdfrota.tbveiculo WHERE placa='$placa';";
-	$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+	$sql2="SELECT idlocador FROM bdautofrota.tbveiculo WHERE placa='$placa';";
+	$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 		$locadora= $row2['idlocador'];
 }
 
-$sql2="SELECT cnpj, Estado FROM bdaniel.tbfilial WHERE nome='$filial'; ";
-$resultado2 = mysqli_query($conexao, $sql2) or die(mysqli_error($conexao));
+$sql2="SELECT cnpj, Estado FROM bdcorp.tbfilial WHERE nome='$filial'; ";
+$resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 	$row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 		$cnpj= $row2['cnpj'];
 		$estadofilial = $row2['Estado'];
 
 if($filial ==''){
-	$sql3="SELECT unidade FROM bdfrota.tbveiculo WHERE placa='$placa';";
-	$resultado3 = mysqli_query($conexao, $sql3) or die(mysqli_error($conexao));
+	$sql3="SELECT unidade FROM bdautofrota.tbveiculo WHERE placa='$placa';";
+	$resultado3 = mysqli_query($conn, $sql3) or die(mysqli_error($conn));
 	$row3 = mysqli_fetch_array($resultado3, MYSQLI_BOTH);
 		$estadofilial= $row3['unidade'];
 }
 
 
 /*if($filial == 'FFA Sao Paulo' || $filial=='SP' || $filial=='FFA SP'){
-	$cnpj='08.375.450/0005-02';
+	$cnpj='01.307.399/0001-10';
 	$cidadeass='SÃO PAULO/SP';
 }else{
-	$cnpj='08.375.450/0001-70';
+	$cnpj='01.307.399/0001-10';
 	$cidadeass='RIO DE JANEIRO/RJ';
 }*/
 
 if($estadofilial == 'SP'){
 	if(empty($cnpj)){
-		$cnpj='08.375.450/0005-02';
+		$cnpj='01.307.399/0001-10';
 	}
 	
 	$cidadeass='SÃO PAULO/SP';
 
 }elseif($estadofilial == 'RJ'){
 	if(empty($cnpj)){
-		$cnpj='08.375.450/0001-70';
+		$cnpj='01.307.399/0001-10';
 	}
 
 	$cidadeass='RIO DE JANEIRO/RJ';
 
 }elseif($estadofilial == 'PR'){
 	if(empty($cnpj)){
-		$cnpj='08.375.450/0017-38';
+		$cnpj='01.307.399/0001-10';
 	}
 
 	$cidadeass='CURITIBA/PR';
@@ -118,8 +121,8 @@ if($taxaadm1 == '' || $taxaadm1 == '0'){
 
 
 if($taxaadm1 == ''){
-	$sql4="SELECT tipoposse FROM bdfrota.tbveiculo WHERE placa='$placa';";
-	$resultado4 = mysqli_query($conexao, $sql4) or die(mysqli_error($conexao));
+	$sql4="SELECT tipoposse FROM bdautofrota.tbveiculo WHERE placa='$placa';";
+	$resultado4 = mysqli_query($conn, $sql4) or die(mysqli_error($conn));
 	$row4 = mysqli_fetch_array($resultado4, MYSQLI_BOTH);
 		$tipoposse= $row4['tipoposse'];
 
@@ -232,7 +235,7 @@ class PDF extends FPDF
 function Header()
 {
 	// Logo
-	$this->Image('../../img/logo.png',10,6,20);
+	$this->Image('../../img/logo_hallen.png',10,6,20);
 	// Arial bold 15
 	$this->SetFont('Arial','B',12);
 	// Cor de fundo
@@ -255,7 +258,7 @@ $pdf->AliasNbPages();
 $pdf->AddPage();
 $pdf->SetFont('Arial','',10);
 $pdf->Cell(5);
-$pdf->MultiCell(177,5,utf8_decode("Nome do Empregador: FFA INFRAESTRUTURA E SERVIÇOS LTDA\nCNPJ n.º $cnpj\n"),1,1);
+$pdf->MultiCell(177,5,utf8_decode("Nome do Empregador: Hallen Instalacoes de Equipamentos de Telecomunicacoes LTDA\nCNPJ n.º $cnpj\n"),1,1);
 
 $pdf->Ln(2);
 $pdf->Cell(5);

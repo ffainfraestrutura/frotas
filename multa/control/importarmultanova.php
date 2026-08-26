@@ -292,7 +292,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             }
 
             if (!empty($nomecond)) {
-                $sql2 = "SELECT nome FROM bdaniel.tbfuncionario WHERE nome = '" . mysqli_real_escape_string($con, $nomecond) . "'; ";
+                $sql2 = "SELECT nome FROM bdcorp.tbfuncionario WHERE nome = '" . mysqli_real_escape_string($con, $nomecond) . "'; ";
                 $resultado2 = mysqli_query($con, $sql2);
                  if (!$resultado2) { $resposta .= "- Erro DB Nome Cond: " . mysqli_error($con) . ";\n"; $gravar = FALSE; }
                  else if (mysqli_num_rows($resultado2) <= 0) {
@@ -352,7 +352,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
             // Tramite can be empty if $etapa implies it.
 
             if (!empty($ccustoplan)) { // Corrected variable from $ccusto to $ccustoplan
-                $sql3 = "SELECT ccusto FROM bdaniel.tbfuncionario WHERE ccusto = '" . mysqli_real_escape_string($con, $ccustoplan) . "';";
+                $sql3 = "SELECT ccusto FROM bdcorp.tbfuncionario WHERE ccusto = '" . mysqli_real_escape_string($con, $ccustoplan) . "';";
                 $resultado3 = mysqli_query($con, $sql3);
                 if (!$resultado3) { $resposta .= "- Erro DB CCusto: " . mysqli_error($con) . ";\n"; $gravar = FALSE; }
                 else if (mysqli_num_rows($resultado3) <= 0) {
@@ -424,7 +424,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
 
                 if (!empty($nomecond)) {
                     $sqla = "SELECT idtbfuncionario, nome, codfilial, codempresa, cpf, ccusto, matricula
-                             FROM bdaniel.tbfuncionario
+                             FROM bdcorp.tbfuncionario
                              WHERE nome='" . mysqli_real_escape_string($con, $nomecond) . "'
                              ORDER BY CASE WHEN dtdemissao = '0000-00-00' THEN 1 ELSE 2 END, dtdemissao DESC
                              LIMIT 1;";
@@ -441,7 +441,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
                 } else {
                     $sql_cond_placa = "SELECT C.nome, C.matricula, F.idtbfuncionario, F.codfilial, F.codempresa, F.cpf, F.ccusto
                                        FROM `{$databaseName}`.tbcondutor C
-                                       LEFT JOIN bdaniel.tbfuncionario F ON C.matricula = F.matricula  -- Assuming matricula links them
+                                       LEFT JOIN bdcorp.tbfuncionario F ON C.matricula = F.matricula  -- Assuming matricula links them
                                        WHERE C.placaassoc='" . mysqli_real_escape_string($con, $placa) . "'
                                          AND C.dataassoc <= '" . mysqli_real_escape_string($con, $datahorainfracaof) . "'
                                          AND (C.datadissoc >= '" . mysqli_real_escape_string($con, $datahorainfracaof) . "' OR C.datadissoc='0000-00-00 00:00:00')
@@ -461,7 +461,7 @@ if (isset($_FILES["arquivo"]) && $_FILES["arquivo"]["name"] != '') {
 
                 $filial = null;
                 if ($codempresa && $codfilial) {
-                    $sql3 = "SELECT nome FROM bdaniel.tbfilial WHERE codempresa='" . mysqli_real_escape_string($con, $codempresa) . "' AND codfilial='" . mysqli_real_escape_string($con, $codfilial) . "'; ";
+                    $sql3 = "SELECT nome FROM bdcorp.tbfilial WHERE codempresa='" . mysqli_real_escape_string($con, $codempresa) . "' AND codfilial='" . mysqli_real_escape_string($con, $codfilial) . "'; ";
                     $resultado3 = mysqli_query($con, $sql3);
                     if ($resultado3 && $row3 = mysqli_fetch_assoc($resultado3)) {
                         $filial = $row3['nome'];

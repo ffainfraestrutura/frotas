@@ -1,10 +1,11 @@
 <?php
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
 require '../181/fpdf.php';
 require('../../../control/conecta.php');
 header("Content-type: text/html; charset=utf-8");
+ini_set('display_errors', '0');
+ini_set('display_startup_errors', '0');
+error_reporting(E_ALL);
+ini_set('memory_limit', '256M'); // Aumenta para 256MB
 
 
 
@@ -69,9 +70,9 @@ if ($locadora == '') {
 $sql2 = "SELECT 
     fi.CNPJ, fi.estado
 FROM
-    bdaniel.tbfuncionario f
+    bdcorp.tbfuncionario f
         JOIN
-    BdPonto.tbfilial fi ON fi.idtbfilial = f.codfilial
+    bdcorp.tbfilial fi ON fi.idtbfilial = f.codfilial
 WHERE
     f.matricula = '$matricula'";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
@@ -89,21 +90,21 @@ if ($filial == '') {
 
 if ($estadofilial == 'SP') {
 	if (empty($cnpj)) {
-		$cnpj = '08.375.450/0005-02';
+		$cnpj = '01.307.399/0001-10';
 	}
 
 	$cidadeass = 'SÃO PAULO/SP';
 
 } elseif ($estadofilial == 'RJ') {
 	if (empty($cnpj)) {
-		$cnpj = '08.375.450/0001-70';
+		$cnpj = '01.307.399/0001-10';
 	}
 
 	$cidadeass = 'RIO DE JANEIRO/RJ';
 
 } elseif ($estadofilial == 'PR') {
 	if (empty($cnpj)) {
-		$cnpj = '08.375.450/0017-38';
+		$cnpj = '01.307.399/0001-10';
 	}
 
 	$cidadeass = 'CURITIBA/PR';
@@ -218,13 +219,13 @@ $dia = $datah[2];
 
 $hojef = $datah[2] . "/" . $datah[1] . "/" . $datah[0];
 
-$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
+$sql2a = "SELECT MAX(idtbfuncionario) AS idtbfuncionario FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
 $resultado2a = mysqli_query($conn, $sql2a) or die(mysqli_error($conn));
 $row2a = mysqli_fetch_array($resultado2a, MYSQLI_BOTH);
 $idtbfuncionario = $row2a['idtbfuncionario'];
 
-//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE nome = '$nome'; ";
-$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdaniel.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
+//$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE nome = '$nome'; ";
+$sql2 = "SELECT rg, cpf, endereco, bairro, cidade, estado, cep, matricula FROM bdcorp.tbfuncionario WHERE idtbfuncionario = '$idtbfuncionario'; ";
 $resultado2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
 $row2 = mysqli_fetch_array($resultado2, MYSQLI_BOTH);
 $rg = $row2['rg'];
@@ -254,7 +255,7 @@ $resultado5 = mysqli_query($conn, $sql5) or die(mysqli_error($conn));
 $row5 = mysqli_fetch_array($resultado5, MYSQLI_BOTH);
 $modelof = $row5['modelo'];
 
-$sql6 = "SELECT tel_corp FROM bdaniel.tbfuncionario WHERE matricula='$matricula'; ";
+$sql6 = "SELECT tel_corp FROM bdcorp.tbfuncionario WHERE matricula='$matricula'; ";
 $resultado6 = mysqli_query($conn, $sql6) or die(mysqli_error($conn));
 $row6 = mysqli_fetch_array($resultado6, MYSQLI_BOTH);
 $telefone = $row6['tel_corp'];
@@ -272,7 +273,7 @@ $pdf = new PDF();
 $pdf->AliasNbPages();
 $pdf->AddPage();
 
-$pdf->Image('../../img/logo.png', 10, 6, 20);
+$pdf->Image('../../img/logo_hallen.png', 10, 6, 20);
 $pdf->SetFont('Arial', 'B', 12);
 $pdf->SetFillColor(215);
 $pdf->Ln(0.1);
@@ -284,7 +285,7 @@ $pdf->SetFont('Arial', '', 10);
 $pdf->SetFillColor(255);
 $pdf->Ln(2);
 $pdf->Cell(5);
-$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: FFA INFRAESTRUTURA E SERVIÇOS LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
+$pdf->MultiCell(177, 5, utf8_decode("Nome do Empregador: Hallen Instalacoes de Equipamentos de Telecomunicacoes LTDA\nCNPJ n.º $cnpj\n"), 1, 1);
 
 $pdf->Ln(2);
 $pdf->Cell(5);
