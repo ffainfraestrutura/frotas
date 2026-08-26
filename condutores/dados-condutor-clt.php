@@ -48,7 +48,7 @@ if (!function_exists('normalizarDataInput')) {
 }
 
 if ($matriculaCondutor !== '' && isset($conn) && $conn instanceof mysqli) {
-    $condutor = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY idtbcondutor DESC LIMIT 1", 's', [$matriculaCondutor]);
+    $condutor = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1", 's', [$matriculaCondutor]);
     $cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matriculaCondutor]);
     $usuario = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbusuario` WHERE matricula = ? LIMIT 1", 's', [$matriculaCondutor]);
 
@@ -79,7 +79,27 @@ if ($docCnh === '') {
 
 $docCnhLink = '';
 if ($docCnh !== '') {
-    $docCnhLink = urlDocumentoUploadPortal($docCnh);
+    $docCnhNormalizado = str_replace('\\', '/', trim($docCnh));
+    if (!preg_match('~^(?:https?:)?//~i', $docCnhNormalizado)) {
+        $docCnhNormalizado = ltrim($docCnhNormalizado, '/');
+        $baseCnh = 'autofrota/condutores/docs/cnh/';
+
+        if (strpos($docCnhNormalizado, $baseCnh) === 0) {
+            $arquivoCnh = substr($docCnhNormalizado, strlen($baseCnh));
+            while (strpos($arquivoCnh, 'docs/cnh/') === 0) {
+                $arquivoCnh = substr($arquivoCnh, strlen('docs/cnh/'));
+            }
+            $docCnhNormalizado = $baseCnh . $arquivoCnh;
+        } elseif (strpos($docCnhNormalizado, 'autofrota/condutores/') !== 0) {
+            while (strpos($docCnhNormalizado, 'docs/cnh/') === 0) {
+                $docCnhNormalizado = substr($docCnhNormalizado, strlen('docs/cnh/'));
+            }
+            $docCnhNormalizado = $baseCnh . $docCnhNormalizado;
+        }
+
+        $docCnhNormalizado = '/' . ltrim($docCnhNormalizado, '/');
+    }
+    $docCnhLink = $docCnhNormalizado;
 }
 
 renderCabecalhoAutofrota('Dados do Condutor');

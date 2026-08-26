@@ -78,16 +78,7 @@ function buscarCnhParaEdicao(mysqli $conn, string $databaseName, string $matricu
 
 function caminhoDownloadCnh(?string $caminho): string
 {
-    $caminho = trim((string) $caminho);
-    if ($caminho === '') {
-        return '';
-    }
-
-    if (preg_match('/^https?:\/\//i', $caminho)) {
-        return $caminho;
-    }
-
-    return '.' . '/' . ltrim($caminho, '/');
+    return urlDocumentoUploadPortal($caminho);
 }
 
 if ($matriculaFuncionario === '') {

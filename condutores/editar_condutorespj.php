@@ -2,9 +2,8 @@
 require_once __DIR__ . '/../includes/autofrota_common.php';
 
 $autofrotaSessao = autofrotaInit();
-
 $conn = $autofrotaSessao['conn'] ?? null;
-$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseName = trim((string) ($autofrotaSessao['databaseName'] ?? ''));
 $databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
 if ($databaseCorp === '') {
     $databaseCorp = 'bdcorp';
@@ -12,7 +11,6 @@ if ($databaseCorp === '') {
 
 $matricula = valorRequisicao(['matricula', 'matcond']);
 $mensagem = valorRequisicao(['msg']);
-
 if ($matricula === '') {
     header('Location: listar_condutorespj.php?msg=' . urlencode('Informe a matrícula do condutor PJ.'));
     exit;
@@ -20,95 +18,502 @@ if ($matricula === '') {
 
 $condutor = buscarUmaLinha(
     $conn,
-    "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND matricula REGEXP '^16[0-9]{5}$' ORDER BY idtbcondutor DESC LIMIT 1",
+    "SELECT * FROM `{$databaseName}`.`tbcondutor` WHERE matricula = ? AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY idtbcondutor DESC LIMIT 1",
     's',
     [$matricula]
 );
-
 if ($condutor === []) {
-    header('Location: listar_condutorespj.php?msg=' . urlencode('Condutor PJ não encontrado.'));
+    header('Location: listar_condutorespj.php?msg=' . urlencode('Condutor ativo não encontrado.'));
     exit;
 }
 
-$ccustos = consultaPreparada($conn, "SELECT DISTINCT ccusto FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND ccusto IS NOT NULL AND ccusto <> '' ORDER BY ccusto");
-$cargos = consultaPreparada($conn, "SELECT DISTINCT cargo FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND cargo IS NOT NULL AND cargo <> '' ORDER BY cargo");
+$ccustos = consultaPreparada($conn, "SELECT * FROM `{$databaseCorp}`.`tbccusto`");
+$cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
+$projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseName}`.`tbcondutor` WHERE projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
+$cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
+$ufs = buscarUfsPortal($conn);
 
 function valorCondutorPj(array $condutor, string $campo): string
 {
     return (string) ($condutor[$campo] ?? '');
 }
 
-function valorCentroCustoPj(array $linha): string
+function renderizarOpcoesCondutor(array $linhas, string $campo, string $atual = ''): void
 {
-    return trim((string) ($linha['descricao'] ?? $linha['ccusto'] ?? $linha['nome'] ?? $linha['idtbccusto'] ?? ''));
+    $opcoes = [];
+    if (trim($atual) !== '') {
+        $opcoes[] = trim($atual);
+    }
+    foreach ($linhas as $linha) {
+        $valor = trim((string) ($linha[$campo] ?? ''));
+        if ($valor !== '' && !is_numeric($valor)) {
+            $opcoes[] = $valor;
+        }
+    }
+    $exibidos = [];
+    foreach ($opcoes as $valor) {
+        $chave = function_exists('mb_strtoupper') ? mb_strtoupper($valor, 'UTF-8') : strtoupper($valor);
+        if (isset($exibidos[$chave])) continue;
+        $exibidos[$chave] = true;
+        echo '<option value="' . esc($chave) . '">' . esc($chave) . '</option>';
+    }
 }
 
-renderCabecalhoAutofrota('Editar Cadastro de Funcionário');
+function renderizarOpcoesCentroCusto(array $linhas, string $atual): void
+{
+    $opcoes = [];
+    if (trim($atual) !== '') $opcoes[] = trim($atual);
+    foreach ($linhas as $linha) {
+        $valor = trim((string) ($linha['descricao'] ?? $linha['ccusto'] ?? $linha['nome'] ?? $linha['idtbccusto'] ?? ''));
+        if ($valor !== '') $opcoes[] = $valor;
+    }
+    foreach (array_unique($opcoes) as $valor) {
+        echo '<option value="' . esc($valor) . '"' . ($valor === $atual ? ' selected' : '') . '>' . esc($valor) . '</option>';
+    }
+}
+
+renderCabecalhoAutofrota('Editar Condutor PJ');
 ?>
+<style>
+    .btn-collapse {
+        background: none;
+        border: none;
+        cursor: pointer;
+        transition: transform .3s ease;
+    }
+    .btn-collapse.rotated {
+        transform: rotate(180deg);
+    }
+    .card-header {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .form-container {
+        margin-top: 14px;
+        margin-bottom: 110px;
+        padding-bottom: 20px;
+    }
+    .char-counter {
+        font-size: 11px;
+        font-weight: 500;
+        margin-top: 2px;
+        transition: color .3s ease;
+    }
+    .char-counter.complete {
+        color: #28a745;
+    }
+    .char-counter.incomplete {
+        color: #dc3545;
+    }
+    .char-counter.neutral {
+        color: #6c757d;
+    }
+    .action-buttons-fixed {
+        position: fixed;
+        right: 30px;
+        bottom: 30px;
+        z-index: 1050;
+        display: flex;
+        gap: 15px;
+        padding: 12px 18px;
+        background: rgba(255, 255, 255, .98);
+        border: 2px solid rgba(0, 0, 0, .05);
+        border-radius: 50px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+        backdrop-filter: blur(10px);
+    }
+    .action-buttons-fixed .btn {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .3s ease;
+    }
+    .action-buttons-fixed .btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .3);
+    }
+</style>
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="mb-3 d-flex flex-wrap justify-content-between align-items-start gap-2">
         <div>
-            <h1 class="h3 mb-1">Editar Cadastro de Funcionário</h1>
-            <small class="text-muted">Atualize os dados cadastrais do condutor <?= esc($matricula) ?>.</small>
+            <h1 class="h3 mb-1">Editar Condutor</h1>
+            <p class="text-muted mb-0">Atualize as informações pessoais, documentos, endereço e dados contratuais do condutor.</p>
         </div>
-        <a class="btn btn-secondary" href="listar_condutorespj.php"><i class="fa fa-arrow-left me-1"></i>Voltar</a>
+        <!-- <a href="listar_condutorespj.php" class="btn btn-outline-secondary btn-sm">
+            <i class="fa-solid fa-list me-1"></i>Listar Condutores
+        </a> -->
     </div>
 
-    <style>
-        .condutor-card-header{background-color:#2E2851;color:#fff;font-weight:600}
-        .condutor-card-header i{color:#ffc107}
-        .required-marker{color:#dc3545}
-    </style>
+    <?php if ($mensagem !== ''): ?>
+        <div class="alert alert-info"><?= esc($mensagem) ?></div>
+    <?php endif; ?>
 
-    <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
+    <div class="form-container">
+        <form id="formCondutor" method="post" action="control/processarcondutor.php" class="mb-3" enctype="multipart/form-data" novalidate>
+            <input type="hidden" name="acao" value="editar">
+            <input type="hidden" name="matricula_original" value="<?= esc($matricula) ?>">
+            <p style="font-size: 10px;"><span class="text-danger">*</span> Campos obrigatórios.</p>
 
-    <form method="post" action="control/processarcondutor.php" class="card" enctype="multipart/form-data">
-        <input type="hidden" name="acao" value="editar">
-        <input type="hidden" name="matricula_original" value="<?= esc($matricula) ?>">
-        <div class="card-header condutor-card-header"><i class="fa fa-id-card me-2"></i>Cadastro Funcionário</div>
-        <div class="card-body">
-            <p class="small mb-3"><span class="required-marker">*</span> Campos obrigatórios.</p>
-            <div class="row g-3">
-                <div class="col-md-2">
-                    <label class="form-label">Matrícula <span class="required-marker">*</span></label>
-                    <input class="form-control" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" inputmode="numeric" minlength="7" maxlength="7" pattern="16[0-9]{5}" title="A matrícula deve começar com 16 e conter exatamente 7 dígitos." required>
+            <div id="dadoscadastrais">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Informações Pessoais</h6>
+                        <button type="button" data-bs-toggle="collapse" data-bs-target="#collapseInformacoesPessoais" id="botaoInformacoesPessoais" onclick="girarBotao('botaoInformacoesPessoais')" class="btn-collapse" aria-label="Recolher informações pessoais">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="card-body collapse show" id="collapseInformacoesPessoais">
+                        <div class="row g-3">
+                            <div class="col-md-7">
+                                <label for="nome" class="form-label">Nome Completo:<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm text-uppercase" id="nome" name="nome" required value="<?= esc(valorCondutorPj($condutor, 'nome')) ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="dtnasc" class="form-label">Data de Nascimento:<span class="text-danger">*</span></label>
+                                <input type="date" class="form-control form-control-sm data-validation" id="dtnasc" name="dtnasc" required value="<?= esc(formatarDataPortal(valorCondutorPj($condutor, 'dtnasc'), 'Y-m-d')) ?>">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="telefone" class="form-label">Telefone:</label>
+                                <input type="text" class="form-control form-control-sm" id="telefone" name="tel_corp" inputmode="numeric" maxlength="11" pattern="[0-9]*" value="<?= esc(valorCondutorPj($condutor, 'tel_corp')) ?>">
+                                <div class="char-counter neutral" id="telefone-counter">0/11 dígitos</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Nome <span class="required-marker">*</span></label>
-                    <input class="form-control text-uppercase" name="nome" value="<?= esc(valorCondutorPj($condutor, 'nome')) ?>" required>
+
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Documentos</h6>
+                        <button type="button" data-bs-toggle="collapse" data-bs-target="#collapseDocumentos" id="botaoDocumentos" onclick="girarBotao('botaoDocumentos')" class="btn-collapse" aria-label="Recolher documentos">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="card-body collapse show" id="collapseDocumentos">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="cpf" class="form-label">CPF (somente números):<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="cpf" name="cpf" pattern="[0-9]{8,11}" inputmode="numeric" maxlength="11" minlength="8" required value="<?= esc(valorCondutorPj($condutor, 'cpf')) ?>">
+                                <div class="char-counter incomplete" id="cpf-counter">0 dígitos (8-11)</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="rg" class="form-label">RG (somente números):</label>
+                                <input type="text" class="form-control form-control-sm" id="rg" name="rg" pattern="[0-9]*" inputmode="numeric" maxlength="11" minlength="6" value="<?= esc(valorCondutorPj($condutor, 'rg')) ?>">
+                                <div class="char-counter neutral" id="rg-counter">0 dígitos (6-11)</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" name="status">
-                        <?php foreach (['Ativo', 'Inativo', 'Afastado', 'Ferias', 'Demitido'] as $status): ?>
-                            <option value="<?= esc($status) ?>" <?= strcasecmp(valorCondutorPj($condutor, 'status'), $status) === 0 ? 'selected' : '' ?>><?= esc($status) ?></option>
-                        <?php endforeach; ?>
-                    </select>
+
+                <div class="card mt-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-address-book me-2"></i>Informações de Endereço</h6>
+                        <button type="button" data-bs-toggle="collapse" data-bs-target="#collapseEndereco" id="botaoEndereco" onclick="girarBotao('botaoEndereco')" class="btn-collapse" aria-label="Recolher informações de endereço">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="card-body collapse show" id="collapseEndereco">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-2">
+                                <label for="cep" class="form-label">CEP:<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="cep" name="cep" pattern="[0-9]*" inputmode="numeric" maxlength="8" required value="<?= esc(valorCondutorPj($condutor, 'cep')) ?>">
+                                <div class="char-counter incomplete" id="cep-counter">0/8 dígitos</div>
+                            </div>
+                            <div class="col-md-5">
+                                <label for="endereco" class="form-label">Endereço:<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm text-uppercase" id="endereco" name="endereco" required value="<?= esc(valorCondutorPj($condutor, 'endereco')) ?>">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="bairro" class="form-label">Bairro:<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm text-uppercase" id="bairro" name="bairro" required value="<?= esc(valorCondutorPj($condutor, 'bairro')) ?>">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="estado" class="form-label">Estado (UF):<span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="estado" id="estado" required>
+                                    <option value="">Selecione</option>
+                                    <?php foreach ($ufs as $uf): ?>
+                                        <option value="<?= esc($uf) ?>" <?= valorCondutorPj($condutor, 'estado') === $uf ? 'selected' : '' ?>><?= esc($uf) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="cidade" class="form-label">Cidade:<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm text-uppercase" id="cidade" name="cidade" required value="<?= esc(valorCondutorPj($condutor, 'cidade')) ?>">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="email" class="form-label">E-mail:</label>
+                                <input type="email" class="form-control form-control-sm" id="email" name="email" maxlength="99" value="<?= esc(valorCondutorPj($condutor, 'email')) ?>">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Data admissão</label>
-                    <input class="form-control" type="date" name="dtadmissao" value="<?= esc(formatarDataPortal(valorCondutorPj($condutor, 'dtadmissao'), 'Y-m-d')) ?>">
-                </div>
-                <div class="col-md-3"><label class="form-label">CPF</label><input class="form-control" name="cpf" value="<?= esc(valorCondutorPj($condutor, 'cpf')) ?>"></div>
-                <div class="col-md-3"><label class="form-label">RG</label><input class="form-control" name="rg" value="<?= esc(valorCondutorPj($condutor, 'rg')) ?>"></div>
-                <div class="col-md-3"><label class="form-label">Data nascimento</label><input class="form-control" type="date" name="dtnasc" value="<?= esc(formatarDataPortal(valorCondutorPj($condutor, 'dtnasc'), 'Y-m-d')) ?>"></div>
-                <div class="col-md-3"><label class="form-label">UF trabalho</label><input class="form-control text-uppercase" name="uf_trabalho" maxlength="2" value="<?= esc(valorCondutorPj($condutor, 'uf_trabalho') ?: valorCondutorPj($condutor, 'estado')) ?>"></div>
-                <div class="col-md-4"><label class="form-label">Centro de custo</label><input class="form-control" name="ccusto" list="listaCcusto" value="<?= esc(valorCondutorPj($condutor, 'ccusto')) ?>"><datalist id="listaCcusto"><?php foreach ($ccustos['linhas'] as $linha): $valorCcusto = valorCentroCustoPj($linha); if ($valorCcusto !== ''): ?><option value="<?= esc($valorCcusto) ?>"><?php endif; endforeach; ?></datalist></div>
-                <div class="col-md-4"><label class="form-label">Cargo</label><input class="form-control text-uppercase" name="cargo" list="listaCargo" value="<?= esc(valorCondutorPj($condutor, 'cargo')) ?>"><datalist id="listaCargo"><?php foreach ($cargos['linhas'] as $linha): ?><option value="<?= esc($linha['cargo'] ?? '') ?>"><?php endforeach; ?></datalist></div>
-                <div class="col-md-4"><label class="form-label">Projeto</label><input class="form-control text-uppercase" name="projeto" value="<?= esc(valorCondutorPj($condutor, 'projeto')) ?>"></div>
-                <div class="col-md-5"><label class="form-label">Endereço</label><input class="form-control text-uppercase" name="endereco" value="<?= esc(valorCondutorPj($condutor, 'endereco')) ?>"></div>
-                <div class="col-md-3"><label class="form-label">Bairro</label><input class="form-control text-uppercase" name="bairro" value="<?= esc(valorCondutorPj($condutor, 'bairro')) ?>"></div>
-                <div class="col-md-3"><label class="form-label">Cidade</label><input class="form-control text-uppercase" name="cidade" value="<?= esc(valorCondutorPj($condutor, 'cidade')) ?>"></div>
-                <div class="col-md-1"><label class="form-label">CEP</label><input class="form-control" name="cep" value="<?= esc(valorCondutorPj($condutor, 'cep')) ?>"></div>
-                <div class="col-md-4"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" maxlength="99" value="<?= esc(valorCondutorPj($condutor, 'email')) ?>"></div>
-                <div class="col-md-3"><label class="form-label">Telefone</label><input class="form-control" name="tel_corp" inputmode="numeric" maxlength="11" pattern="[0-9]*" value="<?= esc(valorCondutorPj($condutor, 'tel_corp')) ?>"></div>
             </div>
+
+            <div id="dadoscontratuais" class="mt-3">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0"><i class="fas fa-briefcase me-2"></i>Dados Contratuais</h6>
+                        <button type="button" data-bs-toggle="collapse" data-bs-target="#collapseDadosContratuais" id="botaoDadosContratuais" onclick="girarBotao('botaoDadosContratuais')" class="btn-collapse" aria-label="Recolher dados contratuais">
+                            <i class="fa-solid fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="card-body collapse show" id="collapseDadosContratuais">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-2">
+                                <label for="matricula" class="form-label">Matrícula:<span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" readonly required style="background-color: #e9ecef;">
+                                <small class="text-muted">Matrícula do cadastro</small>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="status" class="form-label">Situação:</label>
+                                <select class="form-select form-select-sm" name="status" id="status" required>
+                                    <?php foreach (['ATIVO' => 'Ativo', 'INATIVO' => 'Inativo', 'AFASTADO' => 'Afastado', 'FERIAS' => 'Férias', 'DEMITIDO' => 'Demitido'] as $valorStatus => $rotuloStatus): ?>
+                                        <option value="<?= esc($valorStatus) ?>" <?= strcasecmp(valorCondutorPj($condutor, 'status'), $valorStatus) === 0 ? 'selected' : '' ?>><?= esc($rotuloStatus) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="dtadmissao" class="form-label">Data Admissão:<span class="text-danger">*</span></label>
+                                <input type="date" class="form-control form-control-sm data-validation" id="dtadmissao" name="dtadmissao" value="<?= esc(formatarDataPortal(valorCondutorPj($condutor, 'dtadmissao'), 'Y-m-d')) ?>" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="ccusto" class="form-label">Departamento/Centro de Custo:<span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="ccusto" id="ccusto" required>
+                                    <option value="">Selecione</option>
+                                    <?php renderizarOpcoesCentroCusto($ccustos['linhas'], valorCondutorPj($condutor, 'ccusto')); ?>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="cargo" class="form-label">Cargo:<span class="text-danger">*</span></label>
+                                <input class="form-control form-control-sm text-uppercase" name="cargo" id="cargo" list="listaCargo" value="<?= esc(valorCondutorPj($condutor, 'cargo')) ?>" required>
+                                <datalist id="listaCargo"><?php renderizarOpcoesCondutor($cargos['linhas'], 'cargo', valorCondutorPj($condutor, 'cargo')); ?></datalist>
+                            </div>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="projeto" class="form-label">Projeto:</label>
+                                <input class="form-control form-control-sm text-uppercase" name="projeto" id="projeto" list="listaProjeto" value="<?= esc(valorCondutorPj($condutor, 'projeto')) ?>">
+                                <datalist id="listaProjeto"><?php renderizarOpcoesCondutor($projetos['linhas'], 'projeto', valorCondutorPj($condutor, 'projeto')); ?></datalist>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="uf_trabalho" class="form-label">UF de Trabalho:<span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="uf_trabalho" id="uf_trabalho" required>
+                                    <option value="">Selecione</option>
+                                    <?php foreach ($ufs as $uf): ?>
+                                        <option value="<?= esc($uf) ?>" <?= valorCondutorPj($condutor, 'uf_trabalho') === $uf ? 'selected' : '' ?>><?= esc($uf) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <?php require __DIR__ . '/includes/form_cnh_opcional.php'; ?>
+        </form>
+
+        <div class="action-buttons-fixed">
+            <button class="btn btn-danger rounded-circle" type="button" onclick="window.history.back()" title="Voltar" aria-label="Voltar">
+                <i class="fa-solid fa-arrow-left fa-xl"></i>
+            </button>
+            <button class="btn btn-success rounded-circle" type="submit" form="formCondutor" title="Salvar alterações" aria-label="Salvar alterações">
+                <i class="fa-solid fa-floppy-disk fa-xl"></i>
+            </button>
         </div>
-        <div class="card-footer d-flex justify-content-end gap-2">
-            <a class="btn btn-secondary" href="listar_condutorespj.php"><i class="fa fa-xmark me-1"></i>Cancelar</a>
-            <button class="btn btn-success"><i class="fa fa-save me-1"></i>Salvar alterações</button>
-        </div>
-    </form>
+    </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const onlyDigits = ['cpf', 'rg', 'cep', 'telefone', 'cnh_numero', 'cnh_pontos'];
+    onlyDigits.forEach(function (id) {
+        const field = document.getElementById(id);
+        if (!field) {
+            return;
+        }
+        field.addEventListener('input', function () {
+            field.value = field.value.replace(/\D/g, '');
+        });
+    });
+
+    document.querySelectorAll('input[type="text"].text-uppercase').forEach(function (field) {
+        field.addEventListener('input', function () {
+            field.value = field.value.toUpperCase();
+        });
+    });
+
+    function updateCharCounter(inputId, counterId, maxLength, isRequired) {
+        const input = document.getElementById(inputId);
+        const counter = document.getElementById(counterId);
+        if (!input || !counter) {
+            return;
+        }
+
+        input.addEventListener('input', function () {
+            const currentLength = input.value.length;
+
+            if (inputId === 'rg') {
+                if (currentLength >= 6 && currentLength <= 11) {
+                    counter.textContent = currentLength + ' dígitos (✓ válido)';
+                    counter.className = 'char-counter complete';
+                } else if (currentLength > 0) {
+                    counter.textContent = currentLength + ' dígitos (6-11 necessários)';
+                    counter.className = 'char-counter incomplete';
+                } else {
+                    counter.textContent = '0 dígitos (6-11)';
+                    counter.className = 'char-counter neutral';
+                }
+                return;
+            }
+
+            if (inputId === 'cpf') {
+                if (currentLength >= 8 && currentLength <= 11) {
+                    counter.textContent = currentLength + ' dígitos (✓ válido)';
+                    counter.className = 'char-counter complete';
+                } else if (currentLength > 0) {
+                    counter.textContent = currentLength + ' dígitos (8-11 necessários)';
+                    counter.className = 'char-counter incomplete';
+                } else {
+                    counter.textContent = '0 dígitos (8-11)';
+                    counter.className = 'char-counter incomplete';
+                }
+                return;
+            }
+
+            counter.textContent = currentLength + '/' + maxLength + ' dígitos';
+            if (currentLength === maxLength) {
+                counter.className = 'char-counter complete';
+            } else if (currentLength > 0 || isRequired) {
+                counter.className = isRequired ? 'char-counter incomplete' : 'char-counter neutral';
+            } else {
+                counter.className = 'char-counter neutral';
+            }
+        });
+    }
+
+    updateCharCounter('cpf', 'cpf-counter', 11, true);
+    updateCharCounter('rg', 'rg-counter', 11, false);
+    updateCharCounter('cep', 'cep-counter', 8, true);
+    updateCharCounter('telefone', 'telefone-counter', 11, false);
+    ['cpf', 'rg', 'cep', 'telefone'].forEach(function (id) {
+        document.getElementById(id)?.dispatchEvent(new Event('input'));
+    });
+
+    function limparFormularioCep() {
+        document.getElementById('endereco').value = '';
+        document.getElementById('bairro').value = '';
+        document.getElementById('cidade').value = '';
+        document.getElementById('estado').value = '';
+    }
+
+    document.getElementById('cep').addEventListener('blur', function () {
+        const cep = this.value.replace(/\D/g, '');
+        if (cep === '') {
+            limparFormularioCep();
+            return;
+        }
+        if (!/^[0-9]{8}$/.test(cep)) {
+            limparFormularioCep();
+            alert('Formato de CEP inválido.');
+            return;
+        }
+
+        document.getElementById('endereco').value = '...';
+        document.getElementById('bairro').value = '...';
+        document.getElementById('cidade').value = '...';
+        document.getElementById('estado').value = '';
+
+        fetch('https://viacep.com.br/ws/' + cep + '/json/')
+            .then(function (response) { return response.json(); })
+            .then(function (dados) {
+                if (dados.erro) {
+                    limparFormularioCep();
+                    alert('CEP não encontrado.');
+                    return;
+                }
+                document.getElementById('endereco').value = (dados.logradouro || '').toUpperCase();
+                document.getElementById('bairro').value = (dados.bairro || '').toUpperCase();
+                document.getElementById('cidade').value = (dados.localidade || '').toUpperCase();
+                document.getElementById('estado').value = dados.uf || '';
+            })
+            .catch(function () {
+                limparFormularioCep();
+                alert('Não foi possível consultar o CEP. Preencha o endereço manualmente.');
+            });
+    });
+
+    document.querySelectorAll('.data-validation').forEach(function (field) {
+        field.addEventListener('blur', function () {
+            validarAno(field);
+        });
+    });
+
+    document.getElementById('formCondutor').addEventListener('submit', function (event) {
+        const cpf = document.getElementById('cpf').value.replace(/\D/g, '');
+        const rg = document.getElementById('rg').value.replace(/\D/g, '');
+        const cep = document.getElementById('cep').value.replace(/\D/g, '');
+
+        if (!this.checkValidity()) {
+            event.preventDefault();
+            this.reportValidity();
+            return;
+        }
+
+        if (cpf.length < 8 || cpf.length > 11) {
+            event.preventDefault();
+            alert('CPF deve conter entre 8 e 11 dígitos!');
+            document.getElementById('cpf').focus();
+            return;
+        }
+
+        if (/^(.)\1+$/.test(cpf)) {
+            event.preventDefault();
+            alert('CPF inválido! Não é permitido CPF com todos os dígitos iguais.');
+            document.getElementById('cpf').focus();
+            return;
+        }
+
+        if (rg.length > 0 && (rg.length < 6 || rg.length > 11)) {
+            event.preventDefault();
+            alert('RG deve conter entre 6 e 11 dígitos!');
+            document.getElementById('rg').focus();
+            return;
+        }
+
+        if (rg.length > 0 && /^(.)\1+$/.test(rg)) {
+            event.preventDefault();
+            alert('RG inválido! Não é permitido RG com todos os dígitos iguais.');
+            document.getElementById('rg').focus();
+            return;
+        }
+
+        if (cep.length !== 8) {
+            event.preventDefault();
+            alert('CEP deve conter exatamente 8 dígitos!');
+            document.getElementById('cep').focus();
+        }
+    });
+});
+
+function girarBotao(btnId) {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        btn.classList.toggle('rotated');
+    }
+}
+
+function validarAno(input) {
+    const inputDate = input.value;
+    if (!inputDate) {
+        return;
+    }
+    const year = parseInt(inputDate.split('-')[0], 10);
+    if (isNaN(year) || year < 1000 || year > 9999) {
+        alert('Por favor, insira um ano válido.');
+        input.value = '';
+    }
+}
+</script>
 <?php renderRodapeAutofrota(); ?>
