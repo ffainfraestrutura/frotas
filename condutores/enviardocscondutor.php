@@ -21,10 +21,14 @@ function buscarDocumentosCondutor(mysqli $conn, string $databaseName, string $ma
     }
 
     $sql = "
-        SELECT cn.*, f.nome
+        SELECT cn.*, (
+            SELECT condutor.nome
+            FROM `{$databaseName}`.`tbcondutor` condutor
+            WHERE condutor.matricula = cn.matricula
+            ORDER BY condutor.idtbcondutor DESC
+            LIMIT 1
+        ) AS nome
         FROM `{$databaseName}`.`tbcnh` cn
-        INNER JOIN `{$databaseName}`.`tbfuncionario` f
-            ON f.matricula = cn.matricula
         WHERE cn.matricula = ?
         LIMIT 1
     ";
@@ -59,7 +63,13 @@ function hrefDocumentoCondutor(?string $caminho): string
         return $caminho;
     }
 
-    return './' . ltrim($caminho, '/');
+    if (preg_match('~(?:^|/)visualizar-upload\.php\?abrir=([^&]+)~', $caminho, $resultado)) {
+        $nomeArquivo = basename(rawurldecode($resultado[1]));
+    } else {
+        $nomeArquivo = basename(str_replace('\\', '/', $caminho));
+    }
+
+    return '/visualizar-upload.php?abrir=' . rawurlencode($nomeArquivo);
 }
 
 if ($matriculaFuncionario === '') {
@@ -111,8 +121,8 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                         <?= htmlspecialchars($mensagemErro) ?>
                     </div>
                     <div class="mt-3 d-flex gap-3">
-                        <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listagemcnh.php'; }">Fechar</button>
-                        <a class="btn btn-secondary" href="listagemcnh.php">Listagem de CNH</a>
+                        <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listar_condutorespj.php'; }">Fechar</button>
+                        <a class="btn btn-secondary" href="listar_condutorespj.php">Listagem de condutores</a>
                     </div>
                 <?php else: ?>
                     <form method="post" action="./control/enviardocscond.php" enctype="multipart/form-data" class="pb-5 mb-5">
@@ -228,7 +238,7 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
 
                         <div class="mt-4 pb-3 d-flex justify-content-start gap-4">
                             <button class="btn btn-success" type="submit">Confirmar envio</button>
-                            <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listagemcnh.php'; }">Cancelar envio</button>
+                            <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listar_condutorespj.php'; }">Cancelar envio</button>
                         </div>
                     </form>
                 <?php endif; ?>

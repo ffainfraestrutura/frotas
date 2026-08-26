@@ -11,10 +11,8 @@ exigirLogin();
 date_default_timezone_set('America/Sao_Paulo');
 header('Content-Type: text/html; charset=utf-8');
 
-$baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
-$baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
-$uploadDir = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: '/tmp/frotas_docs/condutor'), '/\\') . DIRECTORY_SEPARATOR;
-$uploadUrl = rtrim((string) (getenv('FROTAS_UPLOAD_URL') ?: $baseScheme . '://' . $baseHost . '/visualizar-upload.php?abrir='), '/');
+$uploadDir = '/tmp/frotas_docs/condutor' . DIRECTORY_SEPARATOR;
+$uploadPathPrefix = '/visualizar-upload.php?abrir=';
 
 function responderEnvioDocsCondutor(string $mensagem): void
 {
@@ -27,11 +25,11 @@ function responderEnvioDocsCondutor(string $mensagem): void
             window.opener.location.reload();
             window.close();
         } else if ({$recarregarOrigemJs}) {
-            window.location.href = '../listagemcnh.php';
+            window.location.href = '../listar_condutorespj.php';
         } else if (window.history.length > 1) {
             window.history.back();
         } else {
-            window.location.href = '../listagemcnh.php';
+            window.location.href = '../listar_condutorespj.php';
         }
     </script>";
     exit;
@@ -135,7 +133,7 @@ function salvarDocumentoCondutor(string $campo, string $matricula, string $sufix
         responderEnvioDocsCondutor('Não foi possível enviar o arquivo de ' . $sufixo . '.');
     }
 
-    return $uploadPathPrefix . $nomeFinal;
+    return $uploadPathPrefix . rawurlencode($nomeFinal);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
