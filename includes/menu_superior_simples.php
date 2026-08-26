@@ -252,7 +252,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Cadastrar condutor</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem geral de condutores com veículos</a></li>
+                                    target="_self">Listagem de condutores ativos e inativos</a></li>
                             <!-- <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagemcnh.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Condutores com CNH</a></li> -->

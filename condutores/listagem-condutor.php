@@ -336,7 +336,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     <div id="layoutSidenav_content">
         <main class="page-wrapper py-3">
-            <h1 class="page-title">Condutores com Vistorias Realizadas</h1>
+            <h1 class="page-title">Condutores Ativos e Inativos</h1>
 
             <section class="filter-area">
                 <form action="" method="post">
