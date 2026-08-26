@@ -114,12 +114,6 @@ function montarAcoesCondutor(array $condutor, string $matriculaLogada, string $p
             'matr_autor' => $matriculaLogada,
             'perf_autor' => $perfilLogado,
         ], 'attach_file', 'Anexar documentos'),
-        // NOVO BOTÃO: Associar Veículo
-        'associar_veiculo' => montarBotaoPost('cadastro-veiculo-condutor.php', [
-            'matricula' => $matricula,
-            'matr_autor' => $matriculaLogada,
-            'perfil' => $perfilLogado,
-        ], 'directions_car', 'Associar Veículo'),
     ];
 }
 
@@ -280,7 +274,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                     'dissociado_em' => formatarDataCondutor($condutor['dissociado_em'] ?? ''),
                     'editar_cnh' => $acoes['editar_cnh'],
                     'anexar_documentos' => $acoes['anexar_documentos'],
-                    'associar_veiculo' => $acoes['associar_veiculo'], // NOVO
                     'atualizado_em' => formatarDataCondutor($condutor['atualizado_em'] ?? ''),
                     'ultima_atualizacao' => $ultimaAtualizacao,
                     'realizada_por' => $realizadaPor,
@@ -336,7 +329,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     <div id="layoutSidenav_content">
         <main class="page-wrapper py-3">
-            <h1 class="page-title">Condutores com Vistorias Realizadas</h1>
+            <h1 class="page-title">Condutores Ativos e Inativos</h1>
 
             <section class="filter-area">
                 <form action="" method="post">
@@ -371,10 +364,10 @@ if (isset($conn) && $conn instanceof mysqli) {
             </section>
 
             <section class="d-flex justify-content-start actions flex-wrap">
-                <a class="btn btn-secondary" href="cadastrar_condutorespj.php">Cadastrar Funcionário</a>
-                <a class="btn btn-success" href="funcionarios-semcnh.php">Cadastrar CNH de Colaborador</a>
-                <a class="btn btn-secondary" href="listagemcnh.php">Listagens de CNHs Cadastradas</a>
-                <a class="btn btn-primary" href="importarcnh.php">Importar CNHs em Lote</a>
+                <!-- <a class="btn btn-secondary" href="cadastrar_condutorespj.php">Cadastrar Funcionário</a> -->
+                <!-- <a class="btn btn-success" href="funcionarios-semcnh.php">Cadastrar CNH de Colaborador</a> -->
+                <!-- <a class="btn btn-secondary" href="listagemcnh.php">Listagens de CNHs Cadastradas</a> -->
+                <!-- <a class="btn btn-primary" href="importarcnh.php">Importar CNHs em Lote</a> -->
                 <form action="control/gerarexcelcondutores.php" method="post" class="d-inline">
                     <input type="hidden" name="unidadef" value="<?= esc($unidadeSelecionada) ?>">
                     <input type="hidden" name="status_colaborador" value="<?= esc($statusColaboradorSelecionado) ?>">
@@ -399,7 +392,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                             <th>Data dissociação</th>
                             <th>Cadastrar/Editar CNH</th>
                             <th>Anexar documentos</th>
-                            <th>Associar Veículo</th> <!-- NOVO -->
                             <th>Detalhes</th>
                         </tr>
                     </thead>
@@ -508,7 +500,6 @@ if (isset($conn) && $conn instanceof mysqli) {
                 { data: 'dissociado_em', defaultContent: '' },
                 { data: 'editar_cnh', defaultContent: '', orderable: false, searchable: false },
                 { data: 'anexar_documentos', defaultContent: '', orderable: false, searchable: false },
-                { data: 'associar_veiculo', defaultContent: '', orderable: false, searchable: false }, // NOVO
                 {
                     data: null,
                     orderable: false,

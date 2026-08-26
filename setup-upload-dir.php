@@ -320,7 +320,7 @@ FROTAS_UPLOAD_URL=https://seu-dominio.com/caminho/publico</pre>
 
             <div class="mt-4 text-center text-muted small">
                 <p>Este script cria <code>/var/www/html/files/frotas</code> com permissões 775 para que a aplicação possa gravar arquivos sem problemas de acesso.</p>
-                <p><a href="diagnostico-uploads.php" class="link-secondary">Ver diagnóstico completo</a></p>
+                <p><a href="visualizar-upload.php" class="link-secondary">Ver diagnóstico completo</a></p>
             </div>
         </div>
     </div>

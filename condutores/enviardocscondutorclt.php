@@ -7,6 +7,10 @@ header('Content-Type: text/html; charset=utf-8');
 
 $conn = $autofrotaSessao['conn'] ?? null;
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
+$databaseCorp = trim((string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? '')));
+if ($databaseCorp === '') {
+    $databaseCorp = 'bdcorp';
+}
 
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_POST['matr_autor'] ?? '');
 $matriculaFuncionario = trim((string) ($_POST['matcondutor'] ?? $_POST['matricula'] ?? $_GET['matcondutor'] ?? $_GET['matricula'] ?? ''));
@@ -14,22 +18,20 @@ $mensagemErro = '';
 $dados = null;
 $ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 
-function buscarDocumentosCondutor(mysqli $conn, string $databaseName, string $matricula): ?array
+function buscarDocumentosCondutorClt(mysqli $conn, string $databaseName, string $databaseCorp, string $matricula): ?array
 {
     if ($matricula === '') {
         return null;
     }
 
     $sql = "
-        SELECT cn.*, (
-            SELECT condutor.nome
-            FROM `{$databaseName}`.`tbcondutor` condutor
-            WHERE condutor.matricula = cn.matricula
-            ORDER BY condutor.idtbcondutor DESC
-            LIMIT 1
-        ) AS nome
+        SELECT cn.*, f.nome
         FROM `{$databaseName}`.`tbcnh` cn
+        INNER JOIN `{$databaseCorp}`.`tbfuncionario` f
+            ON f.matricula = cn.matricula
         WHERE cn.matricula = ?
+          AND f.idtbempresa = 2
+          AND UPPER(TRIM(f.status)) = 'ATIVO'
         LIMIT 1
     ";
     $stmt = mysqli_prepare($conn, $sql);
@@ -52,7 +54,7 @@ function buscarDocumentosCondutor(mysqli $conn, string $databaseName, string $ma
     return $registro ?: null;
 }
 
-function hrefDocumentoCondutor(?string $caminho): string
+function hrefDocumentoCondutorClt(?string $caminho): string
 {
     $caminho = trim((string) $caminho);
     if ($caminho === '') {
@@ -63,13 +65,7 @@ function hrefDocumentoCondutor(?string $caminho): string
         return $caminho;
     }
 
-    if (preg_match('~(?:^|/)visualizar-upload\.php\?abrir=([^&]+)~', $caminho, $resultado)) {
-        $nomeArquivo = basename(rawurldecode($resultado[1]));
-    } else {
-        $nomeArquivo = basename(str_replace('\\', '/', $caminho));
-    }
-
-    return '/visualizar-upload.php?abrir=' . rawurlencode($nomeArquivo);
+    return '/visualizar-upload.php?abrir=' . rawurlencode(basename(str_replace('\\', '/', $caminho)));
 }
 
 if ($matriculaFuncionario === '') {
@@ -77,7 +73,7 @@ if ($matriculaFuncionario === '') {
 } elseif (!isset($conn) || !($conn instanceof mysqli)) {
     $mensagemErro = 'Não foi possível conectar ao banco de dados.';
 } else {
-    $dados = buscarDocumentosCondutor($conn, $databaseName, $matriculaFuncionario);
+    $dados = buscarDocumentosCondutorClt($conn, $databaseName, $databaseCorp, $matriculaFuncionario);
 
     if (!$dados) {
         $mensagemErro = 'CNH não encontrada para a matrícula informada.';
@@ -121,11 +117,11 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                         <?= htmlspecialchars($mensagemErro) ?>
                     </div>
                     <div class="mt-3 d-flex gap-3">
-                        <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listar_condutorespj.php'; }">Fechar</button>
-                        <a class="btn btn-secondary" href="listar_condutorespj.php">Listagem de condutores</a>
+                        <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listar_condutoresclt.php'; }">Fechar</button>
+                        <a class="btn btn-secondary" href="listar_condutoresclt.php">Listagem de CNH</a>
                     </div>
                 <?php else: ?>
-                    <form method="post" action="./control/enviardocscond.php" enctype="multipart/form-data" class="pb-5 mb-5">
+                    <form method="post" action="./control/enviardocscondclt.php" enctype="multipart/form-data" class="pb-5 mb-5">
                         <input type="hidden" name="matcond" value="<?= htmlspecialchars((string) ($dados['matricula'] ?? '')) ?>">
                         <input type="hidden" name="mat_autor" value="<?= htmlspecialchars($matriculaLogada) ?>">
 
@@ -181,7 +177,7 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                             </div>
                             <?php if ($docAtual !== ''): ?>
                                 <div class="col-md-3">
-                                    <a href="<?= htmlspecialchars(hrefDocumentoCondutor($docAtual)) ?>" class="btn btn-secondary" download>Ver CNH</a>
+                                    <a href="<?= htmlspecialchars(hrefDocumentoCondutorClt($docAtual)) ?>" class="btn btn-secondary" download>Ver CNH</a>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -192,7 +188,7 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                                 <input class="form-control" type="file" name="politicauso" id="politicauso" accept=".pdf,.doc,.docx">
                             </div>
                             <?php if (!empty($dados['politicauso'])): ?>
-                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutor((string) $dados['politicauso'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
+                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutorClt((string) $dados['politicauso'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
                             <?php endif; ?>
                         </div>
 
@@ -202,7 +198,7 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                                 <input class="form-control" type="file" name="termocombustivel" id="termocombustivel" accept=".pdf,.doc,.docx">
                             </div>
                             <?php if (!empty($dados['termocombust'])): ?>
-                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutor((string) $dados['termocombust'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
+                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutorClt((string) $dados['termocombust'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
                             <?php endif; ?>
                         </div>
 
@@ -212,7 +208,7 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                                 <input class="form-control" type="file" name="contrato" id="contrato" accept=".pdf,.doc,.docx">
                             </div>
                             <?php if (!empty($dados['contratoagregamento'])): ?>
-                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutor((string) $dados['contratoagregamento'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
+                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutorClt((string) $dados['contratoagregamento'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
                             <?php endif; ?>
                         </div>
 
@@ -222,7 +218,7 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                                 <input class="form-control" type="file" name="rescisao" id="rescisao" accept=".pdf,.doc,.docx">
                             </div>
                             <?php if (!empty($dados['termorescisao'])): ?>
-                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutor((string) $dados['termorescisao'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
+                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutorClt((string) $dados['termorescisao'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
                             <?php endif; ?>
                         </div>
 
@@ -232,13 +228,13 @@ $docAtual = !empty($dados['doc2']) ? (string) $dados['doc2'] : (string) ($dados[
                                 <input class="form-control" type="file" name="ultrecibo" id="ultrecibo" accept=".pdf,.doc,.docx">
                             </div>
                             <?php if (!empty($dados['ultrecibo'])): ?>
-                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutor((string) $dados['ultrecibo'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
+                                <div class="col-md-3"><a href="<?= htmlspecialchars(hrefDocumentoCondutorClt((string) $dados['ultrecibo'])) ?>" class="btn btn-secondary" download>Último Documento</a></div>
                             <?php endif; ?>
                         </div>
 
                         <div class="mt-4 pb-3 d-flex justify-content-start gap-4">
                             <button class="btn btn-success" type="submit">Confirmar envio</button>
-                            <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listar_condutorespj.php'; }">Cancelar envio</button>
+                            <button class="btn btn-secondary" type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href = 'listar_condutoresclt.php'; }">Cancelar envio</button>
                         </div>
                     </form>
                 <?php endif; ?>

@@ -31,31 +31,17 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
     }
 
     .af-top-simple.navbar {
-        min-height: calc(48px *
-                <?= $menuCompactScale ?>
-            );
-        padding-top: calc(0.5rem *
-                <?= $menuCompactScale ?>
-            );
-        padding-bottom: calc(0.5rem *
-                <?= $menuCompactScale ?>
-            );
+        min-height: calc(48px * <?= $menuCompactScale ?>);
+        padding-top: calc(0.5rem * <?= $menuCompactScale ?>);
+        padding-bottom: calc(0.5rem * <?= $menuCompactScale ?>);
     }
 
     .af-top-simple .navbar-brand {
-        font-size: calc(1.25rem *
-                <?= $menuCompactScale ?>
-            );
+        font-size: calc(1.25rem * <?= $menuCompactScale ?>);
         font-weight: 700;
-        margin-right: calc(1rem *
-                <?= $menuCompactScale ?>
-            );
-        padding-top: calc(0.3125rem *
-                <?= $menuCompactScale ?>
-            );
-        padding-bottom: calc(0.3125rem *
-                <?= $menuCompactScale ?>
-            );
+        margin-right: calc(1rem * <?= $menuCompactScale ?>);
+        padding-top: calc(0.3125rem * <?= $menuCompactScale ?>);
+        padding-bottom: calc(0.3125rem * <?= $menuCompactScale ?>);
         white-space: nowrap;
     }
 
@@ -65,26 +51,16 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
     }
 
     .af-top-simple .nav-link {
-        font-size: calc(1rem *
-                <?= $menuCompactScale ?>
-            );
-        padding-left: calc(0.5rem *
-                <?= $menuCompactScale ?>
-            );
-        padding-right: calc(0.5rem *
-                <?= $menuCompactScale ?>
-            );
+        font-size: calc(1rem * <?= $menuCompactScale ?>);
+        padding-left: calc(0.5rem * <?= $menuCompactScale ?>);
+        padding-right: calc(0.5rem * <?= $menuCompactScale ?>);
         white-space: nowrap;
     }
 
     .af-top-simple .nav-link i,
     .af-top-simple .nav-link svg {
-        font-size: calc(1rem *
-                <?= $menuCompactScale ?>
-            );
-        margin-right: calc(0.25rem *
-                <?= $menuCompactScale ?>
-            ) !important;
+        font-size: calc(1rem * <?= $menuCompactScale ?>);
+        margin-right: calc(0.25rem * <?= $menuCompactScale ?>) !important;
     }
 
     .af-top-simple .nav-link.active {
@@ -102,30 +78,20 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
     }
 
     .af-user-greeting {
-        font-size: calc(0.875rem *
-                <?= $menuCompactScale ?>
-            );
+        font-size: calc(0.875rem * <?= $menuCompactScale ?>);
         font-weight: 600;
         white-space: nowrap;
     }
 
     .af-user-dropdown {
         flex-shrink: 0;
-        gap: calc(1rem *
-                <?= $menuCompactScale ?>
-            ) !important;
+        gap: calc(1rem * <?= $menuCompactScale ?>) !important;
     }
 
     .af-user-dropdown .btn-sm {
-        --bs-btn-font-size: calc(0.875rem *
-                <?= $menuCompactScale ?>
-            );
-        --bs-btn-padding-x: calc(0.5rem *
-                <?= $menuCompactScale ?>
-            );
-        --bs-btn-padding-y: calc(0.25rem *
-                <?= $menuCompactScale ?>
-            );
+        --bs-btn-font-size: calc(0.875rem * <?= $menuCompactScale ?>);
+        --bs-btn-padding-x: calc(0.5rem * <?= $menuCompactScale ?>);
+        --bs-btn-padding-y: calc(0.25rem * <?= $menuCompactScale ?>);
     }
 
     .af-user-dropdown .dropdown-toggle::after {
@@ -150,7 +116,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
 
         <div class="collapse navbar-collapse" id="afMenuSuperior">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
+                                <li class="nav-item">
                     <a class="nav-link<?= menuSuperiorAtivo('index.php', $paginaAtual, $baseAutofrotaUrl) ?>"
                         href="<?= menuSuperiorLink('index.php', $baseAutofrotaUrl) ?>" target="_self">
                         <i class="fas fa-house me-1"></i>Início
@@ -286,16 +252,13 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Cadastrar condutor</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagem-condutor.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem geral de condutores com veículos</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('condutores/funcionarios-semcnh.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Condutores sem CNH</a></li>
-                            <li><a class="dropdown-item"
+                                    target="_self">Listagem de condutores ativos e inativos</a></li>
+                            <!-- <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/listagemcnh.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Condutores com CNH</a></li>
-                            <li><a class="dropdown-item"
+                                    target="_self">Condutores com CNH</a></li> -->
+                            <!-- <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('condutores/importarcnh.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Importar CNH</a></li>
+                                    target="_self">Importar CNH</a></li> -->
                         </ul>
                     </li>
 
@@ -330,13 +293,13 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuManutencoes">
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
-                                    target="_self" onclick="window.location.href=this.href; return false;">Cadastrar
-                                    manutenção</a></li>
+                            href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                            target="_self" onclick="window.location.href=this.href; return false;">Cadastrar
+                            manutenção</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Listagem de
-                                    manutenções</a></li>
+                                    manutenções</a></li>        
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/importar-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Importar
@@ -347,7 +310,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     preventiva</a></li>
                         </ul>
                     </li>
-
+                    
 
 
                 <?php endif; ?>
@@ -366,6 +329,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                 <li><a class="dropdown-item"
                                         href="<?= menuSuperiorLink('multa/multasfrota.php', $baseAutofrotaUrl) ?>"
                                         target="_self">Listar Multas</a></li>
+                                <li><a class="dropdown-item"
+                                        href="<?= menuSuperiorLink('multa/cadastromulta.php', $baseAutofrotaUrl) ?>"
+                                        target="_self">Lançamento e consulta de multas</a></li>
                                 <li><a class="dropdown-item"
                                         href="<?= menuSuperiorLink('multa/importarmultasnovas.php', $baseAutofrotaUrl) ?>"
                                         target="_self">Importar multas novas</a></li>
@@ -477,13 +443,10 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                 </a>
                             </li>
                             <li>
-                                <a class="dropdown-item" href="<?= menuSuperiorLink('cotafixa.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cota Fixa</a>
+                                <a class="dropdown-item" href="<?= menuSuperiorLink('cotafixa.php', $baseAutofrotaUrl) ?>" target="_self">Cota Fixa</a>
                             </li>
                             <li>
-                                <a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Inserir Saldo Veículo</a>
+                                <a class="dropdown-item" href="<?= menuSuperiorLink('relatorio-saldo-veiculos.php', $baseAutofrotaUrl) ?>" target="_self">Inserir Saldo Veículo</a>
                             </li>
                             <li>
                                 <a class="dropdown-item"
