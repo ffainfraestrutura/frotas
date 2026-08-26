@@ -60,7 +60,7 @@ renderCabecalhoAutofrota('Condutores Cadastrados');
             <!-- <a href="funcionarios-semcnh.php" class="btn btn-secondary"><i class="fa fa-user-times me-1"></i>Condutores sem CNH</a> -->
             <!-- <a href="listagemcnh.php" class="btn btn-secondary"><i class="fa fa-id-card me-1"></i>Anexar Documentos</a> -->
             <a href="cadastrar_condutorespj.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor PJ</a>
-            <a href="listar_condutoresclt.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor Colaborador</a>
+            <a href="condutores/cadastrar_condutoresclt.php" class="btn btn-success"><i class="fa fa-plus me-1"></i>Novo Condutor Colaborador</a>
 
         </div>
     </div>

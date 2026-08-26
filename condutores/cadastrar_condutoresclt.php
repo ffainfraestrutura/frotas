@@ -16,8 +16,8 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
 ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div><h1 class="h3 mb-1">Cadastrar CNH de Colaborador</h1><p class="text-muted mb-0">Selecione um funcionário da empresa 2 e informe somente os dados da CNH.</p></div>
-        <a class="btn btn-secondary" href="listar_condutoresclt.php"><i class="fa fa-arrow-left me-1"></i>Voltar</a>
+        <div><h1 class="h3 mb-1">Cadastrar CNH de Colaborador</h1><p class="text-muted mb-0">Selecione um funcionário e informe somente os dados da CNH.</p></div>
+        <a class="btn btn-secondary" href="cadastrar_condutoresclt.php"><i class="fa fa-arrow-left me-1"></i>Voltar</a>
     </div>
     <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
     <?php if ($funcionarios['erro'] !== ''): ?><div class="alert alert-danger"><?= esc($funcionarios['erro']) ?></div><?php endif; ?>
@@ -40,7 +40,7 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
             </div>
             <?php require __DIR__ . '/includes/form_cnh_opcional_clt.php'; ?>
         </div>
-        <div class="card-footer d-flex justify-content-end gap-2"><a class="btn btn-secondary" href="listar_condutoresclt.php">Cancelar</a><button class="btn btn-success"><i class="fa fa-save me-1"></i>Salvar CNH</button></div>
+        <div class="card-footer d-flex justify-content-end gap-2"><a class="btn btn-secondary" href="cadastrar_condutoresclt.php">Cancelar</a><button class="btn btn-success"><i class="fa fa-save me-1"></i>Salvar CNH</button></div>
     </form>
 </div>
 <script>
