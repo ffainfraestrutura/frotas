@@ -236,7 +236,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('veiculos/listagem-veiculo.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Veículo</a></li>
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Manutenção</a></li>
                         </ul>
                     </li>
@@ -290,13 +290,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuManutencoes">
                             <li><a class="dropdown-item"
-                            href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                             target="_self" onclick="window.location.href=this.href; return false;">Cadastrar
-                            manutenção</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
-                                    target="_self" onclick="window.location.href=this.href; return false;">Listagem de
-                                    manutenções</a></li>        
+                            manutenção</a></li>       
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/importar-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Importar
