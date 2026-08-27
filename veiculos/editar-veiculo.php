@@ -19,6 +19,7 @@ $usuarioLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['usuario'] ?
 $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
 $idtbveiculo = trim((string) ($_GET['idtbveiculo'] ?? $_POST['idtbveiculo'] ?? ''));
 $veiculo = [];
+$documentosVeiculo = [];
 $erroCarregamento = '';
 
 if ($idtbveiculo === '') {
@@ -35,6 +36,16 @@ if ($idtbveiculo === '') {
     }
     if ($veiculo === []) {
         $erroCarregamento = 'Veículo não encontrado para o identificador informado.';
+    } else {
+        $placaDocumentos = trim((string) ($veiculo['placa'] ?? ''));
+        $stmtDocumentos = mysqli_prepare($conn, "SELECT crlv, crv, cert_ipva FROM `{$databaseName}`.`tbveicdocs` WHERE placa = ? LIMIT 1");
+        if ($stmtDocumentos) {
+            mysqli_stmt_bind_param($stmtDocumentos, 's', $placaDocumentos);
+            mysqli_stmt_execute($stmtDocumentos);
+            $resultadoDocumentos = mysqli_stmt_get_result($stmtDocumentos);
+            $documentosVeiculo = $resultadoDocumentos ? (mysqli_fetch_assoc($resultadoDocumentos) ?: []) : [];
+            mysqli_stmt_close($stmtDocumentos);
+        }
     }
 } else {
     $erroCarregamento = 'Não foi possível conectar ao banco de dados.';
@@ -478,15 +489,24 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                     <div class="card-body row g-3">
                         <div class="col-md-4">
                             <label class="form-label" for="crlv">CRLV</label>
-                            <input class="form-control" type="file" name="doc01" id="crlv" accept=".pdf,.jpg,.jpeg,.png">
+                            <input class="form-control" type="file" name="crlv" id="crlv" accept=".pdf,.jpg,.jpeg,.png">
+                            <?php if (!empty($documentosVeiculo['crlv'])): ?>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" href="<?= esc(urlDocumentoUploadPortal($documentosVeiculo['crlv'])) ?>" target="_blank" rel="noopener"><i class="fas fa-eye me-1"></i>Abrir CRLV atual</a>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="crv">CRV</label>
                             <input class="form-control" type="file" name="crv" id="crv" accept=".pdf,.jpg,.jpeg,.png">
+                            <?php if (!empty($documentosVeiculo['crv'])): ?>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" href="<?= esc(urlDocumentoUploadPortal($documentosVeiculo['crv'])) ?>" target="_blank" rel="noopener"><i class="fas fa-eye me-1"></i>Abrir CRV atual</a>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label" for="ipva">IPVA</label>
                             <input class="form-control" type="file" name="ipva" id="ipva" accept=".pdf,.jpg,.jpeg,.png">
+                            <?php if (!empty($documentosVeiculo['cert_ipva'])): ?>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" href="<?= esc(urlDocumentoUploadPortal($documentosVeiculo['cert_ipva'])) ?>" target="_blank" rel="noopener"><i class="fas fa-eye me-1"></i>Abrir IPVA atual</a>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>

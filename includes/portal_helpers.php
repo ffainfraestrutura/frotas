@@ -101,7 +101,7 @@ if (!function_exists('urlDocumentoUploadPortal')) {
     function urlDocumentoUploadPortal($documento): string
     {
         $documento = trim((string) ($documento ?? ''));
-        if ($documento === '' || preg_match('~^(?:https?:)?//~i', $documento)) {
+        if ($documento === '' || preg_match('~^(?:https?:)?//~i', $documento) || preg_match('~^/?visualizar-upload\.php\?abrir=~i', $documento)) {
             return $documento;
         }
 

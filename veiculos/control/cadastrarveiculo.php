@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
+require_once __DIR__ . '/documentos-veiculo.php';
 exigirLogin();
 
 date_default_timezone_set('America/Sao_Paulo');
@@ -105,33 +106,6 @@ function simNaoParaInt(string $valor): ?int
         return 0;
     }
     return null;
-}
-
-function salvarUploadVeiculo(string $campo, string $prefixo, string $placa): string
-{
-    if (empty($_FILES[$campo]['tmp_name']) || !is_uploaded_file($_FILES[$campo]['tmp_name'])) {
-        return '';
-    }
-
-    $extensoesPermitidas = ['pdf', 'jpg', 'jpeg', 'png'];
-    $nomeOriginal = (string) ($_FILES[$campo]['name'] ?? '');
-    $extensao = strtolower(pathinfo($nomeOriginal, PATHINFO_EXTENSION));
-
-    if (!in_array($extensao, $extensoesPermitidas, true)) {
-        responderCadastroVeiculo('Envie apenas arquivos PDF, JPG, JPEG ou PNG.');
-    }
-
-    $pasta = __DIR__ . '/../docs/';
-    if (!is_dir($pasta) && !mkdir($pasta, 0775, true)) {
-        responderCadastroVeiculo('Não foi possível preparar a pasta de documentos do veículo.');
-    }
-
-    $nomeFinal = $prefixo . '-' . $placa . '.' . $extensao;
-    if (!move_uploaded_file($_FILES[$campo]['tmp_name'], $pasta . $nomeFinal)) {
-        responderCadastroVeiculo('Não foi possível enviar o documento ' . strtoupper($campo) . '.');
-    }
-
-    return '../docs/' . $nomeFinal;
 }
 
 function inserirLogCadastroVeiculo(mysqli $con, string $dataHora, string $matriculaAutor, string $placa): void
@@ -256,13 +230,6 @@ if (in_array($dados['statusvel'], ['5', '18'], true)) {
     $dados['matcond'] = '';
 }
 
-$crlv = salvarUploadVeiculo('crlv', 'CRLV', $placa);
-if ($crlv !== '' && $dados['doccrlv'] === '') {
-    $dados['doccrlv'] = $crlv;
-}
-salvarUploadVeiculo('crv', 'CRV', $placa);
-salvarUploadVeiculo('ipva', 'IPVA', $placa);
-
 $sqlExiste = "SELECT idtbveiculo FROM `{$databaseName}`.`tbveiculo` WHERE placa = ? LIMIT 1";
 $stmtExiste = mysqli_prepare($con, $sqlExiste);
 if (!$stmtExiste) {
@@ -305,6 +272,13 @@ if (!mysqli_stmt_execute($stmtInserir)) {
     responderCadastroVeiculo('Erro ao cadastrar veículo: ' . $erro);
 }
 mysqli_stmt_close($stmtInserir);
+
+try {
+    $documentos = salvarUploadsDocumentosVeiculo($placa);
+    persistirDocumentosVeiculo($con, $databaseName, $placa, $documentos);
+} catch (RuntimeException $erroDocumentos) {
+    responderCadastroVeiculo($erroDocumentos->getMessage());
+}
 
 if ($dados['matcond'] !== '') {
     $sqlFuncionario = "SELECT nome FROM `{$databaseName}`.`tbfuncionario` WHERE matricula = ? LIMIT 1";
