@@ -1,30 +1,21 @@
 <?php
-require_once __DIR__ . '/../auth.php';
+require_once __DIR__ . '/../includes/autofrota_common.php';
 
-if (function_exists('mysqli_report')) {
-    mysqli_report(MYSQLI_REPORT_OFF);
-}
-
-require_once __DIR__ . '/../control/conecta.php';
-
-$perfil = (string) ($_SESSION['perfil'] ?? '0');
+$autofrotaSessao = autofrotaInit();
+$conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
+$databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
+$perfil = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '0');
 if ($perfil === '0' || $perfil === '') {
     http_response_code(403);
     exit('Sem permissão.');
 }
 
-exigirLogin();
-
-$databaseCorp = trim((string) ($databaseCorp ?? ($GLOBALS['databaseCorp'] ?? '')));
-if ($databaseCorp === '') {
-    $databaseCorp = 'bdcorp';
-}
-
 date_default_timezone_set('America/Sao_Paulo');
 
-$matriculaLogada = (string) ($_POST['matr_autor'] ?? $_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
-$perfilLogado = (string) ($_POST['perfil_autor'] ?? $_SESSION['perfil'] ?? '');
-$usuarioLogado = $_SESSION['usuario'] ?? 'Usuário';
+$matriculaLogada = (string) ($_POST['matr_autor'] ?? $autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
+$perfilLogado = (string) ($_POST['perfil_autor'] ?? $perfil);
+$usuarioLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['usuario'] ?? 'Usuário');
 $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
 $idtbveiculo = trim((string) ($_GET['idtbveiculo'] ?? $_POST['idtbveiculo'] ?? ''));
 $veiculo = [];
@@ -225,14 +216,13 @@ if (isset($conn) && $conn instanceof mysqli) {
     ");
 
     $funcionarios = consultarOpcoes($conn, "
-        SELECT matricula, nome, ccusto
-        FROM `{$databaseCorp}`.`tbfuncionario`
-        WHERE idtbempresa = 2
-          AND matricula LIKE '16%'
-          AND CHAR_LENGTH(matricula) = 7
-          AND status <> 'Demitido'
+        SELECT DISTINCT matricula, nome
+        FROM `{$databaseCorp}`.`tbcondutor`
+        WHERE matricula IS NOT NULL
+          AND TRIM(matricula) <> ''
+          AND nome IS NOT NULL
+          AND TRIM(nome) <> ''
         ORDER BY nome
-        LIMIT 5000
     ");
 
     $basesGestao = consultarOpcoes($conn, "
@@ -302,8 +292,7 @@ $modelosFormatados = array_map(static function (array $modelo): array {
 $funcionariosFormatados = array_map(static function (array $funcionario): array {
     $matricula = trim((string) ($funcionario['matricula'] ?? ''));
     $nome = trim((string) ($funcionario['nome'] ?? ''));
-    $ccusto = trim((string) ($funcionario['ccusto'] ?? ''));
-    $funcionario['descricao'] = trim($matricula . ' - ' . $nome . ($ccusto !== '' ? ' (' . $ccusto . ')' : ''));
+    $funcionario['descricao'] = trim($matricula . ' - ' . $nome);
     return $funcionario;
 }, $funcionarios);
 

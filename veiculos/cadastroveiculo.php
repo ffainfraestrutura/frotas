@@ -387,8 +387,8 @@ $statusDisponivelPadrao = $localizarOpcaoPorDescricao($statusVeiculoFormatado, '
                 <div class="card mb-3">
                     <div class="card-header"><i class="fas fa-route me-2"></i>Status, posse e movimentação</div>
                     <div class="card-body row g-3">
-                        <?php renderSelect('status', 'Status', $statusCadastroFormatado, 'valor', 'descricao', true, '', 'Selecione o status...', $statusAtivoPadrao); ?>
-                        <?php renderSelect('statusvel', 'Status do veículo', $statusVeiculoFormatado, 'valor', 'descricao', true, '', 'Selecione o status do veículo...', $statusDisponivelPadrao); ?>
+                        <?php renderSelect('status', 'Status', $statusCadastroFormatado, 'valor', 'descricao', true, '', 'Selecione o status...', $statusAtivoPadrao, true); ?>
+                        <?php renderSelect('statusvel', 'Status do veículo', $statusVeiculoFormatado, 'valor', 'descricao', true, '', 'Selecione o status do veículo...', $statusDisponivelPadrao, true); ?>
                         <?php renderSelect('tipovel', 'Tipo operacional', $tiposVeiculoFormatado, 'valor', 'descricao', true); ?>
                         <?php renderInput('situacao', 'Situação', 'text', true, 'placeholder="FIXO, PROVISÓRIO"'); ?>
                         <?php renderInput('hodometroinicial', 'Hodômetro inicial', 'number', false, 'min="0" step="1"'); ?>

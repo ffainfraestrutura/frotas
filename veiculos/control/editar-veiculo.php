@@ -218,6 +218,7 @@ $dados = [
     'statusvel' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('statusvel', '1')),
     'obsveiculo' => campoPostEdicaoVeiculo('obsveiculo'),
     'datamovimentacao' => montarDataHoraEdicaoVeiculo(campoPostEdicaoVeiculo('datamovimentacao'), campoPostEdicaoVeiculo('horamovimentacao')),
+    'matcond' => campoPostEdicaoVeiculo('matcond'),
     'oficina' => campoPostEdicaoVeiculo('oficina'),
     'dtentrega' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtentrega')),
     'dtdevolucao' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdevolucao')),
