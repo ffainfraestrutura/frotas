@@ -14,6 +14,12 @@ $ufs = $conn instanceof mysqli ? buscarUfsPortal($conn) : [];
 
 renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
 ?>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+<style>
+    .select2-container .select2-selection--single { height: 38px; display: flex; align-items: center; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 38px; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+</style>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div><h1 class="h3 mb-1">Cadastrar CNH de Colaborador</h1><p class="text-muted mb-0">Selecione um funcionário, confira os dados carregados e informe somente a CNH.</p></div>
@@ -28,13 +34,12 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
             <div class="card-body"><div class="row g-3">
                 <div class="col-md-7">
                     <label class="form-label" for="funcionario">Nome Completo</label>
-                    <input class="form-control" id="funcionario" list="lista-funcionarios" autocomplete="off" placeholder="Digite o nome ou a matrícula" required>
-                    <datalist id="lista-funcionarios">
+                    <select class="form-select" id="funcionario" required>
+                        <option value="">Selecione um funcionário</option>
                         <?php foreach ($funcionarios['linhas'] as $funcionario): ?>
-                            <?php $identificacao = ($funcionario['nome'] ?? '') . ' — ' . ($funcionario['matricula'] ?? ''); ?>
-                            <option value="<?= esc($identificacao) ?>" data-funcionario="<?= esc(json_encode($funcionario, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"></option>
+                            <option value="<?= esc($funcionario['matricula'] ?? '') ?>" data-funcionario="<?= esc(json_encode($funcionario, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"><?= esc(($funcionario['nome'] ?? '') . ' (' . ($funcionario['matricula'] ?? '') . ')') ?></option>
                         <?php endforeach; ?>
-                    </datalist>
+                    </select>
                     <small class="text-muted">Clique para selecionar ou pesquise pelo nome/matrícula.</small>
                 </div>
                 <div class="col-md-3"><label class="form-label">Data de Nascimento</label><input class="form-control campo-funcionario" id="dtnasc" type="date" readonly></div>
@@ -90,26 +95,36 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
         </div>
     </form>
 </div>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const busca = document.getElementById('funcionario');
     const matricula = document.getElementById('matricula');
-    const opcoes = Array.from(document.querySelectorAll('#lista-funcionarios option'));
 
     function preencherFuncionario() {
-        const opcao = opcoes.find(function (item) { return item.value === busca.value; });
-        const dados = opcao ? JSON.parse(opcao.dataset.funcionario) : {};
+        const opcao = busca.options[busca.selectedIndex];
+        const dados = opcao && opcao.dataset.funcionario ? JSON.parse(opcao.dataset.funcionario) : {};
         matricula.value = dados.matricula || '';
         document.querySelectorAll('.campo-funcionario').forEach(function (campo) {
             const valor = dados[campo.dataset.campo || campo.id] || '';
             campo.value = campo.type === 'date' && valor ? valor.substring(0, 10) : valor;
         });
-        busca.setCustomValidity(opcao ? '' : 'Selecione um funcionário da lista.');
     }
 
-    busca.addEventListener('input', preencherFuncionario);
     busca.addEventListener('change', preencherFuncionario);
     document.getElementById('form-condutor-clt').addEventListener('submit', preencherFuncionario);
+
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery(busca).select2({
+            width: '100%',
+            placeholder: 'Selecione um funcionário',
+            language: {
+                noResults: function () { return 'Nenhum funcionário encontrado'; },
+                searching: function () { return 'Buscando...'; }
+            }
+        });
+    }
 });
 </script>
 <?php renderRodapeAutofrota(); ?>
