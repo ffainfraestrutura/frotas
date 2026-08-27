@@ -11,6 +11,41 @@ function retornarCnhClt(string $url, string $mensagem): void
     exit;
 }
 
+function salvarAnexoCnhClt(string $matricula, string $retorno, bool $segundoDocumento = false): string
+{
+    if (!isset($_FILES['cnh_arquivo']) || (int) ($_FILES['cnh_arquivo']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return '';
+    }
+    if ((int) $_FILES['cnh_arquivo']['error'] !== UPLOAD_ERR_OK) {
+        retornarCnhClt($retorno, 'Não foi possível fazer o upload da habilitação.');
+    }
+
+    $extensao = strtolower((string) pathinfo((string) $_FILES['cnh_arquivo']['name'], PATHINFO_EXTENSION));
+    if (!in_array($extensao, ['jpg', 'jpeg', 'png', 'gif', 'pdf'], true)) {
+        retornarCnhClt($retorno, 'A habilitação deve estar nos formatos JPG, JPEG, PNG, GIF ou PDF.');
+    }
+    if ((int) ($_FILES['cnh_arquivo']['size'] ?? 0) > 4 * 1024 * 1024) {
+        retornarCnhClt($retorno, 'O arquivo da habilitação deve ter no máximo 4 MB.');
+    }
+
+    $temporario = (string) ($_FILES['cnh_arquivo']['tmp_name'] ?? '');
+    if ($temporario === '' || !is_uploaded_file($temporario)) {
+        retornarCnhClt($retorno, 'Arquivo temporário inválido para upload da habilitação.');
+    }
+
+    $diretorio = diretorioUploadsPortal() . DIRECTORY_SEPARATOR;
+    if ((!is_dir($diretorio) && !@mkdir($diretorio, 0775, true)) || !is_writable($diretorio)) {
+        retornarCnhClt($retorno, 'Não foi possível preparar a pasta de upload da habilitação.');
+    }
+
+    $nome = 'cnh-' . preg_replace('/[^0-9A-Za-z_-]/', '', $matricula) . ($segundoDocumento ? '-2' : '') . '.' . $extensao;
+    if (!move_uploaded_file($temporario, $diretorio . $nome)) {
+        retornarCnhClt($retorno, 'Não foi possível salvar o arquivo da habilitação.');
+    }
+
+    return $nome;
+}
+
 $matricula = trim((string) ($_POST['matricula'] ?? ''));
 $retorno = '../condutores/editar_condutoresclt.php?matricula=' . urlencode($matricula);
 $funcionario = buscarUmaLinha($conn, "SELECT * FROM `{$databaseCorp}`.`tbfuncionario` WHERE matricula = ? AND idtbempresa = 2 LIMIT 1", 's', [$matricula]);
@@ -97,12 +132,20 @@ if ($resultadoCondutor['erro'] !== '') {
     retornarCnhClt($retorno, 'Não foi possível salvar o condutor: ' . $resultadoCondutor['erro']);
 }
 
-$existente = buscarUmaLinha($conn, "SELECT idtbcnh FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
+$existente = buscarUmaLinha($conn, "SELECT idtbcnh, doc1, doc2 FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
+$anexo = salvarAnexoCnhClt($matricula, $retorno, $existente !== [] && !empty($existente['doc1']));
 $dados = [$numero, $validade, $uf, $categoria, $pontos, $consulta, $suspensa];
 if ($existente === []) {
-    $resultado = consultaPreparada($conn, "INSERT INTO `{$databaseName}`.`tbcnh` (numcnh, validade, uf, categoria, pontos, consulta, suspensa, matricula) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 'ssssssss', array_merge($dados, [$matricula]));
+    $resultado = consultaPreparada($conn, "INSERT INTO `{$databaseName}`.`tbcnh` (numcnh, validade, uf, categoria, pontos, consulta, suspensa, matricula, doc1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 'sssssssss', array_merge($dados, [$matricula, $anexo]));
 } else {
-    $resultado = consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbcnh` SET numcnh = ?, validade = ?, uf = ?, categoria = ?, pontos = ?, consulta = ?, suspensa = ? WHERE matricula = ?", 'ssssssss', array_merge($dados, [$matricula]));
+    $campoAnexo = '';
+    $parametros = $dados;
+    if ($anexo !== '') {
+        $campoAnexo = empty($existente['doc1']) ? ', doc1 = ?' : ', doc2 = ?';
+        $parametros[] = $anexo;
+    }
+    $parametros[] = $matricula;
+    $resultado = consultaPreparada($conn, "UPDATE `{$databaseName}`.`tbcnh` SET numcnh = ?, validade = ?, uf = ?, categoria = ?, pontos = ?, consulta = ?, suspensa = ?{$campoAnexo} WHERE matricula = ?", str_repeat('s', count($parametros)), $parametros);
 }
 if ($resultado['erro'] !== '') {
     mysqli_rollback($conn);
@@ -110,4 +153,4 @@ if ($resultado['erro'] !== '') {
 }
 
 mysqli_commit($conn);
-retornarCnhClt('../condutores/listar_condutorespj.php', 'CNH do colaborador salva com sucesso.');
+retornarCnhClt('../condutores/listar_condutoresclt.php', 'CNH do colaborador salva com sucesso.');

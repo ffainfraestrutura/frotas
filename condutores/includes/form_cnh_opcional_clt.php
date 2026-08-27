@@ -7,6 +7,8 @@ if ($ufs === [] && isset($conn) && $conn instanceof mysqli && function_exists('b
 $valorCnh = static function (string $campo) use ($cnh): string {
     return (string) ($cnh[$campo] ?? '');
 };
+$documentoCnhAtual = $valorCnh('doc2') !== '' ? $valorCnh('doc2') : $valorCnh('doc1');
+$urlDocumentoCnh = urlDocumentoUploadPortal($documentoCnhAtual);
 ?>
 <div class="card mt-3">
     <div class="card-header">
@@ -19,6 +21,16 @@ $valorCnh = static function (string $campo) use ($cnh): string {
                 <label class="form-label" for="cnh_numero">Número da CNH</label>
                 <input class="form-control" id="cnh_numero" name="cnh_numero" inputmode="numeric" pattern="[0-9]*" maxlength="12" value="<?= esc($valorCnh('numcnh')) ?>" required>
             </div>
+            <div class="col-md-5">
+                <label class="form-label" for="cnh_arquivo">Anexar habilitação</label>
+                <input class="form-control" type="file" id="cnh_arquivo" name="cnh_arquivo" accept=".jpg,.jpeg,.png,.gif,.pdf">
+                <small class="text-muted">Opcional. Formatos aceitos: JPG, JPEG, PNG, GIF ou PDF (até 4 MB).</small>
+            </div>
+            <?php if ($urlDocumentoCnh !== ''): ?>
+                <div class="col-md-3 d-flex align-items-center">
+                    <a class="btn btn-outline-secondary btn-sm" href="<?= esc($urlDocumentoCnh) ?>" target="_blank" rel="noopener"><i class="fa-solid fa-paperclip me-1"></i>Última CNH anexada</a>
+                </div>
+            <?php endif; ?>
             <div class="col-md-2">
                 <label class="form-label" for="cnh_validade">Validade</label>
                 <input class="form-control" type="date" id="cnh_validade" name="cnh_validade" value="<?= esc(formatarDataPortal($valorCnh('validade'), 'Y-m-d')) ?>" required>
