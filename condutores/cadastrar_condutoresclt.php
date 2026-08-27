@@ -98,33 +98,51 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const busca = document.getElementById('funcionario');
-    const matricula = document.getElementById('matricula');
+const busca = document.getElementById('funcionario');
+const matricula = document.getElementById('matricula');
 
-    function preencherFuncionario() {
-        const opcao = busca.options[busca.selectedIndex];
-        const dados = opcao && opcao.dataset.funcionario ? JSON.parse(opcao.dataset.funcionario) : {};
-        matricula.value = dados.matricula || '';
-        document.querySelectorAll('.campo-funcionario').forEach(function (campo) {
-            const valor = dados[campo.dataset.campo || campo.id] || '';
-            campo.value = campo.type === 'date' && valor ? valor.substring(0, 10) : valor;
-        });
-    }
+function preencherFuncionario(opcaoSelecionada) {
+    const opcao = opcaoSelecionada instanceof HTMLOptionElement
+        ? opcaoSelecionada
+        : busca.options[busca.selectedIndex];
+    const dados = opcao && opcao.dataset.funcionario ? JSON.parse(opcao.dataset.funcionario) : {};
+    matricula.value = dados.matricula || '';
+    document.querySelectorAll('.campo-funcionario').forEach(function (campo) {
+        const valor = dados[campo.dataset.campo || campo.id] || '';
+        campo.value = campo.type === 'date' && valor ? valor.substring(0, 10) : valor;
+    });
+}
 
-    busca.addEventListener('change', preencherFuncionario);
-    document.getElementById('form-condutor-clt').addEventListener('submit', preencherFuncionario);
+busca.addEventListener('change', function () { preencherFuncionario(); });
+document.getElementById('form-condutor-clt').addEventListener('submit', function () { preencherFuncionario(); });
 
-    if (window.jQuery && jQuery.fn.select2) {
-        jQuery(busca).select2({
-            width: '100%',
-            placeholder: 'Selecione um funcionário',
-            language: {
-                noResults: function () { return 'Nenhum funcionário encontrado'; },
-                searching: function () { return 'Buscando...'; }
-            }
-        });
-    }
-});
+if (window.jQuery && jQuery.fn.select2) {
+    jQuery(busca).select2({
+        width: '100%',
+        placeholder: 'Selecione um funcionário',
+        minimumResultsForSearch: 0,
+        language: {
+            inputTooShort: function () { return 'Digite para buscar por nome ou matrícula'; },
+            noResults: function () { return 'Nenhum funcionário encontrado'; },
+            searching: function () { return 'Buscando...'; }
+        }
+    });
+    jQuery(busca).on('select2:select', function (evento) {
+        const opcao = evento.params && evento.params.data ? evento.params.data.element : null;
+        preencherFuncionario(opcao);
+    });
+    jQuery(busca).on('select2:clear', function () {
+        preencherFuncionario(null);
+    });
+    jQuery(busca).on('select2:open', function () {
+        const pesquisa = document.querySelector('.select2-container--open .select2-search__field');
+        if (pesquisa) {
+            pesquisa.placeholder = 'Digite o nome ou a matrícula';
+            pesquisa.focus();
+        }
+    });
+} else {
+    console.error('Não foi possível inicializar a busca de funcionários.');
+}
 </script>
 <?php renderRodapeAutofrota(); ?>

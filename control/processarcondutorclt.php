@@ -50,7 +50,7 @@ $matricula = trim((string) ($_POST['matricula'] ?? ''));
 $retorno = '../condutores/editar_condutoresclt.php?matricula=' . urlencode($matricula);
 $funcionario = buscarUmaLinha($conn, "SELECT * FROM `{$databaseCorp}`.`tbfuncionario` WHERE matricula = ? AND idtbempresa = 2 LIMIT 1", 's', [$matricula]);
 if ($matricula === '' || $funcionario === []) {
-    retornarCnhClt('../condutores/listar_condutoresclt.php', 'Funcionário da empresa 2 não encontrado.');
+    retornarCnhClt('../condutores/listar_condutorespj.php', 'Funcionário da empresa 2 não encontrado.');
 }
 
 $numero = preg_replace('/\D+/', '', (string) ($_POST['cnh_numero'] ?? ''));
@@ -153,4 +153,4 @@ if ($resultado['erro'] !== '') {
 }
 
 mysqli_commit($conn);
-retornarCnhClt('../condutores/listar_condutoresclt.php', 'CNH do colaborador salva com sucesso.');
+retornarCnhClt('../condutores/listar_condutorespj.php', 'CNH do colaborador salva com sucesso.');
