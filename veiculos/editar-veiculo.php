@@ -498,8 +498,8 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderInput('placa', 'Placa', 'text', true, 'maxlength="8" style="text-transform: uppercase;"', (string) ($veiculo['placa'] ?? '')); ?>
                         <?php renderSelect('uf', 'UF', $opcoesUf, '', '', true, selectedValue: (string) ($veiculo['uf'] ?? '')); ?>
                         <?php renderSelect('aplicacaofrota', 'Aplicação da frota', $aplicacoes, 'idtbaplicacaoveic', 'aplicacao', true, selectedValue: (string) ($veiculo['aplicacao'] ?? '')); ?>
-                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true, selectedValue: (string) ($veiculo['modelo'] ?? '')); ?>
                         <?php renderSelect('marca', 'Marca', $marcasFormatadas, 'valor', 'descricao', true, '', 'Selecione a marca...', selectedValue: (string) ($veiculo['marca'] ?? '')); ?>
+                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true, selectedValue: (string) ($veiculo['modelo'] ?? '')); ?>
                         <?php renderInput('versao', 'Versão', value: (string) ($veiculo['versao'] ?? '')); ?>
                         <?php renderSelect('categoria', 'Categoria', $categoriasFormatadas, 'valor', 'descricao', true, '', 'Selecione a categoria...', selectedValue: normalizarValorOpcaoTexto((string) ($veiculo['categoria'] ?? ''))); ?>
                         <?php renderSelect('tipoveic', 'Classificação', $classificacoesFormatadas, 'valor', 'descricao', false, '', 'Selecione a classificação...', selectedValue: (string) ($veiculo['tipo'] ?? '')); ?>

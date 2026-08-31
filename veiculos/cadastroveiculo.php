@@ -401,8 +401,8 @@ $statusDisponivelPadrao = $localizarOpcaoPorDescricao($statusVeiculoFormatado, '
                         <?php renderInput('placa', 'Placa', 'text', true, 'maxlength="8" style="text-transform: uppercase;"'); ?>
                         <?php renderSelect('uf', 'UF', $opcoesUf, '', '', true); ?>
                         <?php renderSelect('aplicacaofrota', 'Aplicação da frota', $aplicacoes, 'idtbaplicacaoveic', 'aplicacao', true); ?>
-                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true); ?>
                         <?php renderSelect('marca', 'Marca', $marcasFormatadas, 'valor', 'descricao', true, '', 'Selecione a marca...'); ?>
+                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true); ?>
                         <?php renderInput('versao', 'Versão'); ?>
                         <?php renderSelect('categoria', 'Categoria', $categoriasFormatadas, 'valor', 'descricao', true, '', 'Selecione a categoria...'); ?>
                         <?php renderSelect('tipoveic', 'Classificação', $classificacoesFormatadas, 'valor', 'descricao', false, '', 'Selecione a classificação...'); ?>
