@@ -172,6 +172,7 @@ $categoriasVeiculo = [];
 $classificacoesVeiculo = [];
 $marcasVeiculo = [];
 $tiposVeiculo = [];
+$opcoesGpsEmpresa = [];
 
 if (isset($conn) && $conn instanceof mysqli) {
     $aplicacoes = consultarOpcoes($conn, "
@@ -255,6 +256,34 @@ if (isset($conn) && $conn instanceof mysqli) {
         FROM `{$databaseName}`.`tbveltipo`
         ORDER BY 1
     ");
+
+    $fornecedoresGps = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbfornecedor`
+        WHERE tipo = '5'
+        ORDER BY fantasia
+    ");
+
+    $opcoesGpsEmpresa = montarOpcoesTabela(
+        $fornecedoresGps,
+        ['idtbfornecedor', 'idfornecedor', 'idtb_fornecedor', 'id'],
+        ['fantasia', 'nomefantasia', 'nome_fantasia', 'nome', 'razaosocial', 'razao_social']
+    );
+
+    $opcoesGpsEmpresa = array_values(array_filter(array_map(static function (array $fornecedor): ?array {
+        $valor = trim((string) ($fornecedor['valor'] ?? ''));
+        $descricao = trim((string) ($fornecedor['descricao'] ?? ''));
+        if ($valor === '' || $descricao === '' || !ctype_digit($valor)) {
+            return null;
+        }
+
+        return [
+            'valor' => $valor,
+            'descricao' => $descricao,
+        ];
+    }, $opcoesGpsEmpresa)));
+
+    $opcoesGpsEmpresa[] = ['valor' => '0', 'descricao' => 'Não possui'];
 }
 
 $modelosFormatados = array_map(static function (array $modelo): array {
@@ -434,7 +463,7 @@ $statusDisponivelPadrao = $localizarOpcaoPorDescricao($statusVeiculoFormatado, '
                     <div class="card-body row g-3">
                         <?php renderInput('doccrlv', 'Documento CRLV'); ?>
                         <?php renderInput('dtdisponivelloc', 'Data disponível locação', 'date'); ?>
-                        <?php renderInput('gpsemp', 'Empresa GPS', 'text', true); ?>
+                        <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true); ?>
                         <?php renderInput('oficina', 'Oficina'); ?>
                         <?php renderInput('ncontloc', 'Nº contrato locação'); ?>
                         <?php renderSelect('blindagem', 'Blindagem', $blindagens, 'blindagem', 'blindagem'); ?>
