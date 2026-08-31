@@ -157,6 +157,7 @@ $camposObrigatorios = [
     'gps' => 'Informe se o veículo possui GPS.',
     'gpsemp' => 'Informe a empresa de GPS.',
     'tipoposse' => 'Informe o tipo de posse do veículo.',
+    'blindagem' => 'Informe a blindagem do veículo.',
 ];
 
 foreach ($camposObrigatorios as $campo => $mensagem) {
@@ -211,7 +212,7 @@ $dados = [
     'doccrlv' => simNaoParaInt(campoPost('doccrlv')),
     'airbag' => simNaoParaInt(campoPost('airbag')),
     'rack' => simNaoParaInt(campoPost('rack')),
-    'blindagem' => simNaoParaInt(campoPost('blindagem')),
+    'blindagem' => nuloSeVazioNumerico(campoPost('blindagem')),
     'oficina' => campoPost('oficina'),
     'ncontloc' => campoPost('ncontloc'),
     'dtdisponivelloc' => nuloSeVazio(campoPost('dtdisponivelloc')),
@@ -225,6 +226,10 @@ $dados = [
     'dttermodisp' => nuloSeVazio(campoPost('dttermo')),
     'dtdesmobilizacao' => nuloSeVazio(campoPost('dtdisp')),
 ];
+
+if ($dados['blindagem'] === null || $dados['blindagem'] < 1) {
+    responderCadastroVeiculo('Informe uma blindagem valida.');
+}
 
 if (in_array($dados['statusvel'], ['5', '18'], true)) {
     $dados['matcond'] = '';

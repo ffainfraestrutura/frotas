@@ -299,10 +299,10 @@ if (isset($conn) && $conn instanceof mysqli) {
     }
 
     $blindagens = consultarOpcoes($conn, "
-        SELECT DISTINCT blindagem
-        FROM `{$databaseName}`.`tbveiculo`
-        WHERE blindagem IS NOT NULL AND blindagem <> ''
-        ORDER BY blindagem
+        SELECT id, descricao
+        FROM `{$databaseName}`.`tbveiculoblindagem`
+        WHERE descricao IS NOT NULL AND descricao <> ''
+        ORDER BY id
     ");
 
     $categoriasVeiculo = consultarOpcoes($conn, "
@@ -418,6 +418,29 @@ $tiposVeiculoFormatado = montarOpcoesTabela(
     ['idtbveltipo', 'idtbatipovel', 'idtipo', 'id'],
     ['tipo', 'descricao', 'nome']
 );
+
+$blindagensFormatadas = montarOpcoesTabela(
+    $blindagens,
+    ['id'],
+    ['descricao']
+);
+
+$blindagemAtual = trim((string) ($veiculo['blindagem'] ?? ''));
+$blindagemSelecionada = '';
+
+if ($blindagemAtual !== '') {
+    if (ctype_digit($blindagemAtual)) {
+        $blindagemSelecionada = $blindagemAtual;
+    } else {
+        foreach ($blindagensFormatadas as $blindagemOpcao) {
+            $descricaoOpcao = trim((string) ($blindagemOpcao['descricao'] ?? ''));
+            if (mb_strtoupper($descricaoOpcao, 'UTF-8') === mb_strtoupper($blindagemAtual, 'UTF-8')) {
+                $blindagemSelecionada = (string) ($blindagemOpcao['valor'] ?? '');
+                break;
+            }
+        }
+    }
+}
 
 $gpsempAtual = trim((string) ($veiculo['gpsemp'] ?? ''));
 if ($gpsempAtual !== '' && ctype_digit($gpsempAtual)) {
@@ -563,7 +586,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true, '', 'Selecione...', selectedValue: (string) ($veiculo['gpsemp'] ?? '')); ?>
                         <?php renderInput('oficina', 'Oficina', value: (string) ($veiculo['oficina'] ?? '')); ?>
                         <?php renderInput('ncontloc', 'Nº contrato locação', value: (string) ($veiculo['ncontloc'] ?? '')); ?>
-                        <?php renderSelect('blindagem', 'Blindagem', $blindagens, 'blindagem', 'blindagem', selectedValue: (string) ($veiculo['blindagem'] ?? '')); ?>
+                        <?php renderSelect('blindagem', 'Blindagem', $blindagensFormatadas, 'valor', 'descricao', true, '', 'Selecione a blindagem...', selectedValue: $blindagemSelecionada); ?>
                         <?php renderInput('valaquisicao', 'Valor aquisição', 'text', false, 'placeholder="0,00"', value: (string) ($veiculo['valaquisicao'] ?? '')); ?>
                         <?php renderInput('baseffa', 'Base FFA', value: (string) ($veiculo['baseffa'] ?? '')); ?>
                         <?php renderSelect('unidade', 'Unidade', $unidades, 'unidade', 'unidade', selectedValue: (string) ($veiculo['unidade'] ?? '')); ?>

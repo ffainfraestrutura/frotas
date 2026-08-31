@@ -233,13 +233,17 @@ $dados = [
     'dtdisponivelloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdisponivelloc')),
     'dtdevolucaoloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdevolucaoloc')),
     'valaquisicao' => nuloSeVazioDecimalEdicaoVeiculo(campoPostEdicaoVeiculo('valaquisicao')),
-    'blindagem' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('blindagem')),
+    'blindagem' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('blindagem')),
     'basegestao' => campoPostEdicaoVeiculo('basegestao'),
     'ccusto' => campoPostEdicaoVeiculo('centrocusto'),
     'dttermodisp' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dttermo')),
     'dtdesmobilizacao' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdisp')),
     'unidade' => campoPostEdicaoVeiculo('unidade'),
 ];
+
+if ($dados['blindagem'] === null || $dados['blindagem'] < 1) {
+    responderEdicaoVeiculo('Informe uma blindagem valida.');
+}
 
 $caminhoDocumento = salvarUploadDocumentoEdicaoVeiculo('doc01', $placa);
 if ($caminhoDocumento !== '') {

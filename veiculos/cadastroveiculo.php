@@ -227,10 +227,10 @@ if (isset($conn) && $conn instanceof mysqli) {
     ");
 
     $blindagens = consultarOpcoes($conn, "
-        SELECT DISTINCT blindagem
-        FROM `{$databaseName}`.`tbveiculo`
-        WHERE blindagem IS NOT NULL AND blindagem <> ''
-        ORDER BY blindagem
+        SELECT id, descricao
+        FROM `{$databaseName}`.`tbveiculoblindagem`
+        WHERE descricao IS NOT NULL AND descricao <> ''
+        ORDER BY id
     ");
 
     $categoriasVeiculo = consultarOpcoes($conn, "
@@ -326,6 +326,12 @@ $tiposVeiculoFormatado = montarOpcoesTabela(
     $tiposVeiculo,
     ['idtbveltipo', 'idtbatipovel', 'idtipo', 'id'],
     ['tipo', 'descricao', 'nome']
+);
+
+$blindagensFormatadas = montarOpcoesTabela(
+    $blindagens,
+    ['id'],
+    ['descricao']
 );
 
 $opcoesUf = ['AC'=>'AC','AL'=>'AL','AP'=>'AP','AM'=>'AM','BA'=>'BA','CE'=>'CE','DF'=>'DF','ES'=>'ES','GO'=>'GO','MA'=>'MA','MT'=>'MT','MS'=>'MS','MG'=>'MG','PA'=>'PA','PB'=>'PB','PR'=>'PR','PE'=>'PE','PI'=>'PI','RJ'=>'RJ','RN'=>'RN','RS'=>'RS','RO'=>'RO','RR'=>'RR','SC'=>'SC','SP'=>'SP','SE'=>'SE','TO'=>'TO'];
@@ -466,7 +472,7 @@ $statusDisponivelPadrao = $localizarOpcaoPorDescricao($statusVeiculoFormatado, '
                         <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true); ?>
                         <?php renderInput('oficina', 'Oficina'); ?>
                         <?php renderInput('ncontloc', 'Nº contrato locação'); ?>
-                        <?php renderSelect('blindagem', 'Blindagem', $blindagens, 'blindagem', 'blindagem'); ?>
+                        <?php renderSelect('blindagem', 'Blindagem', $blindagensFormatadas, 'valor', 'descricao', true, '', 'Selecione a blindagem...'); ?>
                         <?php renderInput('valaquisicao', 'Valor aquisição', 'text', false, 'placeholder="0,00"'); ?>
                         <?php renderInput('baseffa', 'Base FFA'); ?>
                         <?php renderSelect('unidade', 'Unidade', $unidades, 'unidade', 'unidade'); ?>
