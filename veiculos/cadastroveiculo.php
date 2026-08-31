@@ -19,6 +19,7 @@ $matriculaLogada = (string) ($_POST['matr_autor'] ?? $_SESSION['matricula'] ?? $
 $perfilLogado = (string) ($_POST['perfil_autor'] ?? $_SESSION['perfil'] ?? '');
 $usuarioLogado = $_SESSION['usuario'] ?? 'Usuário';
 $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
+$oficinaSelecionada = trim((string) ($_GET['oficina'] ?? ''));
 
 function esc(?string $valor): string
 {
@@ -173,6 +174,7 @@ $classificacoesVeiculo = [];
 $marcasVeiculo = [];
 $tiposVeiculo = [];
 $opcoesGpsEmpresa = [];
+$oficinas = [];
 
 if (isset($conn) && $conn instanceof mysqli) {
     $aplicacoes = consultarOpcoes($conn, "
@@ -255,6 +257,13 @@ if (isset($conn) && $conn instanceof mysqli) {
         SELECT *
         FROM `{$databaseName}`.`tbveltipo`
         ORDER BY 1
+    ");
+
+    $oficinas = consultarOpcoes($conn, "
+        SELECT nome
+        FROM `{$databaseName}`.`tboficina`
+        WHERE nome IS NOT NULL AND TRIM(nome) <> ''
+        ORDER BY nome
     ");
 
     $fornecedoresGps = consultarOpcoes($conn, "
@@ -470,7 +479,23 @@ $statusDisponivelPadrao = $localizarOpcaoPorDescricao($statusVeiculoFormatado, '
                         <?php renderInput('doccrlv', 'Documento CRLV'); ?>
                         <?php renderInput('dtdisponivelloc', 'Data disponível locação', 'date'); ?>
                         <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true); ?>
-                        <?php renderInput('oficina', 'Oficina'); ?>
+                        <div class="col-md-4">
+                            <label class="form-label" for="oficina">Oficina</label>
+                            <div class="input-group">
+                                <select class="form-select" name="oficina" id="oficina">
+                                    <option value="">Selecione uma oficina</option>
+                                    <?php foreach ($oficinas as $oficina): ?>
+                                        <?php $nomeOficina = trim((string) ($oficina['nome'] ?? '')); ?>
+                                        <?php if ($nomeOficina !== ''): ?>
+                                            <option value="<?= esc($nomeOficina) ?>" <?= $oficinaSelecionada === $nomeOficina ? 'selected' : '' ?>><?= esc($nomeOficina) ?></option>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </select>
+                                <a class="btn btn-outline-success" href="../manutencoes/adicionar-oficina.php?origem=cadastro-veiculo" title="Adicionar oficina" aria-label="Adicionar oficina">
+                                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                        </div>
                         <?php renderInput('ncontloc', 'Nº contrato locação'); ?>
                         <?php renderSelect('blindagem', 'Blindagem', $blindagensFormatadas, 'valor', 'descricao', true, '', 'Selecione a blindagem...'); ?>
                         <?php renderInput('valaquisicao', 'Valor aquisição', 'text', false, 'placeholder="0,00"'); ?>

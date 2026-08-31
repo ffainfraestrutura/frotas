@@ -663,6 +663,31 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
             document.body.classList.toggle('sb-sidenav-toggled');
         });
 
+        const formularioEdicao = document.querySelector('form[action="control/editar-veiculo.php"]');
+        const statusCadastro = document.getElementById('status');
+        const statusVeiculo = document.getElementById('statusvel');
+        const statusVeiculoPermitidosParaInativacao = ['11', '49', '50'];
+        const mensagemStatusInativo = 'Para salvar o veículo como Inativo, selecione ROUBO / FURTO, SINISTRO ou SINISTRO/MANUTENÇÃO no campo Status do veículo.';
+
+        function validarStatusInativo() {
+            const statusInativoSelecionado = statusCadastro?.value === '5';
+            const statusVeiculoPermitido = statusVeiculoPermitidosParaInativacao.includes(statusVeiculo?.value ?? '');
+            const statusValido = !statusInativoSelecionado || statusVeiculoPermitido;
+
+            statusVeiculo?.setCustomValidity(statusValido ? '' : mensagemStatusInativo);
+            return statusValido;
+        }
+
+        statusCadastro?.addEventListener('change', validarStatusInativo);
+        statusVeiculo?.addEventListener('change', validarStatusInativo);
+        formularioEdicao?.addEventListener('submit', function(event) {
+            if (!validarStatusInativo()) {
+                event.preventDefault();
+                statusVeiculo?.reportValidity();
+                statusVeiculo?.focus();
+            }
+        });
+
         $(document).ready(function() {
             $('#placa').mask('AAA0U00', {
                 translation: {
