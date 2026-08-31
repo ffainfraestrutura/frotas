@@ -74,7 +74,7 @@ function consultarOpcoes(mysqli $conn, string $sql): array
 
 function opcoesSimNao(): array
 {
-    return ['SIM' => 'SIM', 'NÃO' => 'NÃO'];
+    return ['1' => 'SIM', '0' => 'NÃO'];
 }
 
 function opcoesZeroKm(): array
@@ -93,26 +93,37 @@ function montarOpcoesTabela(array $linhas, array $camposIdPreferidos, array $cam
 
         $campoId = '';
         foreach ($camposIdPreferidos as $candidato) {
-            if (array_key_exists($candidato, $linha)) {
+            if (array_key_exists($candidato, $linha) && trim((string) ($linha[$candidato] ?? '')) !== '') {
                 $campoId = $candidato;
                 break;
             }
         }
         if ($campoId === '') {
-            $chaves = array_keys($linha);
-            $campoId = (string) ($chaves[0] ?? '');
+            foreach ($linha as $chave => $valorCampo) {
+                if (trim((string) $valorCampo) !== '') {
+                    $campoId = (string) $chave;
+                    break;
+                }
+            }
         }
 
         $campoTexto = '';
         foreach ($camposTextoPreferidos as $candidato) {
-            if (array_key_exists($candidato, $linha)) {
+            if (array_key_exists($candidato, $linha) && trim((string) ($linha[$candidato] ?? '')) !== '') {
                 $campoTexto = $candidato;
                 break;
             }
         }
         if ($campoTexto === '') {
-            $chaves = array_keys($linha);
-            $campoTexto = (string) ($chaves[1] ?? ($chaves[0] ?? ''));
+            foreach ($linha as $chave => $valorCampo) {
+                if (trim((string) $valorCampo) !== '' && (string) $chave !== $campoId) {
+                    $campoTexto = (string) $chave;
+                    break;
+                }
+            }
+            if ($campoTexto === '') {
+                $campoTexto = $campoId;
+            }
         }
 
         $valor = trim((string) ($linha[$campoId] ?? ''));
@@ -128,6 +139,15 @@ function montarOpcoesTabela(array $linhas, array $camposIdPreferidos, array $cam
     }
 
     return $opcoes;
+}
+
+function normalizarValorOpcaoTexto(string $valor): string
+{
+    $valor = trim($valor);
+    $valor = mb_strtolower($valor, 'UTF-8');
+    $valor = preg_replace('/\s+/', '_', $valor);
+
+    return (string) $valor;
 }
 
 function renderSelect(string $name, string $label, array $options, string $valueKey = '', string $textKey = '', bool $required = false, string $extraClass = '', string $placeholder = 'Selecione...', string $selectedValue = ''): void
@@ -228,7 +248,7 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     $funcionarios = consultarOpcoes($conn, "
         SELECT DISTINCT matricula, nome
-        FROM `{$databaseCorp}`.`tbcondutor`
+        FROM `{$databaseName}`.`tbcondutor`
         WHERE matricula IS NOT NULL
           AND TRIM(matricula) <> ''
           AND nome IS NOT NULL
@@ -261,6 +281,21 @@ if (isset($conn) && $conn instanceof mysqli) {
           AND ccusto <> ''
         ORDER BY ccusto
     ");
+
+    $centroCustoAtual = trim((string) ($veiculo['ccusto'] ?? ''));
+    if ($centroCustoAtual !== '') {
+        $centroCustoExiste = false;
+        foreach ($centrosCusto as $centroCusto) {
+            if (trim((string) ($centroCusto['ccusto'] ?? '')) === $centroCustoAtual) {
+                $centroCustoExiste = true;
+                break;
+            }
+        }
+
+        if (!$centroCustoExiste) {
+            array_unshift($centrosCusto, ['ccusto' => $centroCustoAtual]);
+        }
+    }
 
     $blindagens = consultarOpcoes($conn, "
         SELECT DISTINCT blindagem
@@ -312,6 +347,18 @@ $categoriasFormatadas = montarOpcoesTabela(
     ['idtbveiculocategoria', 'idcategoria', 'id'],
     ['categoria', 'descricao', 'nome']
 );
+
+$categoriasFormatadas = array_values(array_filter(array_map(static function (array $categoria): ?array {
+    $descricao = trim((string) ($categoria['descricao'] ?? $categoria['categoria'] ?? $categoria['nome'] ?? ''));
+    if ($descricao === '') {
+        return null;
+    }
+
+    return [
+        'valor' => normalizarValorOpcaoTexto($descricao),
+        'descricao' => $descricao,
+    ];
+}, $categoriasFormatadas)));
 
 $statusCadastroFormatado = montarOpcoesTabela(
     $statusCadastro,
@@ -407,7 +454,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true, selectedValue: (string) ($veiculo['modelo'] ?? '')); ?>
                         <?php renderSelect('marca', 'Marca', $marcasFormatadas, 'valor', 'descricao', true, '', 'Selecione a marca...', selectedValue: (string) ($veiculo['marca'] ?? '')); ?>
                         <?php renderInput('versao', 'Versão', value: (string) ($veiculo['versao'] ?? '')); ?>
-                        <?php renderSelect('categoria', 'Categoria', $categoriasFormatadas, 'valor', 'descricao', true, '', 'Selecione a categoria...', selectedValue: (string) ($veiculo['categoria'] ?? '')); ?>
+                        <?php renderSelect('categoria', 'Categoria', $categoriasFormatadas, 'valor', 'descricao', true, '', 'Selecione a categoria...', selectedValue: normalizarValorOpcaoTexto((string) ($veiculo['categoria'] ?? ''))); ?>
                         <?php renderSelect('tipoveic', 'Classificação', $classificacoesFormatadas, 'valor', 'descricao', false, '', 'Selecione a classificação...', selectedValue: (string) ($veiculo['tipo'] ?? '')); ?>
                         <?php renderInput('cor', 'Cor', 'text', true, value: (string) ($veiculo['cor'] ?? '')); ?>
                         <?php renderSelect('zerokm', 'O veículo é 0km?', opcoesZeroKm(), '', '', true, '', 'Selecione...', selectedValue: (string) ($veiculo['zerokm'] ?? '')); ?>
