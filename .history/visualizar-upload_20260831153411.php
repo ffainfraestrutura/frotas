@@ -74,6 +74,7 @@ $escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, E
     <section class="card shadow-sm mb-4">
         <div class="card-header"><h2 class="h5 mb-0">Teste de upload</h2></div>
         <div class="card-body">
+            <div class="mb-3"><strong>Pasta de destino:</strong> <code><?= $escape($uploadDirPreferida) ?></code></div>
             <?php if ($mensagemUpload !== ''): ?>
                 <div class="alert <?= str_contains($mensagemUpload, 'sucesso') ? 'alert-success' : 'alert-warning' ?> mb-3"><?= $escape($mensagemUpload) ?></div>
             <?php endif ?>
@@ -86,7 +87,7 @@ $escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, E
             <form method="post" enctype="multipart/form-data">
                 <div class="input-group">
                     <input class="form-control" type="file" name="arquivo" required>
-                    <button class="btn btn-success" type="submit">Enviar</button>
+                    <button class="btn btn-success" type="submit">Enviar para /tmp/frotas_docs</button>
                 </div>
             </form>
         </div>

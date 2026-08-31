@@ -68,12 +68,13 @@ $escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, E
 <body class="bg-light">
 <main class="container-fluid px-4 py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-        <div><h1 class="h2 mb-1">Uploads</h1><p class="text-muted mb-0">Envio e visualização de arquivos.</p></div>
+        <div><h1 class="h2 mb-1">Uploads</h1><p class="text-muted mb-0">Envio e visualização de arquivos pelo diretório centralizado do sistema.</p></div>
     </div>
 
     <section class="card shadow-sm mb-4">
         <div class="card-header"><h2 class="h5 mb-0">Teste de upload</h2></div>
         <div class="card-body">
+            <div class="mb-3"><strong>Pasta de destino:</strong> <code><?= $escape($uploadDirPreferida) ?></code></div>
             <?php if ($mensagemUpload !== ''): ?>
                 <div class="alert <?= str_contains($mensagemUpload, 'sucesso') ? 'alert-success' : 'alert-warning' ?> mb-3"><?= $escape($mensagemUpload) ?></div>
             <?php endif ?>
@@ -86,7 +87,7 @@ $escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, E
             <form method="post" enctype="multipart/form-data">
                 <div class="input-group">
                     <input class="form-control" type="file" name="arquivo" required>
-                    <button class="btn btn-success" type="submit">Enviar</button>
+                    <button class="btn btn-success" type="submit">Enviar para /tmp/frotas_docs</button>
                 </div>
             </form>
         </div>
