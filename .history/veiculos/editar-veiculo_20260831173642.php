@@ -371,18 +371,6 @@ $funcionariosFormatados = array_map(static function (array $funcionario): array 
     return $funcionario;
 }, $funcionarios);
 
-$matcondAtual = trim((string) ($veiculo['matcond'] ?? ''));
-$condutorAtualDescricao = 'Nao associado';
-if ($matcondAtual !== '') {
-    $condutorAtualDescricao = $matcondAtual;
-    foreach ($funcionariosFormatados as $funcionarioFormatado) {
-        if (trim((string) ($funcionarioFormatado['matricula'] ?? '')) === $matcondAtual) {
-            $condutorAtualDescricao = trim((string) ($funcionarioFormatado['descricao'] ?? $matcondAtual));
-            break;
-        }
-    }
-}
-
 $categoriasFormatadas = montarOpcoesTabela(
     $categoriasVeiculo,
     ['idtbveiculocategoria', 'idcategoria', 'id'],
@@ -556,11 +544,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderInput('hodometro', 'Hodômetro atual', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['hodometro'] ?? '')); ?>
                         <?php renderInput('datamovimentacao', 'Data movimentação', 'date', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 0, 10)); ?>
                         <?php renderInput('horamovimentacao', 'Hora movimentação', 'time', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 11, 5)); ?>
-                        <div class="col-md-4">
-                            <label class="form-label" for="matcond_exibicao">Condutor</label>
-                            <input class="form-control" type="text" id="matcond_exibicao" value="<?= esc($condutorAtualDescricao) ?>" readonly disabled>
-                            <input type="hidden" name="matcond" value="<?= esc($matcondAtual) ?>">
-                        </div>
+                        <?php renderSelect('matcond', 'Condutor', $funcionariosFormatados, 'matricula', 'descricao', selectedValue: (string) ($veiculo['matcond'] ?? '')); ?>
                         <?php renderInput('dtentrega', 'Data entrega', 'date', value: (string) ($veiculo['dtentrega'] ?? '')); ?>
                         <?php renderInput('dtdevolucao', 'Data devolução', 'date', value: (string) ($veiculo['dtdevolucao'] ?? '')); ?>
                         <?php renderSelect('tipoposse', 'Tipo de posse', $opcoesTipoPosse, '', '', true, selectedValue: (string) ($veiculo['tipoposse'] ?? '')); ?>

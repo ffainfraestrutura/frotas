@@ -371,18 +371,6 @@ $funcionariosFormatados = array_map(static function (array $funcionario): array 
     return $funcionario;
 }, $funcionarios);
 
-$matcondAtual = trim((string) ($veiculo['matcond'] ?? ''));
-$condutorAtualDescricao = 'Nao associado';
-if ($matcondAtual !== '') {
-    $condutorAtualDescricao = $matcondAtual;
-    foreach ($funcionariosFormatados as $funcionarioFormatado) {
-        if (trim((string) ($funcionarioFormatado['matricula'] ?? '')) === $matcondAtual) {
-            $condutorAtualDescricao = trim((string) ($funcionarioFormatado['descricao'] ?? $matcondAtual));
-            break;
-        }
-    }
-}
-
 $categoriasFormatadas = montarOpcoesTabela(
     $categoriasVeiculo,
     ['idtbveiculocategoria', 'idcategoria', 'id'],
@@ -433,24 +421,25 @@ $tiposVeiculoFormatado = montarOpcoesTabela(
 
 $blindagensFormatadas = montarOpcoesTabela(
     $blindagens,
-    ['id'],
+    ['descricao', 'id'],
     ['descricao']
 );
 
 $blindagemAtual = trim((string) ($veiculo['blindagem'] ?? ''));
-$blindagemSelecionada = '';
-
 if ($blindagemAtual !== '') {
-    if (ctype_digit($blindagemAtual)) {
-        $blindagemSelecionada = $blindagemAtual;
-    } else {
-        foreach ($blindagensFormatadas as $blindagemOpcao) {
-            $descricaoOpcao = trim((string) ($blindagemOpcao['descricao'] ?? ''));
-            if (mb_strtoupper($descricaoOpcao, 'UTF-8') === mb_strtoupper($blindagemAtual, 'UTF-8')) {
-                $blindagemSelecionada = (string) ($blindagemOpcao['valor'] ?? '');
-                break;
-            }
+    $blindagemExiste = false;
+    foreach ($blindagensFormatadas as $blindagemOpcao) {
+        if (trim((string) ($blindagemOpcao['valor'] ?? '')) === $blindagemAtual) {
+            $blindagemExiste = true;
+            break;
         }
+    }
+
+    if (!$blindagemExiste) {
+        array_unshift($blindagensFormatadas, [
+            'valor' => $blindagemAtual,
+            'descricao' => 'Atual: ' . $blindagemAtual,
+        ]);
     }
 }
 
@@ -556,11 +545,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderInput('hodometro', 'Hodômetro atual', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['hodometro'] ?? '')); ?>
                         <?php renderInput('datamovimentacao', 'Data movimentação', 'date', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 0, 10)); ?>
                         <?php renderInput('horamovimentacao', 'Hora movimentação', 'time', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 11, 5)); ?>
-                        <div class="col-md-4">
-                            <label class="form-label" for="matcond_exibicao">Condutor</label>
-                            <input class="form-control" type="text" id="matcond_exibicao" value="<?= esc($condutorAtualDescricao) ?>" readonly disabled>
-                            <input type="hidden" name="matcond" value="<?= esc($matcondAtual) ?>">
-                        </div>
+                        <?php renderSelect('matcond', 'Condutor', $funcionariosFormatados, 'matricula', 'descricao', selectedValue: (string) ($veiculo['matcond'] ?? '')); ?>
                         <?php renderInput('dtentrega', 'Data entrega', 'date', value: (string) ($veiculo['dtentrega'] ?? '')); ?>
                         <?php renderInput('dtdevolucao', 'Data devolução', 'date', value: (string) ($veiculo['dtdevolucao'] ?? '')); ?>
                         <?php renderSelect('tipoposse', 'Tipo de posse', $opcoesTipoPosse, '', '', true, selectedValue: (string) ($veiculo['tipoposse'] ?? '')); ?>
@@ -602,7 +587,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true, '', 'Selecione...', selectedValue: (string) ($veiculo['gpsemp'] ?? '')); ?>
                         <?php renderInput('oficina', 'Oficina', value: (string) ($veiculo['oficina'] ?? '')); ?>
                         <?php renderInput('ncontloc', 'Nº contrato locação', value: (string) ($veiculo['ncontloc'] ?? '')); ?>
-                        <?php renderSelect('blindagem', 'Blindagem', $blindagensFormatadas, 'valor', 'descricao', true, '', 'Selecione a blindagem...', selectedValue: $blindagemSelecionada); ?>
+                        <?php renderSelect('blindagem', 'Blindagem', $blindagensFormatadas, 'valor', 'descricao', selectedValue: (string) ($veiculo['blindagem'] ?? '')); ?>
                         <?php renderInput('valaquisicao', 'Valor aquisição', 'text', false, 'placeholder="0,00"', value: (string) ($veiculo['valaquisicao'] ?? '')); ?>
                         <?php renderInput('baseffa', 'Base FFA', value: (string) ($veiculo['baseffa'] ?? '')); ?>
                         <?php renderSelect('unidade', 'Unidade', $unidades, 'unidade', 'unidade', selectedValue: (string) ($veiculo['unidade'] ?? '')); ?>
