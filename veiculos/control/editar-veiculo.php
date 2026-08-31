@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
+require_once __DIR__ . '/documentos-veiculo.php';
 
 if (function_exists('exigirLogin')) {
     exigirLogin();
@@ -245,6 +246,12 @@ if ($caminhoDocumento !== '') {
     $dados['bo'] = $caminhoDocumento;
 }
 
+try {
+    $documentosVeiculo = salvarUploadsDocumentosVeiculo($placa);
+} catch (RuntimeException $exception) {
+    responderEdicaoVeiculo($exception->getMessage());
+}
+
 $schema = str_replace('`', '``', $databaseName);
 $atribuicoes = [];
 foreach (array_keys($dados) as $coluna) {
@@ -274,6 +281,12 @@ if (!mysqli_stmt_execute($stmt)) {
     responderEdicaoVeiculo('Erro ao editar veículo: ' . $erro);
 }
 mysqli_stmt_close($stmt);
+
+try {
+    persistirDocumentosVeiculo($con, $databaseName, $placa, $documentosVeiculo);
+} catch (RuntimeException $exception) {
+    responderEdicaoVeiculo($exception->getMessage());
+}
 
 if ($dados['status'] === '0') {
     $sqlCondutor = "UPDATE `{$schema}`.`tbcondutor` SET datadissoc = ?, ativo = '0', statuscond = '' WHERE placaassoc = ? AND ativo = '1'";
