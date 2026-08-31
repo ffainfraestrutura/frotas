@@ -299,10 +299,10 @@ if (isset($conn) && $conn instanceof mysqli) {
     }
 
     $blindagens = consultarOpcoes($conn, "
-        SELECT DISTINCT blindagem
-        FROM `{$databaseName}`.`tbveiculo`
-        WHERE blindagem IS NOT NULL AND blindagem <> ''
-        ORDER BY blindagem
+        SELECT id, descricao
+        FROM `{$databaseName}`.`tbveiculoblindagem`
+        WHERE descricao IS NOT NULL AND descricao <> ''
+        ORDER BY id
     ");
 
     $categoriasVeiculo = consultarOpcoes($conn, "
@@ -371,6 +371,18 @@ $funcionariosFormatados = array_map(static function (array $funcionario): array 
     return $funcionario;
 }, $funcionarios);
 
+$matcondAtual = trim((string) ($veiculo['matcond'] ?? ''));
+$condutorAtualDescricao = 'Nao associado';
+if ($matcondAtual !== '') {
+    $condutorAtualDescricao = $matcondAtual;
+    foreach ($funcionariosFormatados as $funcionarioFormatado) {
+        if (trim((string) ($funcionarioFormatado['matricula'] ?? '')) === $matcondAtual) {
+            $condutorAtualDescricao = trim((string) ($funcionarioFormatado['descricao'] ?? $matcondAtual));
+            break;
+        }
+    }
+}
+
 $categoriasFormatadas = montarOpcoesTabela(
     $categoriasVeiculo,
     ['idtbveiculocategoria', 'idcategoria', 'id'],
@@ -418,6 +430,29 @@ $tiposVeiculoFormatado = montarOpcoesTabela(
     ['idtbveltipo', 'idtbatipovel', 'idtipo', 'id'],
     ['tipo', 'descricao', 'nome']
 );
+
+$blindagensFormatadas = montarOpcoesTabela(
+    $blindagens,
+    ['id'],
+    ['descricao']
+);
+
+$blindagemAtual = trim((string) ($veiculo['blindagem'] ?? ''));
+$blindagemSelecionada = '';
+
+if ($blindagemAtual !== '') {
+    if (ctype_digit($blindagemAtual)) {
+        $blindagemSelecionada = $blindagemAtual;
+    } else {
+        foreach ($blindagensFormatadas as $blindagemOpcao) {
+            $descricaoOpcao = trim((string) ($blindagemOpcao['descricao'] ?? ''));
+            if (mb_strtoupper($descricaoOpcao, 'UTF-8') === mb_strtoupper($blindagemAtual, 'UTF-8')) {
+                $blindagemSelecionada = (string) ($blindagemOpcao['valor'] ?? '');
+                break;
+            }
+        }
+    }
+}
 
 $gpsempAtual = trim((string) ($veiculo['gpsemp'] ?? ''));
 if ($gpsempAtual !== '' && ctype_digit($gpsempAtual)) {
@@ -498,8 +533,8 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderInput('placa', 'Placa', 'text', true, 'maxlength="8" style="text-transform: uppercase;"', (string) ($veiculo['placa'] ?? '')); ?>
                         <?php renderSelect('uf', 'UF', $opcoesUf, '', '', true, selectedValue: (string) ($veiculo['uf'] ?? '')); ?>
                         <?php renderSelect('aplicacaofrota', 'Aplicação da frota', $aplicacoes, 'idtbaplicacaoveic', 'aplicacao', true, selectedValue: (string) ($veiculo['aplicacao'] ?? '')); ?>
-                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true, selectedValue: (string) ($veiculo['modelo'] ?? '')); ?>
                         <?php renderSelect('marca', 'Marca', $marcasFormatadas, 'valor', 'descricao', true, '', 'Selecione a marca...', selectedValue: (string) ($veiculo['marca'] ?? '')); ?>
+                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true, selectedValue: (string) ($veiculo['modelo'] ?? '')); ?>
                         <?php renderInput('versao', 'Versão', value: (string) ($veiculo['versao'] ?? '')); ?>
                         <?php renderSelect('categoria', 'Categoria', $categoriasFormatadas, 'valor', 'descricao', true, '', 'Selecione a categoria...', selectedValue: normalizarValorOpcaoTexto((string) ($veiculo['categoria'] ?? ''))); ?>
                         <?php renderSelect('tipoveic', 'Classificação', $classificacoesFormatadas, 'valor', 'descricao', false, '', 'Selecione a classificação...', selectedValue: (string) ($veiculo['tipo'] ?? '')); ?>
@@ -521,7 +556,11 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderInput('hodometro', 'Hodômetro atual', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['hodometro'] ?? '')); ?>
                         <?php renderInput('datamovimentacao', 'Data movimentação', 'date', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 0, 10)); ?>
                         <?php renderInput('horamovimentacao', 'Hora movimentação', 'time', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 11, 5)); ?>
-                        <?php renderSelect('matcond', 'Condutor', $funcionariosFormatados, 'matricula', 'descricao', selectedValue: (string) ($veiculo['matcond'] ?? '')); ?>
+                        <div class="col-md-4">
+                            <label class="form-label" for="matcond_exibicao">Condutor</label>
+                            <input class="form-control" type="text" id="matcond_exibicao" value="<?= esc($condutorAtualDescricao) ?>" readonly disabled>
+                            <input type="hidden" name="matcond" value="<?= esc($matcondAtual) ?>">
+                        </div>
                         <?php renderInput('dtentrega', 'Data entrega', 'date', value: (string) ($veiculo['dtentrega'] ?? '')); ?>
                         <?php renderInput('dtdevolucao', 'Data devolução', 'date', value: (string) ($veiculo['dtdevolucao'] ?? '')); ?>
                         <?php renderSelect('tipoposse', 'Tipo de posse', $opcoesTipoPosse, '', '', true, selectedValue: (string) ($veiculo['tipoposse'] ?? '')); ?>
@@ -563,7 +602,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true, '', 'Selecione...', selectedValue: (string) ($veiculo['gpsemp'] ?? '')); ?>
                         <?php renderInput('oficina', 'Oficina', value: (string) ($veiculo['oficina'] ?? '')); ?>
                         <?php renderInput('ncontloc', 'Nº contrato locação', value: (string) ($veiculo['ncontloc'] ?? '')); ?>
-                        <?php renderSelect('blindagem', 'Blindagem', $blindagens, 'blindagem', 'blindagem', selectedValue: (string) ($veiculo['blindagem'] ?? '')); ?>
+                        <?php renderSelect('blindagem', 'Blindagem', $blindagensFormatadas, 'valor', 'descricao', true, '', 'Selecione a blindagem...', selectedValue: $blindagemSelecionada); ?>
                         <?php renderInput('valaquisicao', 'Valor aquisição', 'text', false, 'placeholder="0,00"', value: (string) ($veiculo['valaquisicao'] ?? '')); ?>
                         <?php renderInput('baseffa', 'Base FFA', value: (string) ($veiculo['baseffa'] ?? '')); ?>
                         <?php renderSelect('unidade', 'Unidade', $unidades, 'unidade', 'unidade', selectedValue: (string) ($veiculo['unidade'] ?? '')); ?>
@@ -622,6 +661,31 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
         document.getElementById('sidebarToggle')?.addEventListener('click', function(event) {
             event.preventDefault();
             document.body.classList.toggle('sb-sidenav-toggled');
+        });
+
+        const formularioEdicao = document.querySelector('form[action="control/editar-veiculo.php"]');
+        const statusCadastro = document.getElementById('status');
+        const statusVeiculo = document.getElementById('statusvel');
+        const statusVeiculoPermitidosParaInativacao = ['11', '49', '50'];
+        const mensagemStatusInativo = 'Para salvar o veículo como Inativo, selecione ROUBO / FURTO, SINISTRO ou SINISTRO/MANUTENÇÃO no campo Status do veículo.';
+
+        function validarStatusInativo() {
+            const statusInativoSelecionado = statusCadastro?.value === '5';
+            const statusVeiculoPermitido = statusVeiculoPermitidosParaInativacao.includes(statusVeiculo?.value ?? '');
+            const statusValido = !statusInativoSelecionado || statusVeiculoPermitido;
+
+            statusVeiculo?.setCustomValidity(statusValido ? '' : mensagemStatusInativo);
+            return statusValido;
+        }
+
+        statusCadastro?.addEventListener('change', validarStatusInativo);
+        statusVeiculo?.addEventListener('change', validarStatusInativo);
+        formularioEdicao?.addEventListener('submit', function(event) {
+            if (!validarStatusInativo()) {
+                event.preventDefault();
+                statusVeiculo?.reportValidity();
+                statusVeiculo?.focus();
+            }
         });
 
         $(document).ready(function() {

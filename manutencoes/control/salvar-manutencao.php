@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
- 
+
 exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
@@ -80,7 +80,7 @@ $mapaTabelas = [
     'tbstatusveic' => 'tbveiculostatus',
     'tbaplicacaoveic' => 'tbveiculoaplicacao',
     'tbmodeloveic' => 'tbveiculomodelo',
-    'bdcorp.tbfuncionario' => 'bdautofrotas.tbfuncionario',
+    'bdaniel.tbfuncionario' => 'bdautofrotas.tbfuncionario',
     'tbatipovel' => 'tbveltipo',
     'tbastatusvel' => 'tbvelstatus',
 ];

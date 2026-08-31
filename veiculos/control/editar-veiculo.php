@@ -233,13 +233,26 @@ $dados = [
     'dtdisponivelloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdisponivelloc')),
     'dtdevolucaoloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdevolucaoloc')),
     'valaquisicao' => nuloSeVazioDecimalEdicaoVeiculo(campoPostEdicaoVeiculo('valaquisicao')),
-    'blindagem' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('blindagem')),
+    'blindagem' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('blindagem')),
     'basegestao' => campoPostEdicaoVeiculo('basegestao'),
     'ccusto' => campoPostEdicaoVeiculo('centrocusto'),
     'dttermodisp' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dttermo')),
     'dtdesmobilizacao' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdisp')),
     'unidade' => campoPostEdicaoVeiculo('unidade'),
 ];
+
+$statusCadastroInativo = 5;
+$statusVeiculoPermitidosParaInativacao = [11, 49, 50];
+if (
+    $dados['status'] === $statusCadastroInativo
+    && !in_array($dados['statusvel'], $statusVeiculoPermitidosParaInativacao, true)
+) {
+    responderEdicaoVeiculo('Para salvar o veículo como Inativo, selecione ROUBO / FURTO, SINISTRO ou SINISTRO/MANUTENÇÃO no campo Status do veículo.');
+}
+
+if ($dados['blindagem'] === null || $dados['blindagem'] < 1) {
+    responderEdicaoVeiculo('Informe uma blindagem valida.');
+}
 
 $caminhoDocumento = salvarUploadDocumentoEdicaoVeiculo('doc01', $placa);
 if ($caminhoDocumento !== '') {

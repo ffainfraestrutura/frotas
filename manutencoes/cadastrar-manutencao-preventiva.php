@@ -89,14 +89,8 @@ if (!$man) {
 }
 
 $man['atualizadoem'] = date('Y-m-d');
-<<<<<<< HEAD
 $man['solicitante'] = $nomeSolicitante;
-<<<<<<< HEAD
-=======
->>>>>>> 823e57e57f2273f65b4a417756117138f93a3915
-=======
 $man['ccusto'] = $ccustoSolicitante;
->>>>>>> 87c42997d246f7de229c528937796f06fa63c8ea
 if ($oficinaRecebida !== '') {
     $man['oficina'] = $oficinaRecebida;
 }
@@ -196,15 +190,9 @@ if ($oficinaAtual !== '') {
     $oficinas[$oficinaAtual] = $oficinaAtual;
     natcasesort($oficinas);
 }
-<<<<<<< HEAD
 ?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}</style></head>
 <body class="sb-nav-fixed">
 <?php autofrotaMenu(); ?>
-=======
-?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}</style></head>
-<body class="sb-nav-fixed bg-light">
-<?php include __DIR__ . '/../includes/menu_superior_simples.php'; ?>
->>>>>>> 823e57e57f2273f65b4a417756117138f93a3915
 <div id="layoutSidenav_content">
 <main class="container py-4">
 <h1 class="h1 pt-2 pb-2 m-auto text-center">Cadastrar uma nova Manutenção</h1>
@@ -238,11 +226,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-2">
             <label class="form-label">Hodômetro:<span style="color: red;">*</span></label>
-<<<<<<< HEAD
             <input type="number" class="form-control" name="hodometro" min="0" max="1000000" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" readonly aria-readonly="true" required>
-=======
-            <input type="number" class="form-control" name="hodometro" min="0" max="1000000" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
->>>>>>> 823e57e57f2273f65b4a417756117138f93a3915
         </div>
         <div class="col-md-3">
             <label class="form-label">Centro de custo: <span style="color: red;">*</span></label>

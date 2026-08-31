@@ -4,12 +4,12 @@ require_once __DIR__ . '/../auth.php';
 exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
-$matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
-$bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
-$podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
+$podeEditar = $perfilLogado === '4';
 $placa = strtoupper(trim((string) ($_GET['placa'] ?? $_POST['placa'] ?? '')));
 $placa = str_replace(['-', ' '], '', $placa);
 $mensagem = trim((string) ($_GET['msg'] ?? ''));
+$origem = (string) ($_GET['origem'] ?? $_POST['origem'] ?? '');
+$origem = $origem === 'cadastro-veiculo' ? $origem : 'manutencao';
 
 function esc(?string $valor): string
 {
@@ -34,6 +34,7 @@ function esc(?string $valor): string
         <?php endif; ?>
         <form method="post" action="control/salvar-oficina.php" class="card card-body m-auto" style="max-width: 680px;">
             <input type="hidden" name="placa" value="<?= esc($placa) ?>">
+            <input type="hidden" name="origem" value="<?= esc($origem) ?>">
             <?php if (!$podeEditar): ?>
                 <div class="alert alert-warning">Cadastro disponível apenas para perfis autorizados.</div>
             <?php endif; ?>
@@ -49,7 +50,11 @@ function esc(?string $valor): string
                 <?php if ($podeEditar): ?>
                     <button class="btn btn-success" type="submit">Salvar oficina</button>
                 <?php endif; ?>
-                <a class="btn btn-secondary" href="cadastrar-manutencao-preventiva.php?placa=<?= rawurlencode($placa) ?>">Voltar</a>
+                <?php if ($origem === 'cadastro-veiculo'): ?>
+                    <a class="btn btn-secondary" href="../veiculos/cadastroveiculo.php">Voltar</a>
+                <?php else: ?>
+                    <a class="btn btn-secondary" href="cadastrar-manutencao-preventiva.php?placa=<?= rawurlencode($placa) ?>">Voltar</a>
+                <?php endif; ?>
             </div>
         </form>
     </main>
