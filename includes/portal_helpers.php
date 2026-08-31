@@ -90,6 +90,25 @@ if (!function_exists('buscarUfsPortal')) {
     }
 }
 
+if (!function_exists('diretorioUploadsPortal')) {
+    function diretorioUploadsPortal(): string
+    {
+        return '/tmp/frotas_docs';
+    }
+}
+
+if (!function_exists('urlDocumentoUploadPortal')) {
+    function urlDocumentoUploadPortal($documento): string
+    {
+        $documento = trim((string) ($documento ?? ''));
+        if ($documento === '' || preg_match('~^(?:https?:)?//~i', $documento) || preg_match('~^/?visualizar-upload\.php\?abrir=~i', $documento)) {
+            return $documento;
+        }
+
+        return '/visualizar-upload.php?abrir=' . rawurlencode(basename(str_replace('\\', '/', $documento)));
+    }
+}
+
 if (!function_exists('badgeStatusAtivo')) {
     function badgeStatusAtivo($ativo): string
     {
@@ -125,4 +144,3 @@ if (!function_exists('renderRodapeAutofrota')) {
         echo '</body></html>';
     }
 }
-// 

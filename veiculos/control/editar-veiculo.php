@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
+require_once __DIR__ . '/documentos-veiculo.php';
 
 if (function_exists('exigirLogin')) {
     exigirLogin();
@@ -218,6 +219,7 @@ $dados = [
     'statusvel' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('statusvel', '1')),
     'obsveiculo' => campoPostEdicaoVeiculo('obsveiculo'),
     'datamovimentacao' => montarDataHoraEdicaoVeiculo(campoPostEdicaoVeiculo('datamovimentacao'), campoPostEdicaoVeiculo('horamovimentacao')),
+    'matcond' => campoPostEdicaoVeiculo('matcond'),
     'oficina' => campoPostEdicaoVeiculo('oficina'),
     'dtentrega' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtentrega')),
     'dtdevolucao' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdevolucao')),
@@ -225,7 +227,7 @@ $dados = [
     'situacao' => campoPostEdicaoVeiculo('situacao'),
     'doccrlv' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('doccrlv')),
     'airbag' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('airbag')),
-    'gpsemp' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('gpsemp')),
+    'gpsemp' => nuloSeVazioNumericoEdicaoVeiculo(campoPostEdicaoVeiculo('gpsemp')),
     'rack' => simNaoParaIntEdicaoVeiculo(campoPostEdicaoVeiculo('rack')),
     'ncontloc' => campoPostEdicaoVeiculo('ncontloc'),
     'dtdisponivelloc' => nuloSeVazioEdicaoVeiculo(campoPostEdicaoVeiculo('dtdisponivelloc')),
@@ -242,6 +244,12 @@ $dados = [
 $caminhoDocumento = salvarUploadDocumentoEdicaoVeiculo('doc01', $placa);
 if ($caminhoDocumento !== '') {
     $dados['bo'] = $caminhoDocumento;
+}
+
+try {
+    $documentosVeiculo = salvarUploadsDocumentosVeiculo($placa);
+} catch (RuntimeException $exception) {
+    responderEdicaoVeiculo($exception->getMessage());
 }
 
 $schema = str_replace('`', '``', $databaseName);
@@ -273,6 +281,12 @@ if (!mysqli_stmt_execute($stmt)) {
     responderEdicaoVeiculo('Erro ao editar veículo: ' . $erro);
 }
 mysqli_stmt_close($stmt);
+
+try {
+    persistirDocumentosVeiculo($con, $databaseName, $placa, $documentosVeiculo);
+} catch (RuntimeException $exception) {
+    responderEdicaoVeiculo($exception->getMessage());
+}
 
 if ($dados['status'] === '0') {
     $sqlCondutor = "UPDATE `{$schema}`.`tbcondutor` SET datadissoc = ?, ativo = '0', statuscond = '' WHERE placaassoc = ? AND ativo = '1'";

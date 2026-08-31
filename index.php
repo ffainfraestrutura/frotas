@@ -94,19 +94,19 @@ if ($usuarioLogado === '') {
 $linksPortal = [
     [
         'titulo' => 'Condutores',
-        'descricao' => 'Consulte e filtre a listagem de condutores.',
+        'descricao' => 'Consulte e cadastre condutores.',
         'url' => 'condutores/listar_condutorespj.php',
         'icone' => 'fa-id-card',
     ],
     [
         'titulo' => 'Veículos Cadastrados',
-        'descricao' => 'Acesse os veículos cadastrados e seus filtros de gestão.',
+        'descricao' => 'Consulte e cadastre veículos.',
         'url' => 'veiculos/listagem-veiculo.php',
         'icone' => 'fa-car',
     ],
     [
         'titulo' => 'Registros de Manutenção',
-        'descricao' => 'Visualize e filtre registros de manutenção da frota.',
+        'descricao' => 'Acompanhe, cadastre e consulte os registros de manutenção da frota.',
         'url' => 'manutencoes/listagem-manutencao.php',
         'icone' => 'fa-screwdriver-wrench',
     ],

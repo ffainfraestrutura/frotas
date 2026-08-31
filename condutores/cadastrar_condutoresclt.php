@@ -91,7 +91,7 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
         <?php require __DIR__ . '/includes/form_cnh_opcional_clt.php'; ?>
         <div class="d-flex justify-content-end gap-2 my-3">
             <button class="btn btn-secondary" type="button" onclick="window.history.back()">Cancelar</button>
-            <button class="btn btn-success" type="submit"><i class="fa fa-save me-1"></i>Salvar CNH</button>
+            <button class="btn btn-success" type="submit"><i class="fa fa-save me-1"></i>Salvar</button>
         </div>
     </form>
 </div>

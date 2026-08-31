@@ -233,10 +233,10 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('condutores/listar_condutorespj.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Condutor</a></li>
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('veiculos/listagem-veiculo.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Veículo</a></li>
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Cadastrar Manutenção</a></li>
                         </ul>
                     </li>
@@ -269,11 +269,8 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuVeiculos">
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('veiculos/cadastroveiculo.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Cadastrar veículo</a></li>
-                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/listagem-veiculo.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Listagem de veículos</a></li>
+                                    target="_self">Cadastrar veículo</a></li>
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('veiculos/inventario-veiculo.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Inventário de veículos</a></li>
@@ -293,13 +290,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="afMenuManutencoes">
                             <li><a class="dropdown-item"
-                            href="<?= menuSuperiorLink('manutencoes/solicitar-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                             target="_self" onclick="window.location.href=this.href; return false;">Cadastrar
-                            manutenção</a></li>
-                            <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
-                                    target="_self" onclick="window.location.href=this.href; return false;">Listagem de
-                                    manutenções</a></li>        
+                            manutenção</a></li>       
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/importar-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Importar

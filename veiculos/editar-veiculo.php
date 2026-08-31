@@ -1,1167 +1,647 @@
 <?php
-require_once __DIR__ . '/../auth.php';
-require_once __DIR__ . '/../control/conecta.php';
+require_once __DIR__ . '/../includes/autofrota_common.php';
 
-$perfil = (string) ($_SESSION['perfil'] ?? '0');
+$autofrotaSessao = autofrotaInit();
+$conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
+$databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
+$databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
+$perfil = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '0');
 if ($perfil === '0' || $perfil === '') {
     http_response_code(403);
     exit('Sem permissão.');
 }
 
-exigirLogin();
-
 date_default_timezone_set('America/Sao_Paulo');
-header('Content-Type: text/html; charset=utf-8');
 
-$matricula = (string) ($_SESSION['matricula'] ?? $_POST['matr_autor'] ?? '');
-$link = $_SERVER['REQUEST_URI'] ?? '';
-$idtbveiculo = strpos($link, '=') !== false
-    ? (string) ($_GET['idtbveiculo'] ?? '')
-    : (string) ($_POST['idtbveiculo'] ?? '');
-
+$matriculaLogada = (string) ($_POST['matr_autor'] ?? $autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
+$perfilLogado = (string) ($_POST['perfil_autor'] ?? $perfil);
+$usuarioLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['usuario'] ?? 'Usuário');
+$mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
+$idtbveiculo = trim((string) ($_GET['idtbveiculo'] ?? $_POST['idtbveiculo'] ?? ''));
 $veiculo = [];
+$documentosVeiculo = [];
 $erroCarregamento = '';
 
-if ($idtbveiculo !== '') {
-    $sql = 'SELECT * FROM `bdautofrotas`.`tbveiculo` WHERE idtbveiculo = ? LIMIT 1';
-    $stmt = mysqli_prepare($conn, $sql);
-
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, 's', $idtbveiculo);
-        mysqli_stmt_execute($stmt);
-        $resultado = mysqli_stmt_get_result($stmt);
-        $veiculo = $resultado ? (mysqli_fetch_assoc($resultado) ?: []) : [];
-        mysqli_stmt_close($stmt);
-
-        if ($veiculo === []) {
-            $erroCarregamento = 'Veículo não encontrado para o id informado.';
-        }
-    } else {
-        $erroCarregamento = 'Não foi possível carregar os dados do veículo.';
+if ($idtbveiculo === '') {
+    $erroCarregamento = 'Identificador do veículo não informado.';
+} elseif (isset($conn) && $conn instanceof mysqli) {
+    $sqlVeiculo = "SELECT * FROM `{$databaseName}`.`tbveiculo` WHERE idtbveiculo = ? LIMIT 1";
+    $stmtVeiculo = mysqli_prepare($conn, $sqlVeiculo);
+    if ($stmtVeiculo) {
+        mysqli_stmt_bind_param($stmtVeiculo, 's', $idtbveiculo);
+        mysqli_stmt_execute($stmtVeiculo);
+        $resultadoVeiculo = mysqli_stmt_get_result($stmtVeiculo);
+        $veiculo = $resultadoVeiculo ? (mysqli_fetch_assoc($resultadoVeiculo) ?: []) : [];
+        mysqli_stmt_close($stmtVeiculo);
     }
+    if ($veiculo === []) {
+        $erroCarregamento = 'Veículo não encontrado para o identificador informado.';
+    } else {
+        $placaDocumentos = trim((string) ($veiculo['placa'] ?? ''));
+        $stmtDocumentos = mysqli_prepare($conn, "SELECT crlv, crv, cert_ipva FROM `{$databaseName}`.`tbveicdocs` WHERE placa = ? LIMIT 1");
+        if ($stmtDocumentos) {
+            mysqli_stmt_bind_param($stmtDocumentos, 's', $placaDocumentos);
+            mysqli_stmt_execute($stmtDocumentos);
+            $resultadoDocumentos = mysqli_stmt_get_result($stmtDocumentos);
+            $documentosVeiculo = $resultadoDocumentos ? (mysqli_fetch_assoc($resultadoDocumentos) ?: []) : [];
+            mysqli_stmt_close($stmtDocumentos);
+        }
+    }
+} else {
+    $erroCarregamento = 'Não foi possível conectar ao banco de dados.';
 }
 
-$camposTbveiculo = [
-    'status', 'placa', 'uf', 'aplicacao', 'zerokm', 'categoria', 'tipo',
-    'marca', 'modelo', 'versao', 'cor', 'anofabr', 'anomodelo',
-    'statusvel', 'doc01', 'tipovel', 'situacao', 'hodometroinicial',
-    'datamovimentacao', 'horamovimentacao', 'dtentrega', 'dtdevolucao',
-    'velocmax', 'combustivel', 'tanque', 'motorizacao', 'calibragem', 'aro',
-    'renavam', 'chassi', 'nummotor', 'nportas', 'npassageiros', 'qtdpneus',
-    'qtdestepe', 'qtdeixos', 'gnv', 'gps', 'tagpedagio',
-    'gpsemp', 'doccrlv', 'airbag', 'rack', 'blindagem',
-    'oficina', 'ncontloc', 'dtdisponivelloc', 'dtdevolucaoloc', 'valaquisicao',
-    'hodometro', 'tipoposse', 'idlocador',
-    'basegestao', 'ccusto', 'unidade',
-    'dttermodisp', 'dtdesmobilizacao',
-    'obsveiculo'
-];
-
-function escVeiculo($valor): string
+function esc(?string $valor): string
 {
     return htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 }
 
-function formatoInput($campo): string
+function consultarOpcoes(mysqli $conn, string $sql): array
 {
-    if ($campo === 'doc01') {
-        return 'file';
+    $resultado = mysqli_query($conn, $sql);
+    if (!$resultado) {
+        return [];
     }
 
-    if ($campo === 'horamovimentacao') {
-        return 'time';
+    $linhas = [];
+    while ($linha = mysqli_fetch_assoc($resultado)) {
+        $linhas[] = $linha;
     }
+    mysqli_free_result($resultado);
 
-    if (strpos($campo, 'data') === 0 || strpos($campo, 'dt') === 0) {
-        return 'date';
-    }
-
-    if (in_array($campo, ['anofabr', 'anomodelo', 'renavam', 'hodometro', 'hodometroinicial'], true)) {
-        return 'number';
-    }
-
-    return 'text';
+    return $linhas;
 }
 
-function valorInput($campo, $valor): string
+function opcoesSimNao(): array
 {
-    $valorTexto = trim((string) $valor);
-    $tipo = formatoInput($campo);
+    return ['1' => 'SIM', '0' => 'NÃO'];
+}
 
-    if ($campo === 'horamovimentacao') {
-        if ($valorTexto === '' || $valorTexto === '0000-00-00 00:00:00') {
-            return '';
+function opcoesZeroKm(): array
+{
+    return ['0' => 'Não', '1' => 'Sim'];
+}
+
+function montarOpcoesTabela(array $linhas, array $camposIdPreferidos, array $camposTextoPreferidos): array
+{
+    $opcoes = [];
+
+    foreach ($linhas as $linha) {
+        if (!is_array($linha) || $linha === []) {
+            continue;
         }
 
-        return substr(str_replace(' ', 'T', $valorTexto), 11, 5);
-    }
-
-    if ($tipo === 'datetime-local') {
-        if ($valorTexto === '' || $valorTexto === '0000-00-00 00:00:00') {
-            return '';
+        $campoId = '';
+        foreach ($camposIdPreferidos as $candidato) {
+            if (array_key_exists($candidato, $linha) && trim((string) ($linha[$candidato] ?? '')) !== '') {
+                $campoId = $candidato;
+                break;
+            }
+        }
+        if ($campoId === '') {
+            foreach ($linha as $chave => $valorCampo) {
+                if (trim((string) $valorCampo) !== '') {
+                    $campoId = (string) $chave;
+                    break;
+                }
+            }
         }
 
-        return str_replace(' ', 'T', substr($valorTexto, 0, 16));
-    }
-
-    if ($tipo === 'date') {
-        if ($valorTexto === '' || $valorTexto === '0000-00-00' || $valorTexto === '0000-00-00 00:00:00') {
-            return '';
+        $campoTexto = '';
+        foreach ($camposTextoPreferidos as $candidato) {
+            if (array_key_exists($candidato, $linha) && trim((string) ($linha[$candidato] ?? '')) !== '') {
+                $campoTexto = $candidato;
+                break;
+            }
+        }
+        if ($campoTexto === '') {
+            foreach ($linha as $chave => $valorCampo) {
+                if (trim((string) $valorCampo) !== '' && (string) $chave !== $campoId) {
+                    $campoTexto = (string) $chave;
+                    break;
+                }
+            }
+            if ($campoTexto === '') {
+                $campoTexto = $campoId;
+            }
         }
 
-        return substr($valorTexto, 0, 10);
+        $valor = trim((string) ($linha[$campoId] ?? ''));
+        $texto = trim((string) ($linha[$campoTexto] ?? ''));
+        if ($valor === '' || $texto === '') {
+            continue;
+        }
+
+        $opcoes[] = [
+            'valor' => $valor,
+            'descricao' => $texto,
+        ];
     }
 
-    return $valorTexto;
+    return $opcoes;
 }
 
-function nomeCampoPost($campo): string
+function normalizarValorOpcaoTexto(string $valor): string
 {
-    $mapa = [
-        'aplicacao' => 'aplicacaofrota',
-        'tipo' => 'tipoveic',
-        'idlocador' => 'locador',
-        'ccusto' => 'centrocusto',
-        'dttermodisp' => 'dttermo',
-        'dtdesmobilizacao' => 'dtdisp'
-    ];
+    $valor = trim($valor);
+    $valor = mb_strtolower($valor, 'UTF-8');
+    $valor = preg_replace('/\s+/', '_', $valor);
 
-    return $mapa[$campo] ?? $campo;
+    return (string) $valor;
 }
 
-function campoObrigatorio($campo): bool
+function renderSelect(string $name, string $label, array $options, string $valueKey = '', string $textKey = '', bool $required = false, string $extraClass = '', string $placeholder = 'Selecione...', string $selectedValue = ''): void
 {
-    $obrigatorios = [
-        'status',
-        'placa',
-        'uf',
-        'aplicacao',
-        'zerokm',
-        'categoria',
-        'cor',
-        'anofabr',
-        'statusvel',
-        'tipovel',
-        'situacao',
-        'combustivel',
-        'gnv',
-        'gps',
-        'gpsemp',
-        'tipoposse',
-        'ccusto'
-    ];
+    $requiredAttr = $required ? ' required' : '';
+    echo '<div class="col-md-4 ' . esc($extraClass) . '">';
+    echo '<label class="form-label" for="' . esc($name) . '">' . esc($label) . ($required ? ' <span class="text-danger">*</span>' : '') . '</label>';
+    echo '<select class="form-select" name="' . esc($name) . '" id="' . esc($name) . '"' . $requiredAttr . '>';
+    echo '<option value="">' . esc($placeholder) . '</option>';
 
-    return in_array($campo, $obrigatorios, true);
-}
+    foreach ($options as $valor => $option) {
+        if (is_array($option)) {
+            $value = $valueKey !== '' ? (string) ($option[$valueKey] ?? '') : (string) $valor;
+            $text = $textKey !== '' ? (string) ($option[$textKey] ?? '') : implode(' - ', array_filter($option));
+        } else {
+            $value = (string) $valor;
+            $text = (string) $option;
+        }
 
-function atributosValidacao($campo): string
-{
-    $numericosTexto = [
-        'velocmax', 'tanque', 'calibragem', 'aro', 'nportas', 'npassageiros',
-        'qtdpneus', 'qtdestepe', 'qtdeixos'
-    ];
-
-    if (in_array($campo, $numericosTexto, true)) {
-        return ' inputmode="numeric" pattern="[0-9.]+"';
+        if ($value !== '') {
+            echo '<option value="' . esc($value) . '"' . ((string) $selectedValue === $value ? ' selected' : '') . '>' . esc($text) . '</option>';
+        }
     }
 
-    if (in_array($campo, ['anofabr', 'anomodelo'], true)) {
-        return ' min="1900" max="2999" step="1"';
-    }
-
-    return '';
+    echo '</select></div>';
 }
 
-function rotuloCampo($campo): string
+function renderInput(string $name, string $label, string $type = 'text', bool $required = false, string $extra = '', string $value = ''): void
 {
-    $mapa = [
-        'status' => 'Status',
-        'placa' => 'Placa',
-        'uf' => 'UF',
-        'aplicacao' => 'Aplicação na frota',
-        'zerokm' => 'O veículo é 0km?',
-        'categoria' => 'Categoria',
-        'tipo' => 'Classificação',
-        'marca' => 'Marca',
-        'modelo' => 'Modelo',
-        'versao' => 'Versão',
-        'cor' => 'Cor',
-        'anofabr' => 'Ano de fabricação',
-        'anomodelo' => 'Ano do modelo',
-        'statusvel' => 'Status do Veículo',
-        'doc01' => 'Documento',
-        'tipovel' => 'Tipo',
-        'situacao' => 'Situação',
-        'hodometroinicial' => 'Hodômetro Inicial(em Total de Km)',
-        'datamovimentacao' => 'Data Ult. Movimentação',
-        'horamovimentacao' => 'Hora Ult. Mov.',
-        'dtentrega' => 'Data Entrega',
-        'dtdevolucao' => 'Data Devolução',
-        'velocmax' => 'Velocidade máxima (em km/h)',
-        'combustivel' => 'Tipo de combustível',
-        'tanque' => 'Capac tanque(em L)',
-        'motorizacao' => 'Motorização',
-        'calibragem' => 'Calibragem (em PSI)',
-        'aro' => 'Aro',
-        'renavam' => 'RENAVAM',
-        'chassi' => 'Número do Chassi',
-        'nummotor' => 'Número do Motor',
-        'nportas' => 'Número de Portas',
-        'npassageiros' => 'Nº de passageiros',
-        'qtdpneus' => 'Quantidade de Pneus',
-        'qtdestepe' => 'Quant. de estepes',
-        'qtdeixos' => 'Quantidade de eixos',
-        'gnv' => 'O veículo é GNV?',
-        'gps' => 'O veículo possui GPS?',
-        'tagpedagio' => 'O veículo possui Tag Pedágio?',
-        'gpsemp' => 'GPS Empresa',
-        'doccrlv' => 'Doc. CRLV',
-        'airbag' => 'O veículo possui Airbag?',
-        'rack' => 'O veículo possui rack?',
-        'blindagem' => 'Tipo de Blindagem',
-        'oficina' => 'Oficina',
-        'ncontloc' => 'N° Contrato Locação',
-        'dtdisponivelloc' => 'Data Disp. Locadora',
-        'dtdevolucaoloc' => 'Data Dev. Locadora',
-        'valaquisicao' => 'Valor Aquisição',
-        'hodometro' => 'Hodômetro (em Total de Km)',
-        'tipoposse' => 'Tipo de posse do veículo',
-        'idlocador' => 'Locador (se o veículo for locado)',
-        'basegestao' => 'Base gestão',
-        'ccusto' => 'Centro de Custo',
-        'unidade' => 'Unidade',
-        'dttermodisp' => 'Data termo de disponibilização',
-        'dtdesmobilizacao' => 'Data de desmobilização',
-        'obsveiculo' => 'Observações'
-    ];
+    $requiredAttr = $required ? ' required' : '';
+    $extraNormalizado = trim($extra);
 
-    return $mapa[$campo] ?? ucwords(str_replace('_', ' ', $campo));
-}
+    if ($extraNormalizado !== '' && stripos($extraNormalizado, 'placeholder=') === false) {
+        $labelLimpo = preg_replace('/\s*\*+\s*/', '', $label);
+        $labelLimpo = preg_replace('/\?+$/', '', (string) $labelLimpo);
+        $labelLimpo = trim((string) $labelLimpo);
 
-function placeholderCampo($campo): string
-{
-    $mapa = [
-        'placa' => 'Nº da Placa',
-        'versao' => 'Versão do Veículo',
-        'cor' => 'Cor do Veículo',
-        'anofabr' => 'Ex.: 1990',
-        'anomodelo' => 'Ex.: 1990',
-        'hodometroinicial' => 'Hodômetro em Total de Km',
-        'velocmax' => 'Velocidade máxima',
-        'tanque' => 'Capacidade em Litros',
-        'calibragem' => 'Calibragem (em PSI)',
-        'aro' => 'Aro',
-        'renavam' => 'RENAVAM',
-        'chassi' => 'Nº do Chassi',
-        'nummotor' => 'Nº do motor',
-        'nportas' => 'Nº de portas',
-        'npassageiros' => 'Nº de passageiros',
-        'qtdpneus' => 'Quantidade de Pneus',
-        'qtdestepe' => 'Quantidade de estepes',
-        'qtdeixos' => 'Quantidade de eixos',
-        'doccrlv' => 'Doc. CRLV',
-        'oficina' => 'Oficina',
-        'ncontloc' => 'Número Contrato Locação',
-        'valaquisicao' => 'R$ 0,00',
-        'hodometro' => 'Hodômetro em Total de Km',
-        'obsveiculo' => 'Observação'
-    ];
-
-    return $mapa[$campo] ?? '';
-}
-
-function grupoCampoVeiculo(string $campo): string
-{
-    $identificacao = [
-        'status', 'placa', 'uf', 'aplicacao', 'zerokm', 'categoria', 'tipo',
-        'marca', 'modelo', 'versao', 'cor', 'anofabr', 'anomodelo',
-        'statusvel', 'tipovel', 'situacao'
-    ];
-
-    $movimentacao = [
-        'hodometroinicial', 'datamovimentacao', 'horamovimentacao', 'dtentrega', 'dtdevolucao',
-        'velocmax', 'combustivel', 'tanque', 'motorizacao', 'calibragem', 'aro'
-    ];
-
-    $estruturaDocumentacao = [
-        'renavam', 'chassi', 'nummotor', 'nportas', 'npassageiros', 'qtdpneus',
-        'qtdestepe', 'qtdeixos', 'gnv', 'gps', 'tagpedagio', 'gpsemp',
-        'doccrlv', 'doc01', 'airbag', 'rack', 'blindagem'
-    ];
-
-    $locacaoGestao = [
-        'oficina', 'ncontloc', 'dtdisponivelloc', 'dtdevolucaoloc', 'valaquisicao',
-        'hodometro', 'tipoposse', 'idlocador', 'basegestao', 'ccusto',
-        'unidade', 'dttermodisp', 'dtdesmobilizacao'
-    ];
-
-    if (in_array($campo, $identificacao, true)) {
-        return 'Identificação e Classificação';
+        if ($labelLimpo !== '') {
+            $extraNormalizado .= ' placeholder="Informe ' . esc(mb_strtolower($labelLimpo, 'UTF-8')) . '"';
+        }
     }
 
-    if (in_array($campo, $movimentacao, true)) {
-        return 'Movimentação e Operação';
+    if ($extraNormalizado === '') {
+        $labelLimpo = preg_replace('/\s*\*+\s*/', '', $label);
+        $labelLimpo = preg_replace('/\?+$/', '', (string) $labelLimpo);
+        $labelLimpo = trim((string) $labelLimpo);
+
+        if ($labelLimpo !== '') {
+            $extraNormalizado = 'placeholder="Informe ' . esc(mb_strtolower($labelLimpo, 'UTF-8')) . '"';
+        }
     }
 
-    if (in_array($campo, $estruturaDocumentacao, true)) {
-        return 'Estrutura e Documentação';
-    }
-
-    if (in_array($campo, $locacaoGestao, true)) {
-        return 'Locação e Gestão';
-    }
-
-    return 'Outros Campos';
+    echo '<div class="col-md-4">';
+    echo '<label class="form-label" for="' . esc($name) . '">' . esc($label) . ($required ? ' <span class="text-danger">*</span>' : '') . '</label>';
+    echo '<input class="form-control" type="' . esc($type) . '" name="' . esc($name) . '" id="' . esc($name) . '" value="' . esc($value) . '"' . $requiredAttr . ($extraNormalizado !== '' ? ' ' . $extraNormalizado : '') . '>';
+    echo '</div>';
 }
 
-function iconeGrupoCampoVeiculo(string $grupo): string
-{
-    $mapa = [
-        'Identificação e Classificação' => 'fa-solid fa-id-card',
-        'Movimentação e Operação' => 'fa-solid fa-gauge-high',
-        'Estrutura e Documentação' => 'fa-solid fa-file-lines',
-        'Locação e Gestão' => 'fa-solid fa-briefcase',
-        'Outros Campos' => 'fa-solid fa-layer-group',
+$aplicacoes = [];
+$modelos = [];
+$statusCadastro = [];
+$statusVeiculo = [];
+$funcionarios = [];
+$basesGestao = [];
+$unidades = [];
+$centrosCusto = [];
+$blindagens = [];
+$categoriasVeiculo = [];
+$classificacoesVeiculo = [];
+$marcasVeiculo = [];
+$tiposVeiculo = [];
+$opcoesGpsEmpresa = [];
+
+if (isset($conn) && $conn instanceof mysqli) {
+    $aplicacoes = consultarOpcoes($conn, "
+        SELECT idtbaplicacaoveic, aplicacao
+        FROM `{$databaseName}`.`tbveiculoaplicacao`
+        ORDER BY aplicacao
+    ");
+
+    $modelos = consultarOpcoes($conn, "
+        SELECT idtbmodeloveic, marca, modelo
+        FROM `{$databaseName}`.`tbveiculomodelo`
+        WHERE modelo IS NOT NULL AND modelo <> ''
+        ORDER BY modelo
+    ");
+
+    $statusCadastro = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbveiculostatus`
+        ORDER BY 1
+    ");
+
+    $statusVeiculo = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbvelstatus`
+        ORDER BY 1
+    ");
+
+    $funcionarios = consultarOpcoes($conn, "
+        SELECT DISTINCT matricula, nome
+        FROM `{$databaseName}`.`tbcondutor`
+        WHERE matricula IS NOT NULL
+          AND TRIM(matricula) <> ''
+          AND nome IS NOT NULL
+          AND TRIM(nome) <> ''
+        ORDER BY nome
+    ");
+
+    $basesGestao = consultarOpcoes($conn, "
+        SELECT DISTINCT basegestao
+        FROM `{$databaseName}`.`tbveiculo`
+        WHERE basegestao IS NOT NULL AND basegestao <> ''
+        ORDER BY basegestao
+    ");
+
+    $unidades = consultarOpcoes($conn, "
+        SELECT DISTINCT unidade
+        FROM `{$databaseName}`.`tbveiculo`
+        WHERE unidade IS NOT NULL AND unidade <> ''
+        ORDER BY unidade
+    ");
+
+    $centrosCusto = consultarOpcoes($conn, "
+        SELECT DISTINCT ccusto
+        FROM `{$databaseCorp}`.`tbfuncionario`
+        WHERE idtbempresa = 2
+          AND matricula LIKE '16%'
+          AND CHAR_LENGTH(matricula) = 7
+          AND status <> 'Demitido'
+          AND ccusto IS NOT NULL
+          AND ccusto <> ''
+        ORDER BY ccusto
+    ");
+
+    $centroCustoAtual = trim((string) ($veiculo['ccusto'] ?? ''));
+    if ($centroCustoAtual !== '') {
+        $centroCustoExiste = false;
+        foreach ($centrosCusto as $centroCusto) {
+            if (trim((string) ($centroCusto['ccusto'] ?? '')) === $centroCustoAtual) {
+                $centroCustoExiste = true;
+                break;
+            }
+        }
+
+        if (!$centroCustoExiste) {
+            array_unshift($centrosCusto, ['ccusto' => $centroCustoAtual]);
+        }
+    }
+
+    $blindagens = consultarOpcoes($conn, "
+        SELECT DISTINCT blindagem
+        FROM `{$databaseName}`.`tbveiculo`
+        WHERE blindagem IS NOT NULL AND blindagem <> ''
+        ORDER BY blindagem
+    ");
+
+    $categoriasVeiculo = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbveiculocategoria`
+        ORDER BY 1
+    ");
+
+    $classificacoesVeiculo = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbveiculoclassificacao`
+        ORDER BY 1
+    ");
+
+    $marcasVeiculo = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbveiculomarca`
+        ORDER BY 1
+    ");
+
+    $tiposVeiculo = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbveltipo`
+        ORDER BY 1
+    ");
+
+    $fornecedoresGps = consultarOpcoes($conn, "
+        SELECT *
+        FROM `{$databaseName}`.`tbfornecedor`
+        WHERE tipo = '5'
+        ORDER BY fantasia
+    ");
+
+    $opcoesGpsEmpresa = montarOpcoesTabela(
+        $fornecedoresGps,
+        ['idtbfornecedor', 'idfornecedor', 'idtb_fornecedor', 'id'],
+        ['fantasia', 'nomefantasia', 'nome_fantasia', 'nome', 'razaosocial', 'razao_social']
+    );
+
+    $opcoesGpsEmpresa = array_values(array_filter(array_map(static function (array $fornecedor): ?array {
+        $valor = trim((string) ($fornecedor['valor'] ?? ''));
+        $descricao = trim((string) ($fornecedor['descricao'] ?? ''));
+        if ($valor === '' || $descricao === '' || !ctype_digit($valor)) {
+            return null;
+        }
+
+        return [
+            'valor' => $valor,
+            'descricao' => $descricao,
+        ];
+    }, $opcoesGpsEmpresa)));
+
+    $opcoesGpsEmpresa[] = ['valor' => '0', 'descricao' => 'Não possui'];
+}
+
+$modelosFormatados = array_map(static function (array $modelo): array {
+    $nome = trim((string) ($modelo['modelo'] ?? ''));
+    $modelo['descricao'] = $nome;
+    return $modelo;
+}, $modelos);
+
+$funcionariosFormatados = array_map(static function (array $funcionario): array {
+    $matricula = trim((string) ($funcionario['matricula'] ?? ''));
+    $nome = trim((string) ($funcionario['nome'] ?? ''));
+    $funcionario['descricao'] = trim($matricula . ' - ' . $nome);
+    return $funcionario;
+}, $funcionarios);
+
+$categoriasFormatadas = montarOpcoesTabela(
+    $categoriasVeiculo,
+    ['idtbveiculocategoria', 'idcategoria', 'id'],
+    ['categoria', 'descricao', 'nome']
+);
+
+$categoriasFormatadas = array_values(array_filter(array_map(static function (array $categoria): ?array {
+    $descricao = trim((string) ($categoria['descricao'] ?? $categoria['categoria'] ?? $categoria['nome'] ?? ''));
+    if ($descricao === '') {
+        return null;
+    }
+
+    return [
+        'valor' => normalizarValorOpcaoTexto($descricao),
+        'descricao' => $descricao,
     ];
+}, $categoriasFormatadas)));
 
-    return $mapa[$grupo] ?? 'fa-solid fa-layer-group';
+$statusCadastroFormatado = montarOpcoesTabela(
+    $statusCadastro,
+    ['idtbveiculostatus', 'idtbstatusveic', 'idstatus', 'id'],
+    ['status', 'descricao', 'nome']
+);
+
+$statusVeiculoFormatado = montarOpcoesTabela(
+    $statusVeiculo,
+    ['idtbvelstatus', 'idtbstatusvel', 'idtbstatusveic', 'id'],
+    ['status', 'descricao', 'nome']
+);
+
+$classificacoesFormatadas = montarOpcoesTabela(
+    $classificacoesVeiculo,
+    ['idtbveiculoclassificacao', 'idclassificacao', 'id'],
+    ['classificacao', 'descricao', 'nome', 'tipo']
+);
+
+$marcasFormatadas = montarOpcoesTabela(
+    $marcasVeiculo,
+    ['idtbveiculomarca', 'idmarca', 'id'],
+    ['marca', 'descricao', 'nome']
+);
+
+$tiposVeiculoFormatado = montarOpcoesTabela(
+    $tiposVeiculo,
+    ['idtbveltipo', 'idtbatipovel', 'idtipo', 'id'],
+    ['tipo', 'descricao', 'nome']
+);
+
+$gpsempAtual = trim((string) ($veiculo['gpsemp'] ?? ''));
+if ($gpsempAtual !== '' && ctype_digit($gpsempAtual)) {
+    $gpsempExiste = false;
+    foreach ($opcoesGpsEmpresa as $opcaoGps) {
+        if ((string) ($opcaoGps['valor'] ?? '') === $gpsempAtual) {
+            $gpsempExiste = true;
+            break;
+        }
+    }
+
+    if (!$gpsempExiste) {
+        array_unshift($opcoesGpsEmpresa, [
+            'valor' => $gpsempAtual,
+            'descricao' => 'Código atual (' . $gpsempAtual . ')',
+        ]);
+    }
 }
+
+$opcoesUf = ['AC'=>'AC','AL'=>'AL','AP'=>'AP','AM'=>'AM','BA'=>'BA','CE'=>'CE','DF'=>'DF','ES'=>'ES','GO'=>'GO','MA'=>'MA','MT'=>'MT','MS'=>'MS','MG'=>'MG','PA'=>'PA','PB'=>'PB','PR'=>'PR','PE'=>'PE','PI'=>'PI','RJ'=>'RJ','RN'=>'RN','RS'=>'RS','RO'=>'RO','RR'=>'RR','SC'=>'SC','SP'=>'SP','SE'=>'SE','TO'=>'TO'];
+$opcoesTipoPosse = ['PROPRIO' => 'PRÓPRIO', 'LOCADO' => 'LOCADO', 'AGREGADO' => 'AGREGADO', 'TERCEIRO' => 'TERCEIRO'];
+$opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'ETANOL', 'DIESEL' => 'DIESEL', 'GNV' => 'GNV', 'ELÉTRICO' => 'ELÉTRICO', 'HÍBRIDO' => 'HÍBRIDO'];
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="FFA" />
-    <meta name="author" content="FFA" />
-    <title>Editar Cadastro de Veículo</title>
-
-    <link href="../src/css/styles.css" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>AutoFrota - Editar Veículo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../src/autofrota-botoes.css">
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <style>
-        .grid-campos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 12px;
-        }
-
-        .campo-bloco {
-            border: 1px solid #e5e5e5;
-            border-radius: 8px;
-            padding: 10px;
-            background: #fff;
-        }
-
-        .grupo-campos {
-            border: 1px solid #dfe3e8;
-            border-radius: 10px;
-            background: #f8fafc;
-            padding: 12px;
-        }
-
-        .grupo-titulo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #1f2937;
-            border-bottom: 1px solid #e5e7eb;
-            padding-bottom: 6px;
-        }
+        body { background: #fff; color: #000; font-size: 12px; }
+        .page-title { font-size: 24px; font-weight: 600; margin-bottom: 6px; text-align: center; }
+        .page-subtitle { font-size: 22px; font-weight: 600; margin-bottom: 6px; text-align: center; }
+        .page-author { font-size: 14px; text-align: center; margin-bottom: 14px; }
+        .form-label, .form-control, .form-select, .btn { font-size: 12px; }
+        .card-header { font-weight: 600; }
+        .required-note { color: #dc3545; }
+        .edit-actions { position: fixed; right: 24px; bottom: 24px; z-index: 1030; padding: 12px; background: rgba(255, 255, 255, .96); border: 1px solid #dee2e6; border-radius: 12px; box-shadow: 0 4px 18px rgba(0, 0, 0, .18); }
     </style>
 </head>
 <body class="sb-nav-fixed">
     <?php include __DIR__ . '/../includes/menu_superior_simples.php'; ?>
 
     <div id="layoutSidenav_content">
-        <main style="width: 100%;" class="mb-2">
-            <div class="container-fluid px-4" style="width: 100%;">
-                <h1 class="h1 pt-2 pb-2 text-center">Editar Cadastro de Veículo</h1>
-                <p style="font-size: 12px;" class="ps-5">
-                    Visando a unificação dos processos, a mudança no status do veículo deve ser realizada através um checklist (vistoria).
-                </p>
+        <main class="page-wrapper py-3">
+            <h1 class="page-title">Editar Veículo</h1>
+            <p class="page-author"><strong>Edição feita por:</strong> (Matrícula: <?= esc($matriculaLogada) ?>)</p>
 
-                <div>
-                    <form method="post" action="./control/editar-veiculo.php" enctype="multipart/form-data" style="width: 90%;" class="pb-5 mb-5 m-auto">
-                        <input type="hidden" name="idtbveiculo" value="<?= htmlspecialchars($idtbveiculo, ENT_QUOTES, 'UTF-8') ?>">
-                        <input type="hidden" name="matr_autor" value="<?= htmlspecialchars($matricula, ENT_QUOTES, 'UTF-8') ?>">
+            <?php if ($mensagemRetorno !== ''): ?>
+                <script>
+                    window.addEventListener('load', function () {
+                        alert(<?= json_encode($mensagemRetorno, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>);
 
-                        <?php if ($erroCarregamento !== ''): ?>
-                            <div class="alert alert-warning"><?= escVeiculo($erroCarregamento) ?></div>
-                        <?php endif; ?>
+                        if (window.history && window.history.replaceState) {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete('msg');
+                            window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+                        }
+                    });
+                </script>
+            <?php endif; ?>
 
-                        <div class="mt-3">
-                            <?php $grupoAtual = null; ?>
-                            <?php foreach ($camposTbveiculo as $campo): ?>
-                                <?php if ($campo === 'obsveiculo') { continue; } ?>
-                                <?php $grupoCampo = grupoCampoVeiculo($campo); ?>
-                                <?php if ($grupoCampo !== $grupoAtual): ?>
-                                    <?php if ($grupoAtual !== null): ?>
-                                        </div>
-                                    </section>
-                                    <?php endif; ?>
-                                    <section class="grupo-campos mb-3">
-                                        <div class="grupo-titulo">
-                                            <i class="<?= escVeiculo(iconeGrupoCampoVeiculo($grupoCampo)) ?>" aria-hidden="true"></i>
-                                            <span><?= escVeiculo($grupoCampo) ?></span>
-                                        </div>
-                                        <div class="grid-campos">
-                                    <?php $grupoAtual = $grupoCampo; ?>
-                                <?php endif; ?>
-                                <div class="campo-bloco">
-                                    <label class="form-label mb-1" for="<?= escVeiculo($campo) ?>">
-                                        <?= escVeiculo(rotuloCampo($campo)) ?>:
-                                        <?php if (campoObrigatorio($campo)): ?>
-                                            <span style="color: red;">*</span>
-                                        <?php endif; ?>
-                                    </label>
-                                    <?php if ($campo === 'status'): ?>
-                                        <?php $valorStatus = trim((string) ($veiculo['status'] ?? '')); ?>
-                                        <select
-                                            class="form-select"
-                                            id="status"
-                                            name="status"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <option value="1" <?= $valorStatus === '1' ? 'selected' : '' ?>>Ativo</option>
-                                            <option value="0" <?= $valorStatus === '0' ? 'selected' : '' ?>>Inativo</option>
-                                        </select>
-                                        <?php elseif ($campo === 'basegestao'): ?>
-                                            <?php
-                                                $valorBaseGestao = trim((string) ($veiculo['basegestao'] ?? ''));
-                                                $opcoesBaseGestao = [];
-                                                $sqlBaseGestao = 'SELECT descricao FROM `bdautofrotas`.`tbveiculobasegestao` ORDER BY descricao';
-                                                $resultadoBaseGestao = mysqli_query($conn, $sqlBaseGestao);
-                                                if ($resultadoBaseGestao) {
-                                                    while ($linhaBaseGestao = mysqli_fetch_assoc($resultadoBaseGestao)) {
-                                                        $descBaseGestao = trim((string) ($linhaBaseGestao['descricao'] ?? ''));
-                                                        if ($descBaseGestao !== '') {
-                                                            $opcoesBaseGestao[] = $descBaseGestao;
-                                                        }
-                                                    }
-                                                    mysqli_free_result($resultadoBaseGestao);
-                                                }
-                                            ?>
-                                            <select
-                                                class="form-select"
-                                                id="basegestao"
-                                                name="basegestao"
-                                                <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                            >
-                                                <option value="">Selecione...</option>
-                                                <?php foreach ($opcoesBaseGestao as $baseGestaoOpcao): ?>
-                                                    <option value="<?= escVeiculo($baseGestaoOpcao) ?>" <?= $valorBaseGestao === $baseGestaoOpcao ? 'selected' : '' ?>>
-                                                        <?= escVeiculo($baseGestaoOpcao) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        <?php elseif ($campo === 'unidade'): ?>
-                                                <?php
-                                                    $valorUnidade = trim((string) ($veiculo['unidade'] ?? ''));
-                                                    $opcoesUnidade = [];
-                                                    $sqlUnidade = 'SELECT descricao FROM `bdautofrotas`.`tbveiculounidade`';
-                                                    $resultadoUnidade = mysqli_query($conn, $sqlUnidade);
-                                                    if ($resultadoUnidade) {
-                                                        while ($linhaUnidade = mysqli_fetch_assoc($resultadoUnidade)) {
-                                                            $descUnidade = trim((string) ($linhaUnidade['descricao'] ?? ''));
-                                                            if ($descUnidade !== '') {
-                                                                $opcoesUnidade[] = $descUnidade;
-                                                            }
-                                                        }
-                                                        mysqli_free_result($resultadoUnidade);
-                                                    }
-                                                    sort($opcoesUnidade, SORT_NATURAL | SORT_FLAG_CASE);
-                                                ?>
-                                                <select
-                                                    class="form-select"
-                                                    id="unidade"
-                                                    name="unidade"
-                                                    <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                                >
-                                                    <option value="">Selecione...</option>
-                                                    <?php foreach ($opcoesUnidade as $unidadeOpcao): ?>
-                                                        <option value="<?= escVeiculo($unidadeOpcao) ?>" <?= $valorUnidade === $unidadeOpcao ? 'selected' : '' ?>>
-                                                            <?= escVeiculo($unidadeOpcao) ?>
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                    <?php elseif ($campo === 'uf'): ?>
-                                        <?php
-                                            $valorUf = strtoupper(trim((string) ($veiculo['uf'] ?? '')));
-                                            $opcoesUf = [];
-                                            $sqlUfs = 'SELECT uf, nome_estado FROM `bdautofrotas`.`tb_ufs` ORDER BY uf';
-                                            $resultadoUfs = mysqli_query($conn, $sqlUfs);
-                                            if ($resultadoUfs) {
-                                                while ($linhaUf = mysqli_fetch_assoc($resultadoUfs)) {
-                                                    $opcoesUf[] = $linhaUf;
-                                                }
-                                                mysqli_free_result($resultadoUfs);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="uf"
-                                            name="uf"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <?php foreach ($opcoesUf as $linhaUf): ?>
-                                                <?php
-                                                    $siglaUf = strtoupper(trim((string) ($linhaUf['uf'] ?? '')));
-                                                ?>
-                                                <option value="<?= escVeiculo($siglaUf) ?>" <?= $valorUf === $siglaUf ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($siglaUf) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'aplicacao'): ?>
-                                        <?php
-                                            $valorAplicacao = trim((string) ($veiculo['aplicacao'] ?? ''));
-                                            $opcoesAplicacao = [];
-                                            $sqlAplicacao = 'SELECT idtbaplicacaoveic, aplicacao FROM `bdautofrotas`.`tbveiculoaplicacao` ORDER BY aplicacao';
-                                            $resultadoAplicacao = mysqli_query($conn, $sqlAplicacao);
-                                            if ($resultadoAplicacao) {
-                                                while ($linhaAplicacao = mysqli_fetch_assoc($resultadoAplicacao)) {
-                                                    $opcoesAplicacao[] = $linhaAplicacao;
-                                                }
-                                                mysqli_free_result($resultadoAplicacao);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="aplicacao"
-                                            name="<?= escVeiculo(nomeCampoPost($campo)) ?>"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesAplicacao as $linhaAplicacao): ?>
-                                                <?php
-                                                    $idAplicacao = trim((string) ($linhaAplicacao['idtbaplicacaoveic'] ?? ''));
-                                                    $nomeAplicacao = (string) ($linhaAplicacao['aplicacao'] ?? '');
-                                                ?>
-                                                <option value="<?= escVeiculo($idAplicacao) ?>" <?= $valorAplicacao === $idAplicacao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($nomeAplicacao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'zerokm'): ?>
-                                        <?php $valorZeroKm = trim((string) ($veiculo['zerokm'] ?? '')); ?>
-                                        <select
-                                            class="form-select"
-                                            id="zerokm"
-                                            name="zerokm"
-                                            aria-label="Default select example"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <option value="0" <?= $valorZeroKm === '0' ? 'selected' : '' ?>>Não</option>
-                                            <option value="1" <?= $valorZeroKm === '1' ? 'selected' : '' ?>>Sim</option>
-                                        </select>
-                                    <?php elseif ($campo === 'categoria'): ?>
-                                        <?php
-                                            $valorCategoria = strtolower(trim((string) ($veiculo['categoria'] ?? '')));
-                                            $categorias = [];
+            <form method="post" action="control/editar-veiculo.php" enctype="multipart/form-data" class="pb-5">
+                <input type="hidden" name="idtbveiculo" value="<?= esc($idtbveiculo) ?>">
+                <input type="hidden" name="matr_autor" value="<?= esc($matriculaLogada) ?>">
+                <input type="hidden" name="perfil_autor" value="<?= esc($perfilLogado) ?>">
 
-                                            $sqlCategoria = 'SELECT descricao FROM `bdautofrotas`.`tbveiculocategoria` ORDER BY descricao';
-                                            $resultadoCategoria = mysqli_query($conn, $sqlCategoria);
-                                            if ($resultadoCategoria) {
-                                                while ($linhaCategoria = mysqli_fetch_assoc($resultadoCategoria)) {
-                                                    $descricaoCategoria = trim((string) ($linhaCategoria['descricao'] ?? ''));
-                                                    if ($descricaoCategoria !== '') {
-                                                        $categorias[] = $descricaoCategoria;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoCategoria);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="categoria"
-                                            name="categoria"
-                                            aria-label="Default select example"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($categorias as $categoriaOpcao): ?>
-                                                <?php $valorOpcao = strtolower(trim(str_replace(' ', '_', $categoriaOpcao))); ?>
-                                                <option value="<?= escVeiculo($valorOpcao) ?>" <?= $valorCategoria === $valorOpcao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($categoriaOpcao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'tipo'): ?>
-                                        <?php
-                                            $valorTipo = strtolower(trim((string) ($veiculo['tipo'] ?? '')));
-                                            $opcoesTipo = [];
+                <?php if ($erroCarregamento !== ''): ?>
+                    <div class="alert alert-warning"><?= esc($erroCarregamento) ?></div>
+                <?php endif; ?>
 
-                                            $sqlTipo = 'SELECT descricao FROM `bdautofrotas`.`tbveiculoclassificacao` ORDER BY descricao';
-                                            $resultadoTipo = mysqli_query($conn, $sqlTipo);
-                                            if ($resultadoTipo) {
-                                                while ($linhaTipo = mysqli_fetch_assoc($resultadoTipo)) {
-                                                    $descricaoTipo = trim((string) ($linhaTipo['descricao'] ?? ''));
-                                                    if ($descricaoTipo !== '') {
-                                                        $opcoesTipo[] = $descricaoTipo;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoTipo);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="tipo"
-                                            name="<?= escVeiculo(nomeCampoPost($campo)) ?>"
-                                            aria-label="Default select example"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesTipo as $tipoOpcao): ?>
-                                                <?php $valorOpcao = strtolower($tipoOpcao); ?>
-                                                <option value="<?= escVeiculo($valorOpcao) ?>" <?= $valorTipo === $valorOpcao ? 'selected' : '' ?> >
-                                                    <?= escVeiculo(ucwords(strtolower(str_replace('_', ' ', $tipoOpcao)))) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'statusvel'): ?>
-                                        <?php
-                                            $valorStatusVeiculo = trim((string) ($veiculo['statusvel'] ?? ''));
-                                            $statusVeiculoLinhas = [];
-                                            $sqlStatusVeiculo = 'SELECT * FROM `bdautofrotas`.`tbvelstatus` ORDER BY status';
-                                            $resultadoStatusVeiculo = mysqli_query($conn, $sqlStatusVeiculo);
-                                            if ($resultadoStatusVeiculo) {
-                                                while ($linhaStatusVeiculo = mysqli_fetch_assoc($resultadoStatusVeiculo)) {
-                                                    $statusVeiculoLinhas[] = $linhaStatusVeiculo;
-                                                }
-                                                mysqli_free_result($resultadoStatusVeiculo);
-                                            }
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-id-card me-2"></i>Identificação</div>
+                    <div class="card-body row g-3">
+                        <?php renderInput('placa', 'Placa', 'text', true, 'maxlength="8" style="text-transform: uppercase;"', (string) ($veiculo['placa'] ?? '')); ?>
+                        <?php renderSelect('uf', 'UF', $opcoesUf, '', '', true, selectedValue: (string) ($veiculo['uf'] ?? '')); ?>
+                        <?php renderSelect('aplicacaofrota', 'Aplicação da frota', $aplicacoes, 'idtbaplicacaoveic', 'aplicacao', true, selectedValue: (string) ($veiculo['aplicacao'] ?? '')); ?>
+                        <?php renderSelect('modelo', 'Modelo', $modelosFormatados, 'idtbmodeloveic', 'descricao', true, selectedValue: (string) ($veiculo['modelo'] ?? '')); ?>
+                        <?php renderSelect('marca', 'Marca', $marcasFormatadas, 'valor', 'descricao', true, '', 'Selecione a marca...', selectedValue: (string) ($veiculo['marca'] ?? '')); ?>
+                        <?php renderInput('versao', 'Versão', value: (string) ($veiculo['versao'] ?? '')); ?>
+                        <?php renderSelect('categoria', 'Categoria', $categoriasFormatadas, 'valor', 'descricao', true, '', 'Selecione a categoria...', selectedValue: normalizarValorOpcaoTexto((string) ($veiculo['categoria'] ?? ''))); ?>
+                        <?php renderSelect('tipoveic', 'Classificação', $classificacoesFormatadas, 'valor', 'descricao', false, '', 'Selecione a classificação...', selectedValue: (string) ($veiculo['tipo'] ?? '')); ?>
+                        <?php renderInput('cor', 'Cor', 'text', true, value: (string) ($veiculo['cor'] ?? '')); ?>
+                        <?php renderSelect('zerokm', 'O veículo é 0km?', opcoesZeroKm(), '', '', true, '', 'Selecione...', selectedValue: (string) ($veiculo['zerokm'] ?? '')); ?>
+                        <?php renderInput('anofabric', 'Ano fabricação', 'number', true, 'min="1900" max="2100"', value: (string) ($veiculo['anofabr'] ?? '')); ?>
+                        <?php renderInput('anomodelo', 'Ano modelo', 'number', false, 'min="1900" max="2100"', value: (string) ($veiculo['anomodelo'] ?? '')); ?>
+                    </div>
+                </div>
 
-                                            $idsBloqueados = ['18', '7', '13', '19', '39', '32'];
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="statusvel"
-                                            name="statusvel"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php if ($valorStatusVeiculo !== '1'): ?>
-                                                <?php foreach ($statusVeiculoLinhas as $linhaStatusVeiculo): ?>
-                                                    <?php
-                                                        $idStatusVeiculo = trim((string) (
-                                                            $linhaStatusVeiculo['idtbvelstatus']
-                                                            ?? $linhaStatusVeiculo['idtbastatusvel']
-                                                            ?? $linhaStatusVeiculo['idtbstatusveic']
-                                                            ?? ''
-                                                        ));
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-route me-2"></i>Status, posse e movimentação</div>
+                    <div class="card-body row g-3">
+                        <?php renderSelect('status', 'Status', $statusCadastroFormatado, 'valor', 'descricao', true, '', 'Selecione o status...', selectedValue: (string) ($veiculo['status'] ?? '')); ?>
+                        <?php renderSelect('statusvel', 'Status do veículo', $statusVeiculoFormatado, 'valor', 'descricao', true, '', 'Selecione o status do veículo...', selectedValue: (string) ($veiculo['statusvel'] ?? '')); ?>
+                        <?php renderSelect('tipovel', 'Tipo operacional', $tiposVeiculoFormatado, 'valor', 'descricao', true, selectedValue: (string) ($veiculo['tipovel'] ?? '')); ?>
+                        <?php renderInput('situacao', 'Situação', 'text', true, 'placeholder="FIXO, PROVISÓRIO"', value: (string) ($veiculo['situacao'] ?? '')); ?>
+                        <?php renderInput('hodometroinicial', 'Hodômetro inicial', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['hodometroinicial'] ?? '')); ?>
+                        <?php renderInput('hodometro', 'Hodômetro atual', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['hodometro'] ?? '')); ?>
+                        <?php renderInput('datamovimentacao', 'Data movimentação', 'date', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 0, 10)); ?>
+                        <?php renderInput('horamovimentacao', 'Hora movimentação', 'time', value: substr((string) ($veiculo['datamovimentacao'] ?? ''), 11, 5)); ?>
+                        <?php renderSelect('matcond', 'Condutor', $funcionariosFormatados, 'matricula', 'descricao', selectedValue: (string) ($veiculo['matcond'] ?? '')); ?>
+                        <?php renderInput('dtentrega', 'Data entrega', 'date', value: (string) ($veiculo['dtentrega'] ?? '')); ?>
+                        <?php renderInput('dtdevolucao', 'Data devolução', 'date', value: (string) ($veiculo['dtdevolucao'] ?? '')); ?>
+                        <?php renderSelect('tipoposse', 'Tipo de posse', $opcoesTipoPosse, '', '', true, selectedValue: (string) ($veiculo['tipoposse'] ?? '')); ?>
+                        <?php renderInput('locador', 'Locador / fornecedor', value: (string) ($veiculo['idlocador'] ?? '')); ?>
+                        <?php renderInput('dtdevolucaoloc', 'Vencimento da locação', 'date', value: (string) ($veiculo['dtdevolucaoloc'] ?? '')); ?>
+                    </div>
+                </div>
 
-                                                        if ($idStatusVeiculo === '' || in_array($idStatusVeiculo, $idsBloqueados, true)) {
-                                                            continue;
-                                                        }
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-cogs me-2"></i>Dados técnicos</div>
+                    <div class="card-body row g-3">
+                        <?php renderInput('velmax', 'Velocidade máxima', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['velocmax'] ?? '')); ?>
+                        <?php renderInput('renavam', 'Renavam', value: (string) ($veiculo['renavam'] ?? '')); ?>
+                        <?php renderInput('chassi', 'Chassi', 'text', false, 'style="text-transform: uppercase;"', (string) ($veiculo['chassi'] ?? '')); ?>
+                        <?php renderInput('nummotor', 'Número do motor', value: (string) ($veiculo['nummotor'] ?? '')); ?>
+                        <?php renderSelect('combustivel', 'Combustível', $opcoesCombustivel, '', '', true, selectedValue: (string) ($veiculo['combustivel'] ?? '')); ?>
+                        <?php renderInput('tanque', 'Tanque', 'number', false, 'min="0" step="0.01"', value: (string) ($veiculo['tanque'] ?? '')); ?>
+                        <?php renderInput('motorizacao', 'Motorização', value: (string) ($veiculo['motorizacao'] ?? '')); ?>
+                        <?php renderInput('nportas', 'Nº portas', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['nportas'] ?? '')); ?>
+                        <?php renderInput('npassageiros', 'Nº passageiros', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['npassageiros'] ?? '')); ?>
+                        <?php renderInput('calibragem', 'Calibragem', value: (string) ($veiculo['calibragem'] ?? '')); ?>
+                        <?php renderInput('aro', 'Aro', value: (string) ($veiculo['aro'] ?? '')); ?>
+                        <?php renderInput('qtdpneus', 'Qtd. pneus', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['qtdpneus'] ?? '')); ?>
+                        <?php renderInput('qtdestepes', 'Qtd. estepes', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['qtdestepe'] ?? '')); ?>
+                        <?php renderInput('qtdeixos', 'Qtd. eixos', 'number', false, 'min="0" step="1"', value: (string) ($veiculo['qtdeixos'] ?? '')); ?>
+                        <?php renderSelect('gnv', 'GNV?', opcoesSimNao(), '', '', true, selectedValue: (string) ($veiculo['gnv'] ?? '')); ?>
+                        <?php renderSelect('gps', 'GPS?', opcoesSimNao(), '', '', true, selectedValue: (string) ($veiculo['gps'] ?? '')); ?>
+                        <?php renderSelect('tagpedagio', 'Tag pedágio?', opcoesSimNao(), selectedValue: (string) ($veiculo['tagpedagio'] ?? '')); ?>
+                        <?php renderSelect('airbag', 'Airbag?', opcoesSimNao(), selectedValue: (string) ($veiculo['airbag'] ?? '')); ?>
+                        <?php renderSelect('rack', 'Rack?', opcoesSimNao(), selectedValue: (string) ($veiculo['rack'] ?? '')); ?>
+                    </div>
+                </div>
 
-                                                        $nomeStatusVeiculo = trim((string) ($linhaStatusVeiculo['status'] ?? ''));
-                                                        $statusGeralBruto = trim((string) ($linhaStatusVeiculo['statusgeral'] ?? ''));
-                                                        if ($statusGeralBruto === '0') {
-                                                            $classeStatus = 'inativo';
-                                                        } elseif ($statusGeralBruto === '1') {
-                                                            $classeStatus = 'ativo';
-                                                        } else {
-                                                            $classeStatus = 'semreg';
-                                                        }
-                                                    ?>
-                                                    <option class="<?= escVeiculo($classeStatus) ?>" value="<?= escVeiculo($idStatusVeiculo) ?>" <?= $idStatusVeiculo === $valorStatusVeiculo ? 'selected' : '' ?>>
-                                                        <?= escVeiculo($nomeStatusVeiculo) ?>
-                                                    </option>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <option class="ativo" value="1" selected>CONDUTOR FIXO</option>
-                                            <?php endif; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'tipovel'): ?>
-                                        <?php
-                                            $valorTipoVeiculo = trim((string) ($veiculo['tipovel'] ?? ''));
-                                            $opcoesTipoVeiculo = [];
-                                            $sqlTipoVeiculo = 'SELECT * FROM `bdautofrotas`.`tbveltipo` ORDER BY tipo';
-                                            $resultadoTipoVeiculo = mysqli_query($conn, $sqlTipoVeiculo);
-                                            if ($resultadoTipoVeiculo) {
-                                                while ($linhaTipoVeiculo = mysqli_fetch_assoc($resultadoTipoVeiculo)) {
-                                                    $opcoesTipoVeiculo[] = $linhaTipoVeiculo;
-                                                }
-                                                mysqli_free_result($resultadoTipoVeiculo);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="tipovel"
-                                            name="tipovel"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesTipoVeiculo as $linhaTipoVeiculo): ?>
-                                                <?php
-                                                    $idTipoVeiculo = trim((string) (
-                                                        $linhaTipoVeiculo['idtbveltipo']
-                                                        ?? $linhaTipoVeiculo['idtbatipovel']
-                                                        ?? $linhaTipoVeiculo['idtipovel']
-                                                        ?? ''
-                                                    ));
-                                                    $nomeTipoVeiculo = trim((string) ($linhaTipoVeiculo['tipo'] ?? ''));
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-file-invoice-dollar me-2"></i>Documentos, valores e gestão</div>
+                    <div class="card-body row g-3">
+                        <?php renderInput('doccrlv', 'Documento CRLV', value: (string) ($veiculo['doccrlv'] ?? '')); ?>
+                        <?php renderInput('dtdisponivelloc', 'Data disponível locação', 'date', value: (string) ($veiculo['dtdisponivelloc'] ?? '')); ?>
+                        <?php renderSelect('gpsemp', 'Empresa GPS', $opcoesGpsEmpresa, 'valor', 'descricao', true, '', 'Selecione...', selectedValue: (string) ($veiculo['gpsemp'] ?? '')); ?>
+                        <?php renderInput('oficina', 'Oficina', value: (string) ($veiculo['oficina'] ?? '')); ?>
+                        <?php renderInput('ncontloc', 'Nº contrato locação', value: (string) ($veiculo['ncontloc'] ?? '')); ?>
+                        <?php renderSelect('blindagem', 'Blindagem', $blindagens, 'blindagem', 'blindagem', selectedValue: (string) ($veiculo['blindagem'] ?? '')); ?>
+                        <?php renderInput('valaquisicao', 'Valor aquisição', 'text', false, 'placeholder="0,00"', value: (string) ($veiculo['valaquisicao'] ?? '')); ?>
+                        <?php renderInput('baseffa', 'Base FFA', value: (string) ($veiculo['baseffa'] ?? '')); ?>
+                        <?php renderSelect('unidade', 'Unidade', $unidades, 'unidade', 'unidade', selectedValue: (string) ($veiculo['unidade'] ?? '')); ?>
+                        <?php renderSelect('basegestao', 'Base gestão', $basesGestao, 'basegestao', 'basegestao', selectedValue: (string) ($veiculo['basegestao'] ?? '')); ?>
+                        <?php renderSelect('centrocusto', 'Centro de custo', $centrosCusto, 'ccusto', 'ccusto', selectedValue: (string) ($veiculo['ccusto'] ?? '')); ?>
+                        <?php renderInput('dttermo', 'Data termo disponibilização', 'date', value: (string) ($veiculo['dttermodisp'] ?? '')); ?>
+                        <?php renderInput('dtdisp', 'Data desmobilização', 'date', value: (string) ($veiculo['dtdesmobilizacao'] ?? '')); ?>
+                        <div class="col-12">
+                            <label class="form-label" for="obsveiculo">Observações</label>
+                            <textarea class="form-control" name="obsveiculo" id="obsveiculo" rows="3"><?= esc($veiculo['obsveiculo'] ?? '') ?></textarea>
+                        </div>
+                    </div>
+                </div>
 
-                                                    if ($idTipoVeiculo === '') {
-                                                        continue;
-                                                    }
-                                                ?>
-                                                <option value="<?= escVeiculo($idTipoVeiculo) ?>" <?= $valorTipoVeiculo === $idTipoVeiculo ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($nomeTipoVeiculo) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'situacao'): ?>
-                                        <?php
-                                            $valorSituacao = trim((string) ($veiculo['situacao'] ?? ''));
-                                            $opcoesSituacao = [];
-                                            $sqlSituacao = 'SELECT DISTINCT(situacao) AS situacao FROM `bdautofrotas`.`tbveiculo` WHERE situacao IS NOT NULL AND TRIM(situacao) <> "" ORDER BY situacao';
-                                            $resultadoSituacao = mysqli_query($conn, $sqlSituacao);
-                                            if ($resultadoSituacao) {
-                                                while ($linhaSituacao = mysqli_fetch_assoc($resultadoSituacao)) {
-                                                    $opcoesSituacao[] = $linhaSituacao;
-                                                }
-                                                mysqli_free_result($resultadoSituacao);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="situacao"
-                                            name="situacao"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesSituacao as $linhaSituacao): ?>
-                                                <?php $situacaoOpcao = trim((string) ($linhaSituacao['situacao'] ?? '')); ?>
-                                                <?php if ($situacaoOpcao === '') { continue; } ?>
-                                                <option value="<?= escVeiculo($situacaoOpcao) ?>" <?= $valorSituacao === $situacaoOpcao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($situacaoOpcao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'motorizacao'): ?>
-                                        <?php
-                                            $valorMotorizacao = trim((string) ($veiculo['motorizacao'] ?? ''));
-
-                                            $opcoesMotorizacao = ['1.0', '1.4', '1.6', '1.8', '2.0'];
-
-                                            $sqlMotorizacao = 'SELECT DISTINCT(motorizacao) AS motorizacao FROM `bdautofrotas`.`tbveiculo` WHERE motorizacao IS NOT NULL AND TRIM(motorizacao) <> "" ORDER BY motorizacao';
-                                            $resultadoMotorizacao = mysqli_query($conn, $sqlMotorizacao);
-                                            if ($resultadoMotorizacao) {
-                                                while ($linhaMotorizacao = mysqli_fetch_assoc($resultadoMotorizacao)) {
-                                                    $motorizacaoTabela = trim((string) ($linhaMotorizacao['motorizacao'] ?? ''));
-                                                    if ($motorizacaoTabela !== '' && !in_array($motorizacaoTabela, $opcoesMotorizacao, true)) {
-                                                        $opcoesMotorizacao[] = $motorizacaoTabela;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoMotorizacao);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="motorizacao"
-                                            name="motorizacao"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesMotorizacao as $opcaoMotorizacao): ?>
-                                                <option value="<?= escVeiculo($opcaoMotorizacao) ?>" <?= $valorMotorizacao === $opcaoMotorizacao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($opcaoMotorizacao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'gnv'): ?>
-                                        <?php
-                                            $valorGnv = trim((string) ($veiculo['gnv'] ?? ''));
-                                            $opcoesGnv = ['0', '1'];
-
-                                            $sqlGnv = 'SELECT DISTINCT(gnv) AS gnv FROM `bdautofrotas`.`tbveiculo` WHERE gnv IS NOT NULL AND TRIM(gnv) <> "" ORDER BY gnv';
-                                            $resultadoGnv = mysqli_query($conn, $sqlGnv);
-                                            if ($resultadoGnv) {
-                                                while ($linhaGnv = mysqli_fetch_assoc($resultadoGnv)) {
-                                                    $gnvTabela = trim((string) ($linhaGnv['gnv'] ?? ''));
-                                                    if ($gnvTabela !== '' && !in_array($gnvTabela, $opcoesGnv, true)) {
-                                                        $opcoesGnv[] = $gnvTabela;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoGnv);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="gnv"
-                                            name="gnv"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesGnv as $opcaoGnv): ?>
-                                                <?php
-                                                    $rotuloGnv = $opcaoGnv === '1' ? 'Sim' : ($opcaoGnv === '0' ? 'Não' : $opcaoGnv);
-                                                ?>
-                                                <option value="<?= escVeiculo($opcaoGnv) ?>" <?= $valorGnv === $opcaoGnv ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($rotuloGnv) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'gps'): ?>
-                                        <?php
-                                            $valorGps = trim((string) ($veiculo['gps'] ?? ''));
-                                            $opcoesGps = ['0', '1'];
-
-                                            $sqlGps = 'SELECT DISTINCT(gps) AS gps FROM `bdautofrotas`.`tbveiculo` WHERE gps IS NOT NULL AND TRIM(gps) <> "" ORDER BY gps';
-                                            $resultadoGps = mysqli_query($conn, $sqlGps);
-                                            if ($resultadoGps) {
-                                                while ($linhaGps = mysqli_fetch_assoc($resultadoGps)) {
-                                                    $gpsTabela = trim((string) ($linhaGps['gps'] ?? ''));
-                                                    if ($gpsTabela !== '' && !in_array($gpsTabela, $opcoesGps, true)) {
-                                                        $opcoesGps[] = $gpsTabela;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoGps);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="gps"
-                                            name="gps"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesGps as $opcaoGps): ?>
-                                                <?php
-                                                    $rotuloGps = $opcaoGps === '1' ? 'Sim' : ($opcaoGps === '0' ? 'Não' : $opcaoGps);
-                                                ?>
-                                                <option value="<?= escVeiculo($opcaoGps) ?>" <?= $valorGps === $opcaoGps ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($rotuloGps) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'tagpedagio'): ?>
-                                        <?php
-                                            $valorTagPedagio = trim((string) ($veiculo['tagpedagio'] ?? ''));
-                                            $opcoesTagPedagio = ['0', '1'];
-
-                                            $sqlTagPedagio = 'SELECT DISTINCT(tagpedagio) AS tagpedagio FROM `bdautofrotas`.`tbveiculo` WHERE tagpedagio IS NOT NULL AND TRIM(tagpedagio) <> "" ORDER BY tagpedagio';
-                                            $resultadoTagPedagio = mysqli_query($conn, $sqlTagPedagio);
-                                            if ($resultadoTagPedagio) {
-                                                while ($linhaTagPedagio = mysqli_fetch_assoc($resultadoTagPedagio)) {
-                                                    $tagPedagioTabela = trim((string) ($linhaTagPedagio['tagpedagio'] ?? ''));
-                                                    if ($tagPedagioTabela !== '' && !in_array($tagPedagioTabela, $opcoesTagPedagio, true)) {
-                                                        $opcoesTagPedagio[] = $tagPedagioTabela;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoTagPedagio);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="tagpedagio"
-                                            name="tagpedagio"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesTagPedagio as $opcaoTagPedagio): ?>
-                                                <?php
-                                                    $rotuloTagPedagio = $opcaoTagPedagio === '1' ? 'Sim' : ($opcaoTagPedagio === '0' ? 'Não' : $opcaoTagPedagio);
-                                                ?>
-                                                <option value="<?= escVeiculo($opcaoTagPedagio) ?>" <?= $valorTagPedagio === $opcaoTagPedagio ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($rotuloTagPedagio) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'rack'): ?>
-                                        <?php
-                                            $valorRack = trim((string) ($veiculo['rack'] ?? ''));
-                                            $opcoesRack = ['0', '1'];
-
-                                            $sqlRack = 'SELECT DISTINCT(rack) AS rack FROM `bdautofrotas`.`tbveiculo` WHERE rack IS NOT NULL AND TRIM(rack) <> "" ORDER BY rack';
-                                            $resultadoRack = mysqli_query($conn, $sqlRack);
-                                            if ($resultadoRack) {
-                                                while ($linhaRack = mysqli_fetch_assoc($resultadoRack)) {
-                                                    $rackTabela = trim((string) ($linhaRack['rack'] ?? ''));
-                                                    if ($rackTabela !== '' && !in_array($rackTabela, $opcoesRack, true)) {
-                                                        $opcoesRack[] = $rackTabela;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoRack);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="rack"
-                                            name="rack"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesRack as $opcaoRack): ?>
-                                                <?php
-                                                    $rotuloRack = $opcaoRack === '1' ? 'Sim' : ($opcaoRack === '0' ? 'Não' : $opcaoRack);
-                                                ?>
-                                                <option value="<?= escVeiculo($opcaoRack) ?>" <?= $valorRack === $opcaoRack ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($rotuloRack) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'blindagem'): ?>
-                                        <?php
-                                            $valorBlindagem = strtolower(trim((string) ($veiculo['blindagem'] ?? '')));
-                                            $opcoesBlindagem = [];
-
-                                            $sqlBlindagem = 'SELECT descricao FROM `bdautofrotas`.`tbveiculoblindagem` ORDER BY descricao';
-                                            $resultadoBlindagem = mysqli_query($conn, $sqlBlindagem);
-                                            if ($resultadoBlindagem) {
-                                                while ($linhaBlindagem = mysqli_fetch_assoc($resultadoBlindagem)) {
-                                                    $descricaoBlindagem = trim((string) ($linhaBlindagem['descricao'] ?? ''));
-                                                    if ($descricaoBlindagem !== '') {
-                                                        $opcoesBlindagem[] = $descricaoBlindagem;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoBlindagem);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="blindagem"
-                                            name="blindagem"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesBlindagem as $blindagemOpcao): ?>
-                                                <?php $valorOpcao = strtolower(trim($blindagemOpcao)); ?>
-                                                <option value="<?= escVeiculo($blindagemOpcao) ?>" <?= $valorBlindagem === $valorOpcao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($blindagemOpcao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'gpsemp'): ?>
-                                        <?php
-                                            $valorGpsEmp = trim((string) ($veiculo['gpsemp'] ?? ''));
-                                            $opcoesGpsEmp = [];
-
-                                            $sqlGpsEmp = "SELECT fantasia FROM `bdautofrotas`.`tbfornecedor` WHERE tipo = '5' AND TRIM(fantasia) <> '' ORDER BY fantasia";
-                                            $resultadoGpsEmp = mysqli_query($conn, $sqlGpsEmp);
-                                            if ($resultadoGpsEmp) {
-                                                while ($linhaGpsEmp = mysqli_fetch_assoc($resultadoGpsEmp)) {
-                                                    $fantasiaGpsEmp = trim((string) ($linhaGpsEmp['fantasia'] ?? ''));
-                                                    if ($fantasiaGpsEmp !== '') {
-                                                        $opcoesGpsEmp[] = $fantasiaGpsEmp;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoGpsEmp);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="gpsemp"
-                                            name="gpsemp"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesGpsEmp as $gpsEmpOpcao): ?>
-                                                <option value="<?= escVeiculo($gpsEmpOpcao) ?>" <?= $valorGpsEmp === $gpsEmpOpcao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($gpsEmpOpcao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                            <option value="nao possui" <?= $valorGpsEmp === 'nao possui' ? 'selected' : '' ?>>Não possui</option>
-                                        </select>
-                                    <?php elseif ($campo === 'airbag'): ?>
-                                        <?php $valorAirbag = trim((string) ($veiculo['airbag'] ?? '')); ?>
-                                        <select
-                                            class="form-select"
-                                            id="airbag"
-                                            name="airbag"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <option value="0" <?= $valorAirbag === '0' ? 'selected' : '' ?>>Não</option>
-                                            <option value="1" <?= $valorAirbag === '1' ? 'selected' : '' ?>>Sim</option>
-                                        </select>
-                                    <?php elseif ($campo === 'tipoposse'): ?>
-                                        <?php
-                                            $valorTipoPosse = trim((string) ($veiculo['tipoposse'] ?? ''));
-                                            $opcoesTipoPosse = [];
-
-                                            $sqlTipoPosse = 'SELECT descricao FROM `bdautofrotas`.`tbveiculoposse` ORDER BY descricao';
-                                            $resultadoTipoPosse = mysqli_query($conn, $sqlTipoPosse);
-                                            if ($resultadoTipoPosse) {
-                                                while ($linhaTipoPosse = mysqli_fetch_assoc($resultadoTipoPosse)) {
-                                                    $descTipoPosse = trim((string) ($linhaTipoPosse['descricao'] ?? ''));
-                                                    if ($descTipoPosse !== '') {
-                                                        $opcoesTipoPosse[] = $descTipoPosse;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoTipoPosse);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="tipoposse"
-                                            name="tipoposse"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione uma opção</option>
-                                            <?php foreach ($opcoesTipoPosse as $tipoOpcao): ?>
-                                                <?php $valorOpcaoTipoPosse = strtoupper(trim($tipoOpcao)); ?>
-                                                <option value="<?= escVeiculo($valorOpcaoTipoPosse) ?>" <?= $valorTipoPosse === $valorOpcaoTipoPosse ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($tipoOpcao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'idlocador'): ?>
-                                        <?php
-                                            $valorLocador = trim((string) ($veiculo['idlocador'] ?? ''));
-                                            $locadores = [];
-
-                                            $sqlLocador = "SELECT idtbfornecedor, fantasia FROM `bdautofrotas`.`tbfornecedor` WHERE tipo = '4' AND status = '1' ORDER BY fantasia";
-                                            $resultadoLocador = mysqli_query($conn, $sqlLocador);
-                                            if ($resultadoLocador) {
-                                                while ($linhaLocador = mysqli_fetch_assoc($resultadoLocador)) {
-                                                    $locadores[] = $linhaLocador;
-                                                }
-                                                mysqli_free_result($resultadoLocador);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="idlocador"
-                                            name="<?= escVeiculo(nomeCampoPost($campo)) ?>"
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($locadores as $locador): ?>
-                                                <?php
-                                                    $idFornecedor = trim((string) ($locador['idtbfornecedor'] ?? ''));
-                                                    $fantasiaFornecedor = trim((string) ($locador['fantasia'] ?? ''));
-                                                ?>
-                                                <option value="<?= escVeiculo($idFornecedor) ?>" <?= $valorLocador === $idFornecedor ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($fantasiaFornecedor) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'ccusto'): ?>
-                                        <?php
-                                            $valorCcusto = trim((string) ($veiculo['ccusto'] ?? ''));
-                                            $centrosCusto = [];
-
-                                            $sqlCcusto = 'SELECT descricao AS ccusto FROM `bdautofrotas`.`tbccusto` ORDER BY descricao';
-                                            $resultadoCcusto = mysqli_query($conn, $sqlCcusto);
-                                            if ($resultadoCcusto) {
-                                                while ($linhaCcusto = mysqli_fetch_assoc($resultadoCcusto)) {
-                                                    $ccustoTabela = trim((string) ($linhaCcusto['ccusto'] ?? ''));
-                                                    if ($ccustoTabela !== '') {
-                                                        $centrosCusto[] = $ccustoTabela;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoCcusto);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="ccusto"
-                                            name="<?= escVeiculo(nomeCampoPost($campo)) ?>"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($centrosCusto as $ccustoOpcao): ?>
-                                                <option value="<?= escVeiculo($ccustoOpcao) ?>" <?= $valorCcusto === $ccustoOpcao ? 'selected' : '' ?>>
-                                                    <?= escVeiculo($ccustoOpcao) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif ($campo === 'combustivel'): ?>
-                                        <?php
-                                            $valorCombustivel = strtolower(trim((string) ($veiculo['combustivel'] ?? '')));
-                                            $opcoesCombustivel = [];
-
-                                            $sqlCombustivel = 'SELECT descricao FROM `bdautofrotas`.`tbveiculocombustivel` ORDER BY descricao';
-                                            $resultadoCombustivel = mysqli_query($conn, $sqlCombustivel);
-                                            if ($resultadoCombustivel) {
-                                                while ($linhaCombustivel = mysqli_fetch_assoc($resultadoCombustivel)) {
-                                                    $descricaoCombustivel = trim((string) ($linhaCombustivel['descricao'] ?? ''));
-                                                    if ($descricaoCombustivel !== '') {
-                                                        $opcoesCombustivel[] = $descricaoCombustivel;
-                                                    }
-                                                }
-                                                mysqli_free_result($resultadoCombustivel);
-                                            }
-                                        ?>
-                                        <select
-                                            class="form-select"
-                                            id="combustivel"
-                                            name="combustivel"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                            <option value="">Selecione...</option>
-                                            <?php foreach ($opcoesCombustivel as $combustivelOpcao): ?>
-                                                <?php $valorOpcao = strtolower($combustivelOpcao); ?>
-                                                <option value="<?= escVeiculo($valorOpcao) ?>" <?= $valorCombustivel === $valorOpcao ? 'selected' : '' ?> >
-                                                    <?= escVeiculo(ucwords(strtolower(str_replace('_', ' ', $combustivelOpcao)))) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    <?php elseif (formatoInput($campo) === 'file'): ?>
-                                        <input
-                                            class="form-control"
-                                            type="file"
-                                            id="<?= escVeiculo($campo) ?>"
-                                            name="<?= escVeiculo(nomeCampoPost($campo)) ?>"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?>
-                                        >
-                                    <?php else: ?>
-                                        <?php $valorBruto = $veiculo[$campo] ?? (($campo === 'horamovimentacao') ? ($veiculo['datamovimentacao'] ?? '') : ''); ?>
-                                        <input
-                                            class="form-control"
-                                            type="<?= escVeiculo(formatoInput($campo)) ?>"
-                                            id="<?= escVeiculo($campo) ?>"
-                                            name="<?= escVeiculo(nomeCampoPost($campo)) ?>"
-                                            value="<?= escVeiculo(valorInput($campo, $valorBruto)) ?>"
-                                            placeholder="<?= escVeiculo(placeholderCampo($campo)) ?>"
-                                            <?= campoObrigatorio($campo) ? 'required' : '' ?><?= atributosValidacao($campo) ?>
-                                        >
-                                    <?php endif; ?>
-                                </div>
-                            <?php endforeach; ?>
-                            <?php if ($grupoAtual !== null): ?>
-                                </div>
-                            </section>
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-paperclip me-2"></i>Anexos</div>
+                    <div class="card-body row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label" for="crlv">CRLV</label>
+                            <input class="form-control" type="file" name="crlv" id="crlv" accept=".pdf,.jpg,.jpeg,.png">
+                            <?php if (!empty($documentosVeiculo['crlv'])): ?>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" href="<?= esc(urlDocumentoUploadPortal($documentosVeiculo['crlv'])) ?>" target="_blank" rel="noopener"><i class="fas fa-eye me-1"></i>Abrir CRLV atual</a>
                             <?php endif; ?>
                         </div>
-
-                        <div class="col-sm-12 form-floating mt-3 mb-3">
-                            <textarea
-                                class="form-control"
-                                name="obsveiculo"
-                                id="obsveiculo"
-                                placeholder="Observação"
-                                rows="4"
-                                cols="50"
-                                style="height: 200px !important;"
-                            ><?= escVeiculo($veiculo['obsveiculo'] ?? '') ?></textarea>
-                            <label for="obsveiculo">Observações:</label>
+                        <div class="col-md-4">
+                            <label class="form-label" for="crv">CRV</label>
+                            <input class="form-control" type="file" name="crv" id="crv" accept=".pdf,.jpg,.jpeg,.png">
+                            <?php if (!empty($documentosVeiculo['crv'])): ?>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" href="<?= esc(urlDocumentoUploadPortal($documentosVeiculo['crv'])) ?>" target="_blank" rel="noopener"><i class="fas fa-eye me-1"></i>Abrir CRV atual</a>
+                            <?php endif; ?>
                         </div>
-
-                        <div class="mt-3 pb-2 d-flex col-sm-12 justify-content-center">
-                            <div>
-                                <button class="btn btn-success" type="submit">Confirmar edição</button>
-                            </div>
-                            <div class="ms-5">
-                                <a class="btn btn-danger" href="listagem-veiculo.php" onclick="if (window.opener && !window.opener.closed) { window.close(); return false; }">Cancelar edição</a>
-                            </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="ipva">IPVA</label>
+                            <input class="form-control" type="file" name="ipva" id="ipva" accept=".pdf,.jpg,.jpeg,.png">
+                            <?php if (!empty($documentosVeiculo['cert_ipva'])): ?>
+                                <a class="btn btn-sm btn-outline-secondary mt-2" href="<?= esc(urlDocumentoUploadPortal($documentosVeiculo['cert_ipva'])) ?>" target="_blank" rel="noopener"><i class="fas fa-eye me-1"></i>Abrir IPVA atual</a>
+                            <?php endif; ?>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+
+                <p class="required-note">* Campos obrigatórios.</p>
+
+                <div class="edit-actions d-flex gap-2" role="group" aria-label="Ações da edição">
+                    <button class="btn btn-success" type="submit" <?= $erroCarregamento !== '' ? 'disabled' : '' ?>>Confirmar edição</button>
+                    <a class="btn btn-danger" href="listagem-veiculo.php" onclick="if (window.opener && !window.opener.closed) { window.close(); return false; }">Cancelar edição</a>
+                </div>
+            </form>
         </main>
     </div>
-    </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.15/jquery.mask.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('sidebarToggle')?.addEventListener('click', function(event) {
             event.preventDefault();
             document.body.classList.toggle('sb-sidenav-toggled');
         });
+
+        $(document).ready(function() {
+            $('#placa').mask('AAA0U00', {
+                translation: {
+                    'A': { pattern: /[A-Za-z]/ },
+                    'U': { pattern: /[A-Za-z0-9]/ }
+                },
+                onKeyPress: function(value, e, field, options) {
+                    e.currentTarget.value = value.toUpperCase();
+                    const val = value.replace(/[^\w]/g, '');
+                    const isNumeric = !isNaN(parseFloat(val[4])) && isFinite(val[4]);
+                    let mask = 'AAA 0U00';
+                    if (val.length > 4 && isNumeric) {
+                        mask = 'AAA-0000';
+                    }
+                    $(field).mask(mask, options);
+                }
+            });
+        });
     </script>
 </body>
 </html>
-<!--deixado marca e modelo como opcionais e recebendo texto. Lembrar de atualizar depois -->
