@@ -220,6 +220,7 @@ $classificacoesVeiculo = [];
 $marcasVeiculo = [];
 $tiposVeiculo = [];
 $opcoesGpsEmpresa = [];
+$locadores = [];
 
 if (isset($conn) && $conn instanceof mysqli) {
     $aplicacoes = consultarOpcoes($conn, "
@@ -356,6 +357,16 @@ if (isset($conn) && $conn instanceof mysqli) {
     }, $opcoesGpsEmpresa)));
 
     $opcoesGpsEmpresa[] = ['valor' => '0', 'descricao' => 'Não possui'];
+
+        $locadores = consultarOpcoes($conn, "
+                SELECT idtbfornecedor, fantasia
+                FROM `{$databaseName}`.`tbfornecedor`
+                WHERE tipo = '4'
+                    AND status = '1'
+                    AND fantasia IS NOT NULL
+                    AND TRIM(fantasia) <> ''
+                ORDER BY fantasia
+        ");
 }
 
 $modelosFormatados = array_map(static function (array $modelo): array {
@@ -436,6 +447,49 @@ $blindagensFormatadas = montarOpcoesTabela(
     ['id'],
     ['descricao']
 );
+
+$locadoresFormatados = montarOpcoesTabela(
+    $locadores,
+    ['idtbfornecedor', 'idfornecedor', 'id'],
+    ['fantasia', 'razaosocial', 'nome']
+);
+
+$locadorAtual = trim((string) ($veiculo['idlocador'] ?? ''));
+if ($locadorAtual !== '') {
+    $locadorExiste = false;
+    foreach ($locadoresFormatados as $locadorOpcao) {
+        if ((string) ($locadorOpcao['valor'] ?? '') === $locadorAtual) {
+            $locadorExiste = true;
+            break;
+        }
+    }
+
+    if (!$locadorExiste) {
+        $descricaoLocadorAtual = $locadorAtual;
+        if (isset($conn) && $conn instanceof mysqli) {
+            $stmtLocadorAtual = mysqli_prepare($conn, "
+                SELECT fantasia, razaosocial, nome
+                FROM `{$databaseName}`.`tbfornecedor`
+                WHERE idtbfornecedor = ?
+                LIMIT 1
+            ");
+            if ($stmtLocadorAtual) {
+                mysqli_stmt_bind_param($stmtLocadorAtual, 's', $locadorAtual);
+                mysqli_stmt_execute($stmtLocadorAtual);
+                $resultadoLocadorAtual = mysqli_stmt_get_result($stmtLocadorAtual);
+                $linhaLocadorAtual = $resultadoLocadorAtual ? (mysqli_fetch_assoc($resultadoLocadorAtual) ?: []) : [];
+                mysqli_stmt_close($stmtLocadorAtual);
+
+                $descricaoLocadorAtual = trim((string) ($linhaLocadorAtual['fantasia'] ?? $linhaLocadorAtual['razaosocial'] ?? $linhaLocadorAtual['nome'] ?? $locadorAtual));
+            }
+        }
+
+        array_unshift($locadoresFormatados, [
+            'valor' => $locadorAtual,
+            'descricao' => $descricaoLocadorAtual,
+        ]);
+    }
+}
 
 $blindagemAtual = trim((string) ($veiculo['blindagem'] ?? ''));
 $blindagemSelecionada = '';
@@ -564,7 +618,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
                         <?php renderInput('dtentrega', 'Data entrega', 'date', value: (string) ($veiculo['dtentrega'] ?? '')); ?>
                         <?php renderInput('dtdevolucao', 'Data devolução', 'date', value: (string) ($veiculo['dtdevolucao'] ?? '')); ?>
                         <?php renderSelect('tipoposse', 'Tipo de posse', $opcoesTipoPosse, '', '', true, selectedValue: (string) ($veiculo['tipoposse'] ?? '')); ?>
-                        <?php renderInput('locador', 'Locador / fornecedor', value: (string) ($veiculo['idlocador'] ?? '')); ?>
+                        <?php renderSelect('locador', 'Locador', $locadoresFormatados, 'valor', 'descricao', false, '', 'Selecione a locadora...', selectedValue: $locadorAtual); ?>
                         <?php renderInput('dtdevolucaoloc', 'Vencimento da locação', 'date', value: (string) ($veiculo['dtdevolucaoloc'] ?? '')); ?>
                     </div>
                 </div>

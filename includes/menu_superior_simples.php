@@ -275,9 +275,6 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('veiculos/inventario-veiculo.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Inventário de veículos</a></li>
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('veiculos/importar-hodometro.php', $baseAutofrotaUrl) ?>"
-                                    target="_self">Importar hodômetro</a></li>
-                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Iniciar Vistoria</a></li>
                         </ul>

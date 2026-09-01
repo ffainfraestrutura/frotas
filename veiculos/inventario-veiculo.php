@@ -10,8 +10,6 @@ exigirLogin();
 
 $matriculaLogada = (string) ($_SESSION['matricula'] ?? $_POST['matricula'] ?? $_SESSION['usuario'] ?? '');
 $perfilLogado = (string) ($_SESSION['perfil'] ?? $_POST['perfil'] ?? '');
-$idsOcultos = [1241, 1767, 1764, 1765, 1893, 1894, 1895, 1896];
-$matriculasSemPermissaoEdicao = ['160030', '410109', '500422', '501285', '410039', '501640', '500459', '411425', '003931'];
 $unidades = [];
 $basesGestao = [];
 $veiculos = [];
@@ -36,6 +34,10 @@ function formatarDataInventario(?string $data, string $formato = 'd/m/Y'): strin
 
 function vincularParametrosInventario(mysqli_stmt $stmt, string $tipos, array $parametros): bool
 {
+    if ($tipos === '' || $parametros === []) {
+        return true;
+    }
+
     $referencias = [];
     foreach ($parametros as $indice => $valor) {
         $referencias[$indice] = &$parametros[$indice];
@@ -60,7 +62,7 @@ function parametrosSelecionadosInventario(array $valores): array
 
 function montarBotaoEditarInventario(string $idVeiculo, string $matriculaLogada, string $perfilLogado): string
 {
-    return '<form method="post" action="editarcadveiculo.php" target="_blank" class="d-inline">'
+    return '<form method="post" action="editar-veiculo.php" target="_blank" class="d-inline">'
         . '<input type="hidden" name="matr_autor" value="' . esc($matriculaLogada) . '">'
         . '<input type="hidden" name="perfil_autor" value="' . esc($perfilLogado) . '">'
         . '<input type="hidden" name="idtbveiculo" value="' . esc($idVeiculo) . '">'
@@ -126,7 +128,6 @@ $tipoPosseSelecionado = trim((string) ($_POST['tp'] ?? ''));
 if ($tipoPosseSelecionado === 'PRÓPRIO') {
     $tipoPosseSelecionado = 'PROPRIO';
 }
-$bloquearEdicao = in_array($matriculaLogada, $matriculasSemPermissaoEdicao, true);
 $colunaStatusFuncionario = null;
 
 if (isset($conn) && $conn instanceof mysqli) {
@@ -185,10 +186,9 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     $where = [
         'v.visivel = 1',
-        'v.idtbveiculo NOT IN (' . implode(',', array_fill(0, count($idsOcultos), '?')) . ')',
     ];
-    $tipos = str_repeat('i', count($idsOcultos));
-    $parametros = $idsOcultos;
+    $tipos = '';
+    $parametros = [];
 
     if ($unidadePostada !== '' && $unidadePostada !== 'TODOS') {
         $where[] = 'v.unidade = ?';
@@ -532,7 +532,7 @@ if ($tipoPosseSelecionado !== '') {
                             }
                             ?>
                             <tr>
-                                <td><?= $perfilLogado === '4' && !$bloquearEdicao ? montarBotaoEditarInventario($idVeiculo, $matriculaLogada, $perfilLogado) : '' ?></td>
+                                <td><?= $perfilLogado === '4' ? montarBotaoEditarInventario($idVeiculo, $matriculaLogada, $perfilLogado) : '' ?></td>
                                 <td><?= esc($veiculo['placa'] ?? '') ?></td>
                                 <td><?= esc($veiculo['condutor_nome'] ?? $veiculo['nomecol'] ?? '') ?></td>
                                 <td><?= esc($veiculo['matcond'] ?? '') ?></td>
