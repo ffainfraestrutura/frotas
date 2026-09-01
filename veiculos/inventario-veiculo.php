@@ -227,10 +227,10 @@ if (isset($conn) && $conn instanceof mysqli) {
             COALESCE(sv.status, v.statusvel, '') AS status_veiculo,
             COALESCE(av.aplicacao, v.aplicacao, '') AS aplicacao_nome,
             COALESCE(mv.modelo, v.modelo, '') AS modelo_nome,
-            func.nome AS condutor_nome,
-            func.cpf AS condutor_cpf,
+            cond.nome AS condutor_nome,
+            cond.cpf AS condutor_cpf,
             {$selectStatusFuncionario},
-            func.cargo AS condutor_cargo,
+            cond.cargo AS condutor_cargo,
             cn.numcnh,
             cn.validade AS validade_cnh,
             man.oficina AS oficina_manutencao,
@@ -247,8 +247,8 @@ if (isset($conn) && $conn instanceof mysqli) {
             ON av.idtbaplicacaoveic = v.aplicacao
         LEFT JOIN `{$databaseName}`.`tbveiculomodelo` mv
             ON mv.idtbmodeloveic = v.modelo
-        LEFT JOIN `{$databaseName}`.`tbfuncionario` func
-            ON func.matricula = v.matcond
+        LEFT JOIN `{$databaseName}`.`tbcondutor` cond
+            ON cond.matricula = v.matcond
         LEFT JOIN `{$databaseName}`.`tbcnh` cn
             ON cn.matricula = v.matcond
         LEFT JOIN (
