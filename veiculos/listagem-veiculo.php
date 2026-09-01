@@ -12,8 +12,6 @@ $usuarioLogado = $_SESSION['usuario'] ?? 'Usuário';
 $matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
 $unidades = ['RJ', 'PR', 'SP', 'MG', 'ES', 'TODOS'];
-$idsOcultos = [1241, 1767, 1764, 1765, 1893, 1894, 1895, 1896];
-$matriculasSemPermissaoEdicao = ['160030', '410109', '501285', '410039', '411425', '003931'];
 $basesGestao = [];
 $veiculos = [];
 $erroConsulta = '';
@@ -109,7 +107,7 @@ function montarBotaoPost(string $action, array $campos, string $icone, string $t
         . '</button></form>';
 }
 
-function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $perfilLogado, string $matriculaLogada, bool $bloquearEdicao): array
+function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $perfilLogado, string $matriculaLogada): array
 {
     $tipoposse = (string) ($veiculo['tipoposse'] ?? '');
     if ($tipoposse === 'PROPRIO') {
@@ -166,11 +164,9 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
         'perfil_autor' => $perfilLogado,
     ];
 
-    $podeExibirAcoes = !$bloquearEdicao;
     $manutencaoHtml = '';
     $editarHtml = '';
     $documentosHtml = '';
-    $apagarHtml = '';
     $infoPlaca = '';
     $infoCondutor = '';
 
@@ -186,32 +182,25 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
         ], 'info', 'Histórico Condutor');
     }
 
-    if ($podeExibirAcoes) {
-        if ($emManutencao) {
-            $manutencaoHtml = montarBotaoPost('/../manutencoes/editar-manutencao.php?idtbmanprev=' . rawurlencode($idManutencao) . '&placa=' . rawurlencode($placa), $camposAutor + [
-                'idtbmanprev' => $idManutencao,
-                'placa' => $placa,
-            ], 'edit_note', 'Editar manutenção cadastrada');
-        } else {
-            $manutencaoHtml = montarBotaoPost('/../manutencoes/cadastrar-manutencao-preventiva.php?placa=' . rawurlencode($placa), $camposAutor + [
-                'placa' => $placa,
-            ], 'add_circle', 'Cadastrar nova manutenção');
-        }
-
-        $editarHtml = montarBotaoPost('editar-veiculo.php', $camposAutor + [
-            'idtbveiculo' => $idVeiculo,
-        ], 'edit_note', 'Editar Veículo');
-
-        $documentosHtml = montarBotaoPost('enviar-documento-veiculo.php?idtbveiculo=' . rawurlencode($idVeiculo) . '&placa=' . rawurlencode($placa), $camposAutor + [
-            'idtbveiculo' => $idVeiculo,
+    if ($emManutencao) {
+        $manutencaoHtml = montarBotaoPost('/../manutencoes/editar-manutencao.php?idtbmanprev=' . rawurlencode($idManutencao) . '&placa=' . rawurlencode($placa), $camposAutor + [
+            'idtbmanprev' => $idManutencao,
             'placa' => $placa,
-        ], 'attach_file', 'Enviar Documentos');
-
-        $apagarHtml = '<button type="button" data-bs-toggle="modal" data-bs-target="#apagarveic" '
-            . 'data-idtbveiculo="' . esc($idVeiculo) . '" data-placa="' . esc($placa) . '" '
-            . 'style="border: none; background-color: transparent;" title="Apagar registro">'
-            . '<span class="material-symbols-outlined">delete</span></button>';
+        ], 'edit_note', 'Editar manutenção cadastrada');
+    } else {
+        $manutencaoHtml = montarBotaoPost('/../manutencoes/cadastrar-manutencao-preventiva.php?placa=' . rawurlencode($placa), $camposAutor + [
+            'placa' => $placa,
+        ], 'add_circle', 'Cadastrar nova manutenção');
     }
+
+    $editarHtml = montarBotaoPost('editar-veiculo.php', $camposAutor + [
+        'idtbveiculo' => $idVeiculo,
+    ], 'edit_note', 'Editar Veículo');
+
+    $documentosHtml = montarBotaoPost('enviar-documento-veiculo.php?idtbveiculo=' . rawurlencode($idVeiculo) . '&placa=' . rawurlencode($placa), $camposAutor + [
+        'idtbveiculo' => $idVeiculo,
+        'placa' => $placa,
+    ], 'attach_file', 'Enviar Documentos');
 
     return [
         'style' => trim(($linhaVencida ? 'background-color: #F0F0F0;' : 'background-color: white;') . ($corTexto ? ' color: ' . $corTexto . ';' : '')),
@@ -233,7 +222,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
             $manutencaoHtml,
             $editarHtml,
             $documentosHtml,
-            $apagarHtml,
         ],
     ];
 }
@@ -265,7 +253,6 @@ if (!is_array($basesPostadas)) {
     $basesPostadas = [$basesPostadas];
 }
 $basesSelecionadas = parametrosSelecionados($basesPostadas);
-$bloquearEdicao = in_array($matriculaLogada, $matriculasSemPermissaoEdicao, true);
 
 if (isset($conn) && $conn instanceof mysqli) {
     $sqlBases = "
@@ -288,10 +275,9 @@ if (isset($conn) && $conn instanceof mysqli) {
 
     $where = [
         'v.visivel = 1',
-        'v.idtbveiculo NOT IN (' . implode(',', array_fill(0, count($idsOcultos), '?')) . ')',
     ];
-    $tipos = str_repeat('i', count($idsOcultos));
-    $parametros = $idsOcultos;
+    $tipos = '';
+    $parametros = [];
 
     if ($unidadeSelecionada !== 'TODOS') {
         $where[] = 'v.unidade = ?';
@@ -385,7 +371,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         if ($resultadoVeiculos) {
             while ($veiculo = mysqli_fetch_assoc($resultadoVeiculos)) {
                 if (($veiculo['placa'] ?? '') !== '') {
-                    $veiculos[] = montarLinhaVeiculo($veiculo, $hoje, $perfilLogado, $matriculaLogada, $bloquearEdicao);
+                    $veiculos[] = montarLinhaVeiculo($veiculo, $hoje, $perfilLogado, $matriculaLogada);
                 }
             }
             mysqli_free_result($resultadoVeiculos);
@@ -532,8 +518,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
             <section class="d-flex justify-content-start actions flex-wrap align-items-center">
                 <a class="btn btn-success" href="cadastroveiculo.php">Cadastrar Veículo</a>
                 <a class="btn btn-secondary" href="inventario-veiculo.php">Inventário de Veículos</a>
-                <a class="btn btn-secondary" href="manutencoes/listagem-manutencao.php">Veículos em Manutenção</a>
-                <a class="btn btn-primary" href="importar-hodometro.php">Atualização de Hodômetro em Lote</a>
                 <form action="excel/exportar-veiculo-completo.php" 
                  method="post" target="_blank" class="d-inline">
                     <input type="hidden" name="matr_autor" value="<?= esc($matriculaLogada) ?>">
@@ -583,7 +567,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
                             <th>Cadastrar/Editar Manutenção</th>
                             <th>Editar Veículo</th>
                             <th>Enviar Documentos</th>
-                            <th>Apagar Registro</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -611,30 +594,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
         </div>
     </div>
 
-    <div class="modal fade" id="apagarveic" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Apagar veículo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
-                </div>
-                <div class="modal-body">
-                    Confirma apagar o registro do veículo <strong id="placaApagar"></strong>?
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <form method="post" action="control/apagarveiculo.php">
-                        <input type="hidden" name="idtbveiculo" id="idVeiculoApagar" value="">
-                        <input type="hidden" name="placa" id="placaApagarInput" value="">
-                        <input type="hidden" name="matr_autor" value="<?= esc($matriculaLogada) ?>">
-                        <input type="hidden" name="escolha" value="1">
-                        <button type="submit" class="btn btn-danger">Apagar</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -643,19 +602,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
             event.preventDefault();
             document.body.classList.toggle('sb-sidenav-toggled');
         });
-
-        const modalApagarVeiculo = document.getElementById('apagarveic');
-        if (modalApagarVeiculo) {
-            modalApagarVeiculo.addEventListener('show.bs.modal', function (event) {
-                const botao = event.relatedTarget;
-                const idtbveiculo = botao?.getAttribute('data-idtbveiculo') || '';
-                const placa = botao?.getAttribute('data-placa') || '';
-
-                document.getElementById('idVeiculoApagar').value = idtbveiculo;
-                document.getElementById('placaApagar').textContent = placa;
-                document.getElementById('placaApagarInput').value = placa;
-            });
-        }
 
         $(document).ready(function() {
             $('#tabelaVeiculos').DataTable({
