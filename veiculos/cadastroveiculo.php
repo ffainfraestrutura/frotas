@@ -174,6 +174,7 @@ $classificacoesVeiculo = [];
 $marcasVeiculo = [];
 $tiposVeiculo = [];
 $opcoesGpsEmpresa = [];
+$locadores = [];
 $oficinas = [];
 
 if (isset($conn) && $conn instanceof mysqli) {
@@ -293,6 +294,16 @@ if (isset($conn) && $conn instanceof mysqli) {
     }, $opcoesGpsEmpresa)));
 
     $opcoesGpsEmpresa[] = ['valor' => '0', 'descricao' => 'Não possui'];
+
+        $locadores = consultarOpcoes($conn, "
+                SELECT idtbfornecedor, fantasia
+                FROM `{$databaseName}`.`tbfornecedor`
+                WHERE tipo = '4'
+                    AND status = '1'
+                    AND fantasia IS NOT NULL
+                    AND TRIM(fantasia) <> ''
+                ORDER BY fantasia
+        ");
 }
 
 $modelosFormatados = array_map(static function (array $modelo): array {
@@ -341,6 +352,12 @@ $blindagensFormatadas = montarOpcoesTabela(
     $blindagens,
     ['id'],
     ['descricao']
+);
+
+$locadoresFormatados = montarOpcoesTabela(
+    $locadores,
+    ['idtbfornecedor', 'idfornecedor', 'id'],
+    ['fantasia', 'razaosocial', 'nome']
 );
 
 $opcoesUf = ['AC'=>'AC','AL'=>'AL','AP'=>'AP','AM'=>'AM','BA'=>'BA','CE'=>'CE','DF'=>'DF','ES'=>'ES','GO'=>'GO','MA'=>'MA','MT'=>'MT','MS'=>'MS','MG'=>'MG','PA'=>'PA','PB'=>'PB','PR'=>'PR','PE'=>'PE','PI'=>'PI','RJ'=>'RJ','RN'=>'RN','RS'=>'RS','RO'=>'RO','RR'=>'RR','SC'=>'SC','SP'=>'SP','SE'=>'SE','TO'=>'TO'];
@@ -443,7 +460,7 @@ $statusDisponivelPadrao = $localizarOpcaoPorDescricao($statusVeiculoFormatado, '
                         <?php renderInput('dtentrega', 'Data entrega', 'date'); ?>
                         <?php renderInput('dtdevolucao', 'Data devolução', 'date'); ?>
                         <?php renderSelect('tipoposse', 'Tipo de posse', $opcoesTipoPosse, '', '', true); ?>
-                        <?php renderInput('locador', 'Locador / fornecedor'); ?>
+                        <?php renderSelect('locador', 'Locador', $locadoresFormatados, 'valor', 'descricao', false, '', 'Selecione a locadora...'); ?>
                         <?php renderInput('dtdevolucaoloc', 'Vencimento da locação', 'date'); ?>
                     </div>
                 </div>
