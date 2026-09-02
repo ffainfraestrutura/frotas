@@ -166,7 +166,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
 
     $manutencaoHtml = '';
     $editarHtml = '';
-    $documentosHtml = '';
     $infoPlaca = '';
     $infoCondutor = '';
 
@@ -197,11 +196,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
         'idtbveiculo' => $idVeiculo,
     ], 'edit_note', 'Editar Veículo');
 
-    $documentosHtml = montarBotaoPost('enviar-documento-veiculo.php?idtbveiculo=' . rawurlencode($idVeiculo) . '&placa=' . rawurlencode($placa), $camposAutor + [
-        'idtbveiculo' => $idVeiculo,
-        'placa' => $placa,
-    ], 'attach_file', 'Enviar Documentos');
-
     return [
         'style' => trim(($linhaVencida ? 'background-color: #F0F0F0;' : 'background-color: white;') . ($corTexto ? ' color: ' . $corTexto . ';' : '')),
         'cells' => [
@@ -221,7 +215,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
             esc($autor),
             $manutencaoHtml,
             $editarHtml,
-            $documentosHtml,
         ],
     ];
 }
@@ -312,8 +305,8 @@ if (isset($conn) && $conn instanceof mysqli) {
             COALESCE(sv.status, 'CONDUTOR FIXO') AS situacao,
             av.aplicacao AS aplicacao_nome,
             mv.modelo AS modelo_nome,
-            func.nome AS nomecond,
-            func.cargo AS cargo_condutor,
+            cond.nome AS nomecond,
+            cond.cargo AS cargo_condutor,
             man.idtbmanprev,
             man.oficina,
             logv.acao AS ultima_movimentacao,
@@ -330,8 +323,8 @@ if (isset($conn) && $conn instanceof mysqli) {
             ON av.idtbaplicacaoveic = v.aplicacao
         LEFT JOIN `{$databaseName}`.`tbveiculomodelo` mv
             ON mv.idtbmodeloveic = v.modelo
-        LEFT JOIN `{$databaseName}`.`tbfuncionario` func
-            ON func.matricula = v.matcond
+        LEFT JOIN `{$databaseName}`.`tbcondutor` cond
+            ON cond.matricula = v.matcond
         LEFT JOIN (
             SELECT man_atual.*
             FROM `{$databaseName}`.`tbmanprev` man_atual
@@ -566,7 +559,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
                             <th>Feita por</th>
                             <th>Cadastrar/Editar Manutenção</th>
                             <th>Editar Veículo</th>
-                            <th>Enviar Documentos</th>
                         </tr>
                     </thead>
                     <tbody>

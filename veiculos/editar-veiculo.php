@@ -702,6 +702,7 @@ $opcoesCombustivel = ['FLEX' => 'FLEX', 'GASOLINA' => 'GASOLINA', 'ETANOL' => 'E
 
                 <div class="edit-actions d-flex gap-2" role="group" aria-label="Ações da edição">
                     <button class="btn btn-success" type="submit" <?= $erroCarregamento !== '' ? 'disabled' : '' ?>>Confirmar edição</button>
+                    <a class="btn btn-secondary" href="listagem-veiculo.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='listagem-veiculo.php'; } return false;">Voltar</a>
                     <a class="btn btn-danger" href="listagem-veiculo.php" onclick="if (window.opener && !window.opener.closed) { window.close(); return false; }">Cancelar edição</a>
                 </div>
             </form>

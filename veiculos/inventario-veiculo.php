@@ -464,7 +464,7 @@ if ($tipoPosseSelecionado !== '') {
                 </div>
             <?php else: ?>
                 <div class="alert alert-info mt-3" role="alert">
-                    <i class="fas fa-info-circle me-2"></i><strong>Exibição completa:</strong> listando todos os veículos visíveis no inventário.
+                    <i class="fas fa-info-circle me-2"></i>Listando todos os veículos visíveis no inventário.
                 </div>
             <?php endif; ?>
 

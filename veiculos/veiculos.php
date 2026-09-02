@@ -501,7 +501,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
                 <a class="btn btn-success" href="cadastroveiculo.php">Cadastro Unitário</a>
                 <a class="btn btn-secondary" href="relinventario.php">Todos os Veículos</a>
                 <a class="btn btn-secondary" href="manutencoes/listagem-manutencao.php">Veículos em Manutenção</a>
-                <a class="btn btn-primary" href="importhodometro.php">Atualização de Hodômetro em Lote</a>
                 <form action="control/gerarexcelveicativoscompleto.php" method="post" target="_blank" class="d-inline">
                     <input type="hidden" name="matr_autor" value="<?= esc($matriculaLogada) ?>">
                     <input type="hidden" name="unidades" value="<?= esc($unidadeSelecionada) ?>">
