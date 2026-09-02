@@ -166,7 +166,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
 
     $manutencaoHtml = '';
     $editarHtml = '';
-    $documentosHtml = '';
     $infoPlaca = '';
     $infoCondutor = '';
 
@@ -197,11 +196,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
         'idtbveiculo' => $idVeiculo,
     ], 'edit_note', 'Editar Veículo');
 
-    $documentosHtml = montarBotaoPost('enviar-documento-veiculo.php?idtbveiculo=' . rawurlencode($idVeiculo) . '&placa=' . rawurlencode($placa), $camposAutor + [
-        'idtbveiculo' => $idVeiculo,
-        'placa' => $placa,
-    ], 'attach_file', 'Enviar Documentos');
-
     return [
         'style' => trim(($linhaVencida ? 'background-color: #F0F0F0;' : 'background-color: white;') . ($corTexto ? ' color: ' . $corTexto . ';' : '')),
         'cells' => [
@@ -221,7 +215,6 @@ function montarLinhaVeiculo(array $veiculo, DateTimeImmutable $hoje, string $per
             esc($autor),
             $manutencaoHtml,
             $editarHtml,
-            $documentosHtml,
         ],
     ];
 }
@@ -566,7 +559,6 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
                             <th>Feita por</th>
                             <th>Cadastrar/Editar Manutenção</th>
                             <th>Editar Veículo</th>
-                            <th>Enviar Documentos</th>
                         </tr>
                     </thead>
                     <tbody>
