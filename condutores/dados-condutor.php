@@ -103,7 +103,7 @@ renderCabecalhoAutofrota('Dados do Condutor');
         <div>
             <h1 class="h3 mb-1">Dados do Condutor</h1>
         </div>
-        <a class="btn btn-secondary" href="listagem-condutor.php"><i class="fa fa-arrow-left me-1"></i>Voltar</a>
+        <a class="btn btn-secondary" href="listagem-condutor.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='listagem-condutor.php'; } return false;"><i class="fa fa-arrow-left me-1"></i>Voltar</a>
     </div>
 
     <?php if ($matriculaCondutor === ''): ?>

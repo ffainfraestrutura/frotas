@@ -10,8 +10,7 @@ $matriculaLogada = (string) (($autofrotaSessao['matricula'] ?? '') !== '' ? $aut
 $conn = $autofrotaSessao['conn'] ?? null;
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? '');
-$bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
-$podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
+$podeEditar = $perfilLogado === '4';
 $nomeSolicitante = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? 'Usuário');
 $ccustoSolicitante = '';
 if ($conn instanceof mysqli && $databaseCorp !== '') {
@@ -435,7 +434,7 @@ if ($oficinaAtual !== '') {
             </div>
         <?php endif; ?>
         <div class="ms-5">
-            <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php">
+            <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='solicitar-manutencao-preventiva.php'; } return false;">
                 <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Voltar
             </a>
         </div>
