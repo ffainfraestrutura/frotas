@@ -378,18 +378,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-4">
             <label class="form-label">Tipo de pagamento</label>
-            <select class="form-select" name="tipopagamento">
-                <option value="">Selecione...</option>
-                <?php foreach ($formasPagamentoManutencao as $tipoPagamentoOpcao): ?>
-                    <option value="<?= esc($tipoPagamentoOpcao) ?>" <?= (($man['tipopagamento'] ?? '') === $tipoPagamentoOpcao) ? 'selected' : '' ?>><?= esc($tipoPagamentoOpcao) ?></option>
-                <?php endforeach; ?>
-                <?php
-                $tipoPagamentoAtual = trim((string) ($man['tipopagamento'] ?? ''));
-                if ($tipoPagamentoAtual !== '' && !isset($formasPagamentoManutencao[$tipoPagamentoAtual])):
-                ?>
-                    <option value="<?= esc($tipoPagamentoAtual) ?>" selected><?= esc($tipoPagamentoAtual) ?></option>
-                <?php endif; ?>
-            </select>
+            <input class="form-control" name="tipopagamento" value="<?= esc($man['tipopagamento'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Reembolso aprovado</label>
@@ -497,9 +486,9 @@ if ($oficinaAtual !== '') {
     </div>
     <div class="form-actions-floating d-flex gap-2" role="group" aria-label="Ações do cadastro">
         <?php if ($podeEditar): ?>
-            <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar Manutenção</button>
+            <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar cadastro de manutenção</button>
         <?php endif; ?>
-        <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='solicitar-manutencao-preventiva.php'; } return false;">Voltar</a>
+        <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='solicitar-manutencao-preventiva.php'; } return false;"><i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Voltar</a>
         <a class="btn btn-danger" href="solicitar-manutencao-preventiva.php">Cancelar cadastro</a>
     </div>
 </div>

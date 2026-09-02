@@ -219,7 +219,7 @@ if ($oficinaAtual !== '') {
     $oficinas[$oficinaAtual] = $oficinaAtual;
     natcasesort($oficinas);
 }
-?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}.form-actions-floating{position:fixed;right:24px;bottom:24px;z-index:1030;padding:12px;background:rgba(255,255,255,.96);border:1px solid #dee2e6;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}@media (max-width: 575.98px){.form-actions-floating{right:12px;bottom:12px}}</style></head>
+?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}.acoes-flutuantes{position:fixed;right:24px;bottom:24px;z-index:1030;padding:12px;background:rgba(255,255,255,.96);border:1px solid #dee2e6;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}@media (max-width: 768px){.acoes-flutuantes{left:12px;right:12px;bottom:12px;display:grid !important;grid-template-columns:1fr;gap:8px !important}.acoes-flutuantes .ms-5{margin-left:0 !important}.acoes-flutuantes .btn{width:100%}}</style></head>
 <body class="sb-nav-fixed">
 <?php autofrotaMenu(); ?>
 <div id="layoutSidenav_content">
@@ -378,18 +378,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-4">
             <label class="form-label">Tipo de pagamento</label>
-            <select class="form-select" name="tipopagamento">
-                <option value="">Selecione...</option>
-                <?php foreach ($formasPagamentoManutencao as $tipoPagamentoOpcao): ?>
-                    <option value="<?= esc($tipoPagamentoOpcao) ?>" <?= (($man['tipopagamento'] ?? '') === $tipoPagamentoOpcao) ? 'selected' : '' ?>><?= esc($tipoPagamentoOpcao) ?></option>
-                <?php endforeach; ?>
-                <?php
-                $tipoPagamentoAtual = trim((string) ($man['tipopagamento'] ?? ''));
-                if ($tipoPagamentoAtual !== '' && !isset($formasPagamentoManutencao[$tipoPagamentoAtual])):
-                ?>
-                    <option value="<?= esc($tipoPagamentoAtual) ?>" selected><?= esc($tipoPagamentoAtual) ?></option>
-                <?php endif; ?>
-            </select>
+            <input class="form-control" name="tipopagamento" value="<?= esc($man['tipopagamento'] ?? '') ?>">
         </div>
         <div class="col-md-3">
             <label class="form-label">Reembolso aprovado</label>
@@ -495,12 +484,20 @@ if ($oficinaAtual !== '') {
             <textarea class="form-control" name="observacao" rows="2"><?= esc($man['observacao'] ?? '') ?></textarea>
         </div>
     </div>
-    <div class="form-actions-floating d-flex gap-2" role="group" aria-label="Ações do cadastro">
+    <div class="mt-3 pb-2 d-flex col-sm-12 justify-content-center gap-2 acoes-flutuantes">
         <?php if ($podeEditar): ?>
-            <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar Manutenção</button>
+            <div>
+                <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar cadastro de manutenção</button>
+            </div>
         <?php endif; ?>
-        <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='solicitar-manutencao-preventiva.php'; } return false;">Voltar</a>
-        <a class="btn btn-danger" href="solicitar-manutencao-preventiva.php">Cancelar cadastro</a>
+        <div class="ms-5">
+            <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='solicitar-manutencao-preventiva.php'; } return false;">
+                <i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>Voltar
+            </a>
+        </div>
+        <div class="ms-5">
+            <a class="btn btn-danger" href="solicitar-manutencao-preventiva.php">Cancelar cadastro</a>
+        </div>
     </div>
 </div>
 </form>

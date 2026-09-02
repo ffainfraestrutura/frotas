@@ -497,7 +497,7 @@ if ($oficinaAtual !== '') {
     </div>
     <div class="form-actions-floating d-flex gap-2" role="group" aria-label="Ações do cadastro">
         <?php if ($podeEditar): ?>
-            <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar Manutenção</button>
+            <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar cadastro de manutenção</button>
         <?php endif; ?>
         <a class="btn btn-secondary" href="solicitar-manutencao-preventiva.php" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='solicitar-manutencao-preventiva.php'; } return false;">Voltar</a>
         <a class="btn btn-danger" href="solicitar-manutencao-preventiva.php">Cancelar cadastro</a>
