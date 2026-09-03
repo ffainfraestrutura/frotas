@@ -1,13 +1,13 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
+require_once __DIR__ . '/../../includes/portal_helpers.php';
 
 exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
 $matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
-$bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
-$podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
+$podeEditar = $perfilLogado === '4';
 
 function redirectComMensagem(int $id, string $msg): never
 {
@@ -18,6 +18,12 @@ function redirectComMensagem(int $id, string $msg): never
     }
 
     header('Location: ../editar-manutencao.php?idtbmanprev=' . $id . '&msg=' . rawurlencode($msg));
+    exit;
+}
+
+function redirectParaListagem(string $msg): never
+{
+    header('Location: ../listagem-manutencao.php?msg=' . rawurlencode($msg));
     exit;
 }
 
@@ -178,28 +184,34 @@ if ($stmtAtual) {
 
 $doc = $docAtual;
 if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arquivo']['name'] ?? '') !== '') {
+    $erroUpload = (int) ($_FILES['arquivo']['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($erroUpload !== UPLOAD_ERR_OK || !is_uploaded_file((string) ($_FILES['arquivo']['tmp_name'] ?? ''))) {
+        redirectComMensagem($id, 'Não foi possível receber o arquivo enviado.');
+    }
+
     $permitidas = ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
     $ext = strtolower((string) pathinfo((string) $_FILES['arquivo']['name'], PATHINFO_EXTENSION));
     if (!in_array($ext, $permitidas, true)) {
         redirectComMensagem($id, 'Formato de arquivo inválido. Use: jpg, jpeg, png, gif ou pdf.');
     }
 
-    $pastaRelativa = '../docs/docmanutencao/';
-    $pastaUpload = __DIR__ . '/' . $pastaRelativa;
-    if (!is_dir($pastaUpload)) {
-        @mkdir($pastaUpload, 0775, true);
+    // A visualização central procura os documentos neste mesmo diretório.
+    $pastaUpload = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: diretorioUploadsPortal()), '/\\');
+    if (!is_dir($pastaUpload) && !@mkdir($pastaUpload, 0775, true) && !is_dir($pastaUpload)) {
+        redirectComMensagem($id, 'Não foi possível preparar a pasta de documentos.');
     }
 
-    $baseNome = ($placa !== '' ? $placa : 'MAN') . '-' . date('YmdHis') . '-' . $tipo;
+    $baseNome = ($placa !== '' ? $placa : 'MAN') . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '-' . $tipo;
     $baseNome = preg_replace('/[^A-Z0-9_-]/i', '_', (string) $baseNome);
     $nomeFinal = $baseNome . '.' . $ext;
-    $destino = $pastaUpload . $nomeFinal;
+    $destino = $pastaUpload . DIRECTORY_SEPARATOR . $nomeFinal;
 
     if (!move_uploaded_file((string) $_FILES['arquivo']['tmp_name'], $destino)) {
         redirectComMensagem($id, 'Não foi possível enviar o arquivo.');
     }
 
-    $doc = $pastaRelativa . $nomeFinal;
+    // tbmanprev.doc guarda o nome que visualizar-upload resolve com segurança.
+    $doc = $nomeFinal;
 }
 
     if ($isCreate) {
@@ -269,7 +281,7 @@ if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arqui
             if ($okIns) {
                 $newId = mysqli_insert_id($conn);
                 mysqli_stmt_close($stmtIns);
-                header('Location: ../editar-manutencao.php?idtbmanprev=' . $newId . '&msg=' . rawurlencode('Manutenção criada com sucesso.'));
+                header('Location: ../editar-manutencao.php?idtbmanprev=' . $newId . '&msg=' . rawurlencode('Prévia da manutenção criada. Confira os dados e confirme para finalizar.'));
                 exit;
             }
             mysqli_stmt_close($stmtIns);
@@ -334,7 +346,7 @@ if ($stmt) {
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
     if ($ok) {
-        redirectComMensagem($id, 'Manutenção atualizada com sucesso.');
+        redirectComMensagem($id, 'Modificação salva com sucesso.');
     }
 }
 
@@ -365,7 +377,7 @@ if ($stmtFallback) {
     $okFallback = mysqli_stmt_execute($stmtFallback);
     mysqli_stmt_close($stmtFallback);
     if ($okFallback) {
-        redirectComMensagem($id, 'Manutenção atualizada com sucesso (modo compatível).');
+        redirectComMensagem($id, 'Modificação salva com sucesso.');
     }
 }
 

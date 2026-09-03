@@ -350,9 +350,6 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
                             </td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($tecnicosData)): ?>
-                        <tr><td colspan="4" class="text-center text-muted py-5"><i class="fas fa-users fa-4x mb-4 opacity-50"></i><h4>Nenhum técnico vinculado aos seus supervisores</h4><p class="lead">Vincule supervisores e técnicos primeiro</p></td></tr>
-                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -369,7 +366,18 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
 
     <script>
     $(document).ready(function() {
-        $('#tabelaEscala').DataTable({ paging: false, searching: false, info: false, lengthChange: false, order: [[0, 'asc']], columnDefs: [{ targets: [2,3], orderable: false }], language: { url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt-BR.json' } });
+        $('#tabelaEscala').DataTable({
+            paging: false,
+            searching: false,
+            info: false,
+            lengthChange: false,
+            order: [[0, 'asc']],
+            columnDefs: [{ targets: [2, 3], orderable: false }],
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.1/i18n/pt-BR.json',
+                emptyTable: 'Nenhum técnico vinculado aos seus supervisores. Vincule supervisores e técnicos primeiro.'
+            }
+        });
         verificarHorario();
         setInterval(verificarHorario, 60000);
     });

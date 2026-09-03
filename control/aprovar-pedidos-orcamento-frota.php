@@ -7,15 +7,15 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databas
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
-$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
-$matriculasAutorizadas = ['601004', '004607', '086272', '000000'];
+$perfilLogado = trim((string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? ''));
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
-if ($perfilLogado !== '4' || !in_array($matriculaLogada, $matriculasAutorizadas, true)) {
-    header('Location: /index.php');
-    exit;
+$perfilPermitido = $perfilLogado === '4';
+if (!$perfilPermitido) {
+    http_response_code(403);
+    exit('Acesso permitido apenas para perfil 4.');
 }
 
 // Processar POST
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$tokenValido || $id === 0 || ($decisao !== 1 && $decisao !== 2)) {
         $_SESSION['frota_orcamento_mensagem'] = 'Requisição inválida ou token expirado.';
         $_SESSION['frota_orcamento_tipo'] = 'danger';
-        header('Location: /index.php');
+        header('Location: /aprovar-pedidos-orcamento-frota.php');
         exit;
     }
 
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($pedidoLinha === []) {
         $_SESSION['frota_orcamento_mensagem'] = 'Pedido não encontrado ou já processado.';
         $_SESSION['frota_orcamento_tipo'] = 'warning';
-        header('Location: /index.php');
+        header('Location: /aprovar-pedidos-orcamento-frota.php');
         exit;
     }
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($valorPedido > $saldoAtual) {
             $_SESSION['frota_orcamento_mensagem'] = 'Saldo insuficiente da frota para aprovar este pedido.';
             $_SESSION['frota_orcamento_tipo'] = 'warning';
-            header('Location: /index.php');
+            header('Location: /aprovar-pedidos-orcamento-frota.php');
             exit;
         }
     }
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$stmt) {
         $_SESSION['frota_orcamento_mensagem'] = 'Erro ao preparar query: ' . esc($conn->error);
         $_SESSION['frota_orcamento_tipo'] = 'danger';
-        header('Location: /index.php');
+        header('Location: /aprovar-pedidos-orcamento-frota.php');
         exit;
     }
     
@@ -83,10 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     $stmt->close();
-    header('Location: /index.php');
+    header('Location: /aprovar-pedidos-orcamento-frota.php');
     exit;
 }
 
 // Se chegou aqui, redireciona para a página principal
-header('Location: /index.php');
+header('Location: /aprovar-pedidos-orcamento-frota.php');
 exit;

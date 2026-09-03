@@ -1,9 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/autofrota_common.php';
 
-header('Location: index.php');
-exit;
-
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
 $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databaseName'] ?? 'bdautofrotas'));
@@ -11,15 +8,15 @@ $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databas
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
 $nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
-$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
-$matriculasAutorizadas = ['601004', '004607', '086272', '000000', '601000'];
+$perfilLogado = trim((string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? ''));
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
-if ($perfilLogado !== '4' || !in_array($matriculaLogada, $matriculasAutorizadas, true)) {
-    header('Location: index.php');
-    exit;
+$perfilPermitido = $perfilLogado === '4';
+if (!$perfilPermitido) {
+    http_response_code(403);
+    exit('Acesso permitido apenas para perfil 4.');
 }
 
 function moedaFrotaOrcamento($valor): string
