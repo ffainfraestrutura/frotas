@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../control/conecta.php';
+require_once __DIR__ . '/../includes/portal_helpers.php';
 exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
@@ -127,22 +128,7 @@ foreach (array_values(array_unique($basesCcusto)) as $baseCcusto) {
 }
 
 $docAtual = trim((string) ($man['doc'] ?? ''));
-$hrefDocAtual = '';
-if ($docAtual !== '') {
-    $docNormalizado = str_replace('\\', '/', $docAtual);
-    if (preg_match('/^https?:\/\//i', $docNormalizado)) {
-        $hrefDocAtual = $docNormalizado;
-    } else {
-        while (strpos($docNormalizado, '../') === 0) {
-            $docNormalizado = substr($docNormalizado, 3);
-        }
-        $docNormalizado = ltrim($docNormalizado, '/');
-        if (strpos($docNormalizado, './') !== 0) {
-            $docNormalizado = './' . $docNormalizado;
-        }
-        $hrefDocAtual = $docNormalizado;
-    }
-}
+$hrefDocAtual = urlDocumentoUploadPortal($docAtual);
 ?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0;display:flex;align-items:center;gap:8px}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.section-title i{color:#0d6efd}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}.form-actions-floating{position:fixed;right:24px;bottom:24px;z-index:1030;padding:12px;background:rgba(255,255,255,.96);border:1px solid #dee2e6;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}@media (max-width: 575.98px){.form-actions-floating{right:12px;bottom:12px}}</style></head>
 <body class="sb-nav-fixed bg-light">
     <?php include __DIR__ . '/../includes/menu_superior_simples.php'; ?>
@@ -254,11 +240,11 @@ if ($docAtual !== '') {
         </div>
         <div class="col-md-4">
             <label class="form-label">Anexar arquivo</label>
-            <input type="file" class="form-control" name="arquivo">
+            <input type="file" class="form-control" name="arquivo" accept=".jpg,.jpeg,.png,.gif,.pdf">
         </div>
         <?php if ($hrefDocAtual !== ''): ?>
         <div class="col-md-4 d-flex align-items-end">
-            <a href="<?= esc($hrefDocAtual) ?>" target="_blank" rel="noopener" class="btn btn-secondary">Último Documento Anexado</a>
+            <a href="<?= esc($hrefDocAtual) ?>" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Último Documento Anexado</a>
         </div>
         <?php endif; ?>
         <div class="col-md-4">
