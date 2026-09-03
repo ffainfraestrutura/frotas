@@ -5,8 +5,7 @@ exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
 $matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
-$bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
-$podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
+$podeEditar = $perfilLogado === '4';
 
 function esc(?string $v): string { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
 
@@ -144,7 +143,7 @@ if ($docAtual !== '') {
         $hrefDocAtual = $docNormalizado;
     }
 }
-?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0;display:flex;align-items:center;gap:8px}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.section-title i{color:#0d6efd}</style></head>
+?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.section-title{font-size:1rem;font-weight:700;margin:0;display:flex;align-items:center;gap:8px}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.section-title i{color:#0d6efd}.form-actions-floating{position:fixed;right:24px;bottom:24px;z-index:1030;padding:12px;background:rgba(255,255,255,.96);border:1px solid #dee2e6;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}@media (max-width: 575.98px){.form-actions-floating{right:12px;bottom:12px}}</style></head>
 <body class="sb-nav-fixed bg-light">
     <?php include __DIR__ . '/../includes/menu_superior_simples.php'; ?>
 <div id="layoutSidenav_content">
@@ -377,18 +376,12 @@ if ($docAtual !== '') {
             <textarea class="form-control" name="observacao" rows="2"><?= esc($man['observacao'] ?? '') ?></textarea>
         </div>
     </div>
-    <div class="mt-3 pb-2 d-flex col-sm-12 justify-content-center">
+    <div class="form-actions-floating d-flex gap-2" role="group" aria-label="Ações da manutenção">
         <?php if ($podeEditar): ?>
-            <div>
-                <button class="btn btn-success" name="salvar" value="1" type="submit">Salvar edição</button>
-            </div>
+            <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar</button>
         <?php endif; ?>
-        <div class="ms-3">
-            <a class="btn btn-outline-primary" target="_blank" href="../pdf/fpdf/ordemdeservico.php?num=<?= esc((string)$id) ?>">Ordem de serviço</a>
-        </div>
-        <div class="ms-3">
-            <a class="btn btn-danger" href="#" onclick="history.back(); return false;">Cancelar</a>
-        </div>
+        <a class="btn btn-outline-primary" target="_blank" href="../pdf/fpdf/ordemdeservico.php?num=<?= esc((string)$id) ?>">Ordem de serviço</a>
+        <a class="btn btn-danger" href="listagem-manutencao.php">Cancelar</a>
     </div>
 
     <div class="mt-3" style="color: #dc3545;">

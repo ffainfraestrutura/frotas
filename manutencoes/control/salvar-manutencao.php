@@ -6,8 +6,7 @@ exigirLogin();
 
 $perfilLogado = (string) ($_SESSION['perfil'] ?? '');
 $matriculaLogada = (string) ($_SESSION['matricula'] ?? $_SESSION['usuario'] ?? '');
-$bloqueados = ['160030', '410109', '501285', '410039', '411425', '003931'];
-$podeEditar = $perfilLogado === '4' && !in_array($matriculaLogada, $bloqueados, true);
+$podeEditar = $perfilLogado === '4';
 
 function redirectComMensagem(int $id, string $msg): never
 {
@@ -18,6 +17,12 @@ function redirectComMensagem(int $id, string $msg): never
     }
 
     header('Location: ../editar-manutencao.php?idtbmanprev=' . $id . '&msg=' . rawurlencode($msg));
+    exit;
+}
+
+function redirectParaListagem(string $msg): never
+{
+    header('Location: ../listagem-manutencao.php?msg=' . rawurlencode($msg));
     exit;
 }
 
@@ -269,7 +274,7 @@ if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arqui
             if ($okIns) {
                 $newId = mysqli_insert_id($conn);
                 mysqli_stmt_close($stmtIns);
-                header('Location: ../editar-manutencao.php?idtbmanprev=' . $newId . '&msg=' . rawurlencode('Manutenção criada com sucesso.'));
+                header('Location: ../editar-manutencao.php?idtbmanprev=' . $newId . '&msg=' . rawurlencode('Prévia da manutenção criada. Confira os dados e confirme para finalizar.'));
                 exit;
             }
             mysqli_stmt_close($stmtIns);
@@ -334,7 +339,7 @@ if ($stmt) {
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
     if ($ok) {
-        redirectComMensagem($id, 'Manutenção atualizada com sucesso.');
+        redirectParaListagem('Manutenção finalizada com sucesso.');
     }
 }
 
@@ -365,7 +370,7 @@ if ($stmtFallback) {
     $okFallback = mysqli_stmt_execute($stmtFallback);
     mysqli_stmt_close($stmtFallback);
     if ($okFallback) {
-        redirectComMensagem($id, 'Manutenção atualizada com sucesso (modo compatível).');
+        redirectParaListagem('Manutenção finalizada com sucesso.');
     }
 }
 
