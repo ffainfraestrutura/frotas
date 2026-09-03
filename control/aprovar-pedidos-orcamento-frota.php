@@ -7,15 +7,15 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? ($GLOBALS['databas
 $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp'));
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
-$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
-$matriculasAutorizadas = ['601004', '004607', '086272', '000000'];
+$perfilLogado = trim((string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? ''));
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
-if ($perfilLogado !== '4' || !in_array($matriculaLogada, $matriculasAutorizadas, true)) {
+$perfilPermitido = $perfilLogado === '4';
+if (!$perfilPermitido) {
     http_response_code(403);
-    exit('Acesso permitido apenas para frota autorizada.');
+    exit('Acesso permitido apenas para perfil 4.');
 }
 
 // Processar POST

@@ -9,14 +9,13 @@ $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricu
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
 $nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
 $perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
-$matriculasAutorizadas = ['601004', '004607', '086272', '000000', '601000'];
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
-if ($perfilLogado !== '4' || !in_array($matriculaLogada, $matriculasAutorizadas, true)) {
+if ($perfilLogado !== '4') {
     http_response_code(403);
-    exit('Acesso permitido apenas para frota autorizada.');
+    exit('Acesso permitido apenas para perfil 4.');
 }
 
 function moedaFrotaOrcamento($valor): string
