@@ -224,7 +224,7 @@ if ($oficinaAtual !== '') {
 <?php autofrotaMenu(); ?>
 <div id="layoutSidenav_content">
 <main class="container py-4">
-<h1 class="h1 pt-2 pb-2 m-auto text-center">Cadastrar uma nova Manutenção</h1>
+<h1 class="h1 pt-2 pb-2 m-auto text-center">Cadastrar Manutenção</h1>
 <!-- <p class="text-center text-muted mb-3">Edição #<?= esc((string)$man['idtbmanprev']) ?></p> -->
 <?php if ($mensagem !== ''): ?><div class="alert alert-info"><?= esc($mensagem) ?></div><?php endif; ?>
 <form method="post" action="control/salvar-manutencao.php" class="card card-body m-auto" style="width: 80%;" enctype="multipart/form-data">
