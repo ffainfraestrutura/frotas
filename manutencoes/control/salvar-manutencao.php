@@ -346,7 +346,7 @@ if ($stmt) {
     $ok = mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
     if ($ok) {
-        redirectParaListagem('Manutenção finalizada com sucesso.');
+        redirectComMensagem($id, 'Modificação salva com sucesso.');
     }
 }
 
@@ -377,7 +377,7 @@ if ($stmtFallback) {
     $okFallback = mysqli_stmt_execute($stmtFallback);
     mysqli_stmt_close($stmtFallback);
     if ($okFallback) {
-        redirectParaListagem('Manutenção finalizada com sucesso.');
+        redirectComMensagem($id, 'Modificação salva com sucesso.');
     }
 }
 

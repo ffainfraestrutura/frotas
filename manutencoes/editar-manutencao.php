@@ -367,7 +367,7 @@ $hrefDocAtual = urlDocumentoUploadPortal($docAtual);
             <button class="btn btn-success" name="salvar" value="1" type="submit">Confirmar</button>
         <?php endif; ?>
         <a class="btn btn-outline-primary" target="_blank" href="../pdf/fpdf/ordemdeservico.php?num=<?= esc((string)$id) ?>">Ordem de serviço</a>
-        <a class="btn btn-danger" href="listagem-manutencao.php">Cancelar</a>
+        <a class="btn btn-secondary" href="listagem-manutencao.php">Manutenções cadastradas</a>
     </div>
 
     <div class="mt-3" style="color: #dc3545;">
