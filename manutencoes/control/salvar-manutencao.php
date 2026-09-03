@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../../auth.php';
 require_once __DIR__ . '/../../control/conecta.php';
+require_once __DIR__ . '/../../includes/portal_helpers.php';
 
 exigirLogin();
 
@@ -183,28 +184,34 @@ if ($stmtAtual) {
 
 $doc = $docAtual;
 if (isset($_FILES['arquivo']) && is_array($_FILES['arquivo']) && ($_FILES['arquivo']['name'] ?? '') !== '') {
+    $erroUpload = (int) ($_FILES['arquivo']['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($erroUpload !== UPLOAD_ERR_OK || !is_uploaded_file((string) ($_FILES['arquivo']['tmp_name'] ?? ''))) {
+        redirectComMensagem($id, 'Não foi possível receber o arquivo enviado.');
+    }
+
     $permitidas = ['jpg', 'jpeg', 'png', 'gif', 'pdf'];
     $ext = strtolower((string) pathinfo((string) $_FILES['arquivo']['name'], PATHINFO_EXTENSION));
     if (!in_array($ext, $permitidas, true)) {
         redirectComMensagem($id, 'Formato de arquivo inválido. Use: jpg, jpeg, png, gif ou pdf.');
     }
 
-    $pastaRelativa = '../docs/docmanutencao/';
-    $pastaUpload = __DIR__ . '/' . $pastaRelativa;
-    if (!is_dir($pastaUpload)) {
-        @mkdir($pastaUpload, 0775, true);
+    // A visualização central procura os documentos neste mesmo diretório.
+    $pastaUpload = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: diretorioUploadsPortal()), '/\\');
+    if (!is_dir($pastaUpload) && !@mkdir($pastaUpload, 0775, true) && !is_dir($pastaUpload)) {
+        redirectComMensagem($id, 'Não foi possível preparar a pasta de documentos.');
     }
 
-    $baseNome = ($placa !== '' ? $placa : 'MAN') . '-' . date('YmdHis') . '-' . $tipo;
+    $baseNome = ($placa !== '' ? $placa : 'MAN') . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(4)) . '-' . $tipo;
     $baseNome = preg_replace('/[^A-Z0-9_-]/i', '_', (string) $baseNome);
     $nomeFinal = $baseNome . '.' . $ext;
-    $destino = $pastaUpload . $nomeFinal;
+    $destino = $pastaUpload . DIRECTORY_SEPARATOR . $nomeFinal;
 
     if (!move_uploaded_file((string) $_FILES['arquivo']['tmp_name'], $destino)) {
         redirectComMensagem($id, 'Não foi possível enviar o arquivo.');
     }
 
-    $doc = $pastaRelativa . $nomeFinal;
+    // tbmanprev.doc guarda o nome que visualizar-upload resolve com segurança.
+    $doc = $nomeFinal;
 }
 
     if ($isCreate) {

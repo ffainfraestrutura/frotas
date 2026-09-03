@@ -356,7 +356,7 @@ if ($oficinaAtual !== '') {
         </div>
         <div class="col-md-4">
             <label class="form-label">Anexar arquivo</label>
-            <input type="file" class="form-control" name="arquivo">
+            <input type="file" class="form-control" name="arquivo" accept=".jpg,.jpeg,.png,.gif,.pdf">
         </div>
         <div class="col-md-4">
             <label class="form-label">Previsão de saída: <span style="color: red;">*</span></label>
