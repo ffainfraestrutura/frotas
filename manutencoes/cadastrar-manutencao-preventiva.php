@@ -219,7 +219,7 @@ if ($oficinaAtual !== '') {
     $oficinas[$oficinaAtual] = $oficinaAtual;
     natcasesort($oficinas);
 }
-?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}.form-actions-floating{position:fixed;right:24px;bottom:24px;z-index:1030;padding:12px;background:rgba(255,255,255,.96);border:1px solid #dee2e6;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}@media (max-width: 575.98px){.form-actions-floating{right:12px;bottom:12px}}</style></head>
+?><!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cadastrar Manutenção Preventiva</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>body{background:#fff;color:#000;font-size:12px}.section-title{font-size:1rem;font-weight:700;margin:0;display:flex;align-items:center;gap:8px}.section-wrap{border-top:1px solid #dee2e6;padding-top:14px;margin-top:6px}.section-title i{color:#0d6efd}.form-control[readonly],.form-select:disabled{background-color:#e9ecef;opacity:1}.form-control,.form-select{font-size:12px;border-radius:2px}.btn{font-size:12px;border-radius:3px;padding:6px 10px}.form-actions-floating{position:fixed;right:24px;bottom:24px;z-index:1030;padding:12px;background:rgba(255,255,255,.96);border:1px solid #dee2e6;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.18)}@media (max-width: 575.98px){.form-actions-floating{right:12px;bottom:12px}}</style></head>
 <body class="sb-nav-fixed">
 <?php autofrotaMenu(); ?>
 <div id="layoutSidenav_content">
@@ -237,7 +237,7 @@ if ($oficinaAtual !== '') {
     <div class="row g-3">
         <div class="col-12">
             <div class="p-2 rounded bg-light border">
-                <p class="section-title">Identificação</p>
+                <p class="section-title"><i class="fa-solid fa-id-card" aria-hidden="true"></i><span>Identificação</span></p>
             </div>
         </div>
         <div class="col-md-2">
@@ -278,7 +278,7 @@ if ($oficinaAtual !== '') {
 
         <div class="col-12 section-wrap">
             <div class="p-2 rounded bg-light border">
-                <p class="section-title">Andamento da manutenção</p>
+                <p class="section-title"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>Andamento da manutenção</span></p>
             </div>
         </div>
         <div class="col-md-3">
@@ -343,7 +343,7 @@ if ($oficinaAtual !== '') {
 
         <div class="col-12 section-wrap">
             <div class="p-2 rounded bg-light border">
-                <p class="section-title">Agendamento e execução</p>
+                <p class="section-title"><i class="fa-solid fa-calendar-check" aria-hidden="true"></i><span>Agendamento e execução</span></p>
             </div>
         </div>
         <div class="col-md-4">
@@ -373,7 +373,7 @@ if ($oficinaAtual !== '') {
 
         <div class="col-12 section-wrap">
             <div class="p-2 rounded bg-light border">
-                <p class="section-title">Financeiro</p>
+                <p class="section-title"><i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i><span>Financeiro</span></p>
             </div>
         </div>
         <div class="col-md-4">
@@ -475,7 +475,7 @@ if ($oficinaAtual !== '') {
 
         <div class="col-12 section-wrap">
             <div class="p-2 rounded bg-light border">
-                <p class="section-title">Encerramento</p>
+                <p class="section-title"><i class="fa-solid fa-circle-check" aria-hidden="true"></i><span>Encerramento</span></p>
             </div>
         </div>
         <div class="col-md-3">
