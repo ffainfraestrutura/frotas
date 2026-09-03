@@ -8,12 +8,13 @@ $databaseCorp = (string) ($autofrotaSessao['databaseCorp'] ?? ($GLOBALS['databas
 $matriculaLogada = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] ?? '');
 $nomeLogado = (string) ($autofrotaSessao['usuario'] ?? $_SESSION['nome'] ?? '');
 $nomeExibicao = autofrotaNomeExibicaoPorMatricula($conn, $databaseCorp, $matriculaLogada, $nomeLogado);
-$perfilLogado = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? '');
+$perfilLogado = trim((string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? ''));
 
 if (!$conn instanceof mysqli) {
     exit('Conexão indisponível.');
 }
-if ($perfilLogado !== '4') {
+$perfilPermitido = $perfilLogado === '4';
+if (!$perfilPermitido) {
     http_response_code(403);
     exit('Acesso permitido apenas para perfil 4.');
 }

@@ -153,7 +153,7 @@ $hrefDocAtual = urlDocumentoUploadPortal($docAtual);
         </div>
         <div class="col-md-2">
             <label class="form-label">Placa:<span style="color: red;">*</span></label>
-            <input class="form-control" name="placa" value="<?= esc($man['placa'] ?? '') ?>" required>
+            <input class="form-control" name="placa" value="<?= esc((string)($man['placa'] ?? '')) ?>" readonly aria-readonly="true" required>
         </div>
         <div class="col-md-3">
             <label class="form-label">Plano manutenção: <span style="color: red;">*</span></label>
@@ -166,24 +166,25 @@ $hrefDocAtual = urlDocumentoUploadPortal($docAtual);
         </div>
         <div class="col-md-2">
             <label class="form-label">Hodômetro:<span style="color: red;">*</span></label>
-            <input class="form-control" name="hodometro" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" required>
+            <input type="number" class="form-control" name="hodometro" min="0" max="1000000" step="1" inputmode="numeric" value="<?= esc((string)($man['hodometro'] ?? '')) ?>" readonly aria-readonly="true" required>
         </div>
         <div class="col-md-3">
             <label class="form-label">Centro de custo: <span style="color: red;">*</span></label>
-            <select class="form-select" name="ccusto" required>
+            <input type="hidden" name="ccusto" value="<?= esc((string)($man['ccusto'] ?? '')) ?>">
+            <select class="form-select" disabled aria-disabled="true">
                 <option value="">Selecione o centro de custo</option>
                 <?php foreach ($centrosCusto as $ccustoOpcao): ?>
-                    <option value="<?= esc($ccustoOpcao) ?>" <?= (($man['ccusto'] ?? '') === $ccustoOpcao) ? 'selected' : '' ?>><?= esc($ccustoOpcao) ?></option>
+                    <option value="<?= esc($ccustoOpcao) ?>" <?= ((string)($man['ccusto'] ?? '') === (string) $ccustoOpcao) ? 'selected' : '' ?>><?= esc($ccustoOpcao) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
         <div class="col-md-2">
             <label class="form-label">Atualizado em</label>
-            <input type="date" class="form-control" name="atualizadoem" value="<?= esc(substr((string)($man['atualizadoem'] ?? ''),0,10)) ?>">
+            <input type="date" class="form-control" name="atualizadoem" value="<?= esc(substr((string)($man['atualizadoem'] ?? ''),0,10)) ?>" readonly aria-readonly="true">
         </div>
         <div class="col-md-3">
             <label class="form-label">Solicitante</label>
-            <input class="form-control" name="solicitante" value="<?= esc($man['solicitante'] ?? '') ?>">
+            <input class="form-control" name="solicitante" value="<?= esc((string)($man['solicitante'] ?? '')) ?>" readonly aria-readonly="true">
         </div>
 
         <div class="col-12 section-wrap">
@@ -210,7 +211,7 @@ $hrefDocAtual = urlDocumentoUploadPortal($docAtual);
         </div>
         <div class="col-md-2">
             <label class="form-label">Modelo</label>
-            <input class="form-control" name="modelo" value="<?= esc($man['modelo'] ?? '') ?>">
+            <input class="form-control" name="modelo" value="<?= esc((string)($man['modelo'] ?? '')) ?>" readonly aria-readonly="true">
         </div>
         <div class="col-md-4">
             <label class="form-label">Fornecedor da manutenção</label>
