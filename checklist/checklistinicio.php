@@ -3,8 +3,10 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrota = autofrotaInit();
 $conn = $autofrota['conn'] ?? null;
 $databaseName = (string) ($autofrota['databaseName'] ?? '');
+$matricula = trim((string) ($autofrota['matricula'] ?? ''));
 $veiculos = [];
 $erroVeiculos = '';
+$possuiAssinatura = null;
 
 if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) === 1) {
     $sqlVeiculos = "SELECT DISTINCT placa FROM `{$databaseName}`.`tbveiculo` WHERE placa IS NOT NULL AND placa <> '' ORDER BY placa";
@@ -20,6 +22,30 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
     }
 } else {
     $erroVeiculos = 'Não foi possível conectar à base de veículos.';
+}
+
+if ($conn instanceof mysqli && $matricula !== '') {
+    $sqlAssinatura = "SELECT EXISTS (
+        SELECT 1
+        FROM `bdassinatura`.`tbassinatura`
+        WHERE `usuario_matricula` = ?
+          AND `status` = 'ATIVA'
+          AND `assinado_em` IS NOT NULL
+    ) AS possui_assinatura";
+    $stmtAssinatura = mysqli_prepare($conn, $sqlAssinatura);
+
+    if ($stmtAssinatura instanceof mysqli_stmt) {
+        mysqli_stmt_bind_param($stmtAssinatura, 's', $matricula);
+
+        if (mysqli_stmt_execute($stmtAssinatura)) {
+            mysqli_stmt_bind_result($stmtAssinatura, $resultadoAssinatura);
+            if (mysqli_stmt_fetch($stmtAssinatura)) {
+                $possuiAssinatura = (bool) $resultadoAssinatura;
+            }
+        }
+
+        mysqli_stmt_close($stmtAssinatura);
+    }
 }
 header('Content-Type: text/html; charset=utf-8');
 ?>
@@ -74,13 +100,23 @@ header('Content-Type: text/html; charset=utf-8');
         </div>
       <?php endif; ?>
 
-      <div class="mt-4 alert alert-info" role="alert">
-        <i class="fas fa-info-circle"></i>
-        <strong>Informação:</strong>
-        <ul class="mb-0 mt-2">
-          <li>Se você não possui uma assinatura digital cadastrada, não poderá realizar a vistoria. É necessário que o vistoriador possua assinatura cadastrada para poder assinar o relatório.</li>
-        </ul>
-      </div>
+      <?php if ($possuiAssinatura === true): ?>
+        <div class="mt-4 alert alert-success" role="status">
+          <i class="fas fa-check-circle me-1"></i>
+          <strong>Você já tem assinatura.</strong>
+        </div>
+      <?php elseif ($possuiAssinatura === false): ?>
+        <div class="mt-4 alert alert-warning" role="status">
+          <i class="fas fa-exclamation-triangle me-1"></i>
+          <strong>Você ainda não tem assinatura.</strong>
+          Por favor, adicione uma em <a class="alert-link" href="/assinaturas">Assinaturas</a>.
+        </div>
+      <?php else: ?>
+        <div class="mt-4 alert alert-secondary" role="status">
+          <i class="fas fa-info-circle me-1"></i>
+          Não foi possível verificar sua assinatura neste momento.
+        </div>
+      <?php endif; ?>
     </div>
   </main>
 
