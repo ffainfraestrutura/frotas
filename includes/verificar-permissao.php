@@ -31,7 +31,7 @@ if (!function_exists('autenticarUsuarioAutofrota')) {
                           ON autofrota.matricula = corporativo.matricula
                  WHERE corporativo.usuario = ?
                    AND corporativo.senha = ?
-                   AND corporativo.autofrotas = 1
+                   AND corporativo.autofrota = 1
                  LIMIT 1";
         $stmt = mysqli_prepare($conn, $sql);
 
