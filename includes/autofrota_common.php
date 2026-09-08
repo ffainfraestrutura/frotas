@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/portal_helpers.php';
-require_once __DIR__ . '/verificar-permissao.php';
 
 if (!defined('AUTOFROTA_MENU_COMPACT_SCALE')) {
     define('AUTOFROTA_MENU_COMPACT_SCALE', 0.9);
@@ -50,6 +49,8 @@ if (!function_exists('autofrotaInit')) {
             $resolvedDatabaseCorp = $GLOBALS['databaseCorp'];
         }
 
+        $resolvedDatabaseAssinatura = 'bdassinatura';
+
         if ($resolvedConn instanceof mysqli) {
             $GLOBALS['conn'] = $resolvedConn;
             $GLOBALS['con'] = $resolvedConn;
@@ -73,6 +74,7 @@ if (!function_exists('autofrotaInit')) {
             'conn' => $resolvedConn,
             'databaseName' => $resolvedDatabaseName,
             'databaseCorp' => $resolvedDatabaseCorp,
+            'databaseAssinatura' => $resolvedDatabaseAssinatura,
         ];
     }
 }

@@ -3,6 +3,7 @@ require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrota = autofrotaInit();
 $conn = $autofrota['conn'] ?? null;
 $databaseName = (string) ($autofrota['databaseName'] ?? '');
+$databaseAssinatura = (string) ($autofrota['databaseAssinatura'] ?? '');
 $matricula = trim((string) ($autofrota['matricula'] ?? ''));
 $veiculos = [];
 $erroVeiculos = '';
@@ -24,10 +25,14 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
     $erroVeiculos = 'Não foi possível conectar à base de veículos.';
 }
 
-if ($conn instanceof mysqli && $matricula !== '') {
+if (
+    $conn instanceof mysqli
+    && $matricula !== ''
+    && preg_match('/^[a-zA-Z0-9_]+$/', $databaseAssinatura) === 1
+) {
     $sqlAssinatura = "SELECT EXISTS (
         SELECT 1
-        FROM `bdassinatura`.`tbassinatura`
+        FROM `{$databaseAssinatura}`.`tbassinatura`
         WHERE `usuario_matricula` = ?
           AND `status` = 'ATIVA'
           AND `assinado_em` IS NOT NULL
