@@ -551,7 +551,7 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
                             <th>Condutor</th>
                             <th>Cargo</th>
                             <th>Matrícula Condutor</th>
-                            <th>Situação</th>
+                            <th>Situação Veículo</th>
                             <th>Status Veículo</th>
                             <th>Aplicação</th>
                             <th>Em manutenção?</th>
