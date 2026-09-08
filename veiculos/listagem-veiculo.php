@@ -71,6 +71,10 @@ function buscarEstadoFuncionario(mysqli $conn, string $databaseName, string $mat
 
 function vincularParametros(mysqli_stmt $stmt, string $tipos, array $parametros): bool
 {
+    if ($tipos === '' || $parametros === []) {
+        return true;
+    }
+
     $referencias = [];
     foreach ($parametros as $indice => $valor) {
         $referencias[$indice] = &$parametros[$indice];
