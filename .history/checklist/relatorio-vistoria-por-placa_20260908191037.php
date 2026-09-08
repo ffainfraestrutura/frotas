@@ -162,7 +162,7 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
     <main class="report-page">
         <header class="page-heading mb-4">
             <h1 class="mb-2">Relatórios por Placa</h1>
-            <!-- <p class="mb-0">Insira a placa do veículo para visualizar seus relatórios de vistoria.</p> -->
+            <p class="mb-0">Insira a placa do veículo para visualizar seus relatórios de vistoria.</p>
         </header>
 
         <section class="report-card filter-card mb-4" aria-labelledby="titulo-filtros">

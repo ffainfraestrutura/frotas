@@ -84,33 +84,20 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
         }
 
         .filter-row {
-            align-items: flex-start;
+            align-items: end;
             display: flex;
-            flex-direction: column;
+            flex-wrap: wrap;
             gap: 12px;
-            width: 100%;
         }
 
         .filter-field {
-            width: 100%;
+            flex: 1 1 260px;
+            min-width: 220px;
         }
 
         .filter-action {
-            align-self: flex-end;
-            display: flex;
-            justify-content: flex-end;
-            width: 100%;
-            margin-top: 0;
+            flex: 0 0 auto;
             margin-bottom: 0;
-        }
-
-        .filter-action .btn {
-            min-height: calc(2.5rem + 2px);
-            white-space: nowrap;
-        }
-
-        .filter-field .select2-container {
-            width: 100% !important;
         }
 
         .required-mark {
@@ -162,12 +149,12 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
     <main class="report-page">
         <header class="page-heading mb-4">
             <h1 class="mb-2">Relatórios por Placa</h1>
-            <!-- <p class="mb-0">Insira a placa do veículo para visualizar seus relatórios de vistoria.</p> -->
+            <p class="mb-0">Insira a placa do veículo para visualizar seus relatórios de vistoria.</p>
         </header>
 
         <section class="report-card filter-card mb-4" aria-labelledby="titulo-filtros">
             <h2 class="h5 mb-3" id="titulo-filtros">Consultar veículo</h2>
-            <form method="post" action="relatorio-vistoria-por-placa.php">
+            <form method="post" action="gerarrelatorio.php">
                 <div class="filter-row">
                     <div class="filter-field">
                         <label class="form-label" for="placa">Placa <span class="required-mark" aria-hidden="true">*</span></label>
@@ -197,8 +184,8 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
         </section>
 
         <section aria-labelledby="titulo-resultados">
-            <div class="d-flex flex-column align-items-end gap-2 mb-3">
-                <h2 class="h5 mb-0 w-100" id="titulo-resultados">Relatórios de vistoria</h2>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <h2 class="h5 mb-0" id="titulo-resultados">Relatórios de vistoria</h2>
                 <button class="btn btn-outline-success" type="button" disabled title="Disponível após a integração dos dados">
                     <i class="fas fa-file-excel me-2"></i>Gerar relatório Excel
                 </button>

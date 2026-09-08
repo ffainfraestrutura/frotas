@@ -2,12 +2,7 @@
 require_once __DIR__ . '/../includes/autofrota_common.php';
 $autofrotaSessao = autofrotaInit();
 
-$conn = $autofrotaSessao['conn'] ?? null;
-$databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 $perfilLogado = trim((string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? ''));
-$veiculos = [];
-$erroVeiculos = '';
-
 if ($perfilLogado !== '4') {
     http_response_code(403);
     exit('Acesso permitido apenas para perfil 4.');
@@ -15,22 +10,6 @@ if ($perfilLogado !== '4') {
 
 $placa = strtoupper(trim((string) ($_POST['placa'] ?? '')));
 $placa = preg_replace('/[^A-Z0-9]/', '', $placa) ?? '';
-
-if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) === 1) {
-    $sqlVeiculos = "SELECT DISTINCT placa FROM `{$databaseName}`.`tbveiculo` WHERE placa IS NOT NULL AND placa <> '' ORDER BY placa";
-    $resultadoVeiculos = mysqli_query($conn, $sqlVeiculos);
-
-    if ($resultadoVeiculos instanceof mysqli_result) {
-        while ($veiculo = mysqli_fetch_assoc($resultadoVeiculos)) {
-            $veiculos[] = $veiculo;
-        }
-        mysqli_free_result($resultadoVeiculos);
-    } else {
-        $erroVeiculos = 'Não foi possível carregar as placas. Tente novamente.';
-    }
-} else {
-    $erroVeiculos = 'Não foi possível conectar à base de veículos.';
-}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -42,8 +21,6 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
     <meta name="author" content="FFA" />
     <title>Relatórios por Placa - AutoFrota</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet">
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <style>
         body {
@@ -81,36 +58,6 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
 
         .form-label {
             font-weight: 600;
-        }
-
-        .filter-row {
-            align-items: flex-start;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .filter-field {
-            width: 100%;
-        }
-
-        .filter-action {
-            align-self: flex-end;
-            display: flex;
-            justify-content: flex-end;
-            width: 100%;
-            margin-top: 0;
-            margin-bottom: 0;
-        }
-
-        .filter-action .btn {
-            min-height: calc(2.5rem + 2px);
-            white-space: nowrap;
-        }
-
-        .filter-field .select2-container {
-            width: 100% !important;
         }
 
         .required-mark {
@@ -162,25 +109,30 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
     <main class="report-page">
         <header class="page-heading mb-4">
             <h1 class="mb-2">Relatórios por Placa</h1>
-            <!-- <p class="mb-0">Insira a placa do veículo para visualizar seus relatórios de vistoria.</p> -->
+            <p class="mb-0">Insira a placa do veículo para visualizar seus relatórios de vistoria.</p>
         </header>
 
         <section class="report-card filter-card mb-4" aria-labelledby="titulo-filtros">
             <h2 class="h5 mb-3" id="titulo-filtros">Consultar veículo</h2>
-            <form method="post" action="relatorio-vistoria-por-placa.php">
-                <div class="filter-row">
-                    <div class="filter-field">
+            <form method="post" action="gerarrelatorio.php">
+                <div class="row g-3 align-items-end">
+                    <div class="col-12 col-md-6 col-lg-5">
                         <label class="form-label" for="placa">Placa <span class="required-mark" aria-hidden="true">*</span></label>
-                        <select name="placa" id="placa" class="form-select" required>
-                            <option value="" selected disabled>Selecione uma opção</option>
-                            <?php foreach ($veiculos as $veiculo): ?>
-                                <?php $placaSelecionada = strtoupper(trim((string) ($veiculo['placa'] ?? ''))); ?>
-                                <option value="<?= htmlspecialchars($placaSelecionada, ENT_QUOTES, 'UTF-8') ?>" <?= $placa !== '' && $placa === $placaSelecionada ? 'selected' : '' ?>><?= htmlspecialchars($placaSelecionada, ENT_QUOTES, 'UTF-8') ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="form-text" id="placa-ajuda">Selecione a placa para consultar o histórico de vistorias.</div>
+                        <input
+                            class="form-control text-uppercase"
+                            id="placa"
+                            name="placa"
+                            type="text"
+                            maxlength="8"
+                            placeholder="Ex.: ABC1D23"
+                            value="<?= htmlspecialchars($placa) ?>"
+                            autocomplete="off"
+                            aria-describedby="placa-ajuda"
+                            required
+                        >
+                        <div class="form-text" id="placa-ajuda">Digite a placa no formato antigo ou Mercosul.</div>
                     </div>
-                    <div class="filter-action">
+                    <div class="col-12 col-md-auto">
                         <button class="btn btn-success px-4" type="submit">
                             <i class="fas fa-magnifying-glass me-2"></i>Visualizar relatórios
                         </button>
@@ -188,17 +140,11 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
                 </div>
                 <p class="small text-danger mb-0 mt-3">* Campo obrigatório.</p>
             </form>
-
-            <?php if ($erroVeiculos !== ''): ?>
-                <div class="mt-3 alert alert-danger" role="alert">
-                    <i class="fas fa-exclamation-triangle me-1"></i><?= htmlspecialchars($erroVeiculos, ENT_QUOTES, 'UTF-8') ?>
-                </div>
-            <?php endif; ?>
         </section>
 
         <section aria-labelledby="titulo-resultados">
-            <div class="d-flex flex-column align-items-end gap-2 mb-3">
-                <h2 class="h5 mb-0 w-100" id="titulo-resultados">Relatórios de vistoria</h2>
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <h2 class="h5 mb-0" id="titulo-resultados">Relatórios de vistoria</h2>
                 <button class="btn btn-outline-success" type="button" disabled title="Disponível após a integração dos dados">
                     <i class="fas fa-file-excel me-2"></i>Gerar relatório Excel
                 </button>
@@ -231,20 +177,10 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
         </section>
     </main>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        $(function () {
-            $('#placa').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Digite ou selecione uma placa',
-                width: '100%',
-                language: {
-                    noResults: function () { return 'Nenhuma placa encontrada'; },
-                    searching: function () { return 'Buscando...'; }
-                }
-            });
+        document.getElementById('placa')?.addEventListener('input', function () {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
         });
     </script>
 </body>
