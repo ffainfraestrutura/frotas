@@ -278,7 +278,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Iniciar Vistoria</a></li>
                             <li><a class="dropdown-item"
-                                    href="<?= menuSuperiorLink('checklist/relatorio-vistoria-por-placa.phpp', $baseAutofrotaUrl) ?>"
+                                    href="<?= menuSuperiorLink('checklist/relatorio-vistoria-por-placa.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Relatório de Vistoria por Placa</a></li>
                         </ul>
                     </li>
