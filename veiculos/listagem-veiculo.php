@@ -71,6 +71,10 @@ function buscarEstadoFuncionario(mysqli $conn, string $databaseName, string $mat
 
 function vincularParametros(mysqli_stmt $stmt, string $tipos, array $parametros): bool
 {
+    if ($tipos === '' || $parametros === []) {
+        return true;
+    }
+
     $referencias = [];
     foreach ($parametros as $indice => $valor) {
         $referencias[$indice] = &$parametros[$indice];
@@ -547,7 +551,7 @@ $mensagemRetorno = trim((string) ($_GET['msg'] ?? ''));
                             <th>Condutor</th>
                             <th>Cargo</th>
                             <th>Matrícula Condutor</th>
-                            <th>Situação</th>
+                            <th>Situação Veículo</th>
                             <th>Status Veículo</th>
                             <th>Aplicação</th>
                             <th>Em manutenção?</th>

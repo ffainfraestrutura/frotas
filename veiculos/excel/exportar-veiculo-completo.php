@@ -11,7 +11,7 @@ exigirLogin();
 date_default_timezone_set('America/Sao_Paulo');
 
 $unidadesValidas = ['RJ', 'PR', 'SP', 'MG', 'ES', 'TODOS'];
-$idsOcultos = [1241, 1767, 1764, 1765, 1893, 1894, 1895, 1896];
+$idsOcultos = [];
 
 function excelEsc(?string $valor): string
 {

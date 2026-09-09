@@ -18,8 +18,7 @@ $databaseName = (string) ($autofrotaSessao['databaseName'] ?? '');
 $hoje = date('Y-m-d');
 $dataFinalPadrao = $hoje;
 $dataInicialPadrao = date('Y-m-d', strtotime('-6 days'));
-$matriculasSemPermissaoEdicao = 
-['160030', '410109', '501285', '410039', '411425', '003931'];
+$matriculasSemPermissaoEdicao = [];
 $tipoSelecionado = $_GET['tipo'] ?? $_GET['tipo_manutencao'] ?? $_POST['tipo'] ?? $_POST['tipo_manutencao'] ?? '';
 $statusSelecionado = $_GET['status'] ?? $_POST['status'] ?? '';
 $unidadeSelecionada = $_GET['unidade'] ?? $_POST['unidade'] ?? '';
@@ -368,11 +367,11 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                 </form>
                 <div class="filter-action-buttons">
                     <a class="btn btn-secondary" href="../veiculos/listagem-veiculo.php">Veículos Cadastrados</a>
-                    <form method="post" action="importar-manutencao.php" target="_blank">
+                    <!-- <form method="post" action="importar-manutencao.php" target="_blank">
                         <input type="hidden" name="perfil" value="<?= esc($perfilLogado) ?>">
                         <input type="hidden" name="mat_autor" value="<?= esc($matriculaLogada) ?>">
                         <button class="btn btn-primary" type="submit">Importar Manutenções em Lote</button>
-                    </form>
+                    </form> -->
                     <form method="post" action="solicitar-manutencao-preventiva.php">
                         <input type="hidden" name="perfil" value="<?= esc($perfilLogado) ?>">
                         <input type="hidden" name="mat_autor" value="<?= esc($matriculaLogada) ?>">

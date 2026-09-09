@@ -133,6 +133,7 @@ if (!($conn instanceof mysqli) || $databaseName === '' || $databaseCorp === '') 
                 'classe' => $classeFarol,
                 'placa' => esc($placa) . $infoPlaca,
                 'condutor' => esc($linha['nome_condutor'] ?? ''),
+                'matricula' => esc((string) ($linha['matcond'] ?? '')),
                 'ccusto' => esc($linha['ccusto'] ?? ''),
                 'ultima_manutencao' => esc(farolData($linha['ultima_manutencao'] ?? '')),
                 'hodometro_atual' => esc((string) ($linha['hodometro_atual'] ?? '0')) . ' km',
@@ -218,10 +219,10 @@ if (!($conn instanceof mysqli) || $databaseName === '' || $databaseCorp === '') 
                 </div>
                 <section style="width: 100%; overflow-x: auto;">
                     <table id="tabelaFarol" class="table table-striped" style="width: 100%;">
-                        <thead><tr><th>Placa</th><th>Condutor</th><th>Centro de Custo</th><th>Última Manutenção</th><th>Hodômetro Atual</th><th>Últ. Man. Hodômetro</th><th>Diferença</th><th>Locadora</th><th>Dev. para locadora</th><th>Status</th><th>Cadastrar manutenção</th><th>Data últ. agend. em aberto</th><th>Obs. últ. manutenção</th><th>UF</th><th>Base de gestão</th><th>Status do veículo</th></tr></thead>
+                        <thead><tr><th>Placa</th><th>Condutor</th><th>Matrícula</th><th>Centro de Custo</th><th>Última Manutenção</th><th>Hodômetro Atual</th><th>Últ. Man. Hodômetro</th><th>Diferença</th><th>Locadora</th><th>Dev. para locadora</th><th>Status</th><th>Cadastrar manutenção</th><th>Data últ. agend. em aberto</th><th>Obs. últ. manutenção</th><th>UF</th><th>Base de gestão</th><th>Status do veículo</th></tr></thead>
                         <tbody>
                             <?php foreach ($linhasFarol as $linha): ?>
-                                <tr class="<?= esc($linha['classe']) ?>"><td><?= $linha['placa'] ?></td><td><?= $linha['condutor'] ?></td><td><?= $linha['ccusto'] ?></td><td><?= $linha['ultima_manutencao'] ?></td><td><?= $linha['hodometro_atual'] ?></td><td><?= $linha['hodometro_ultima_manutencao'] ?></td><td><?= $linha['diferenca'] ?></td><td><?= $linha['locadora'] ?></td><td><?= $linha['devolucao_locadora'] ?></td><td><?= $linha['status'] ?></td><td class="text-center"><?= $linha['acao'] ?></td><td><?= $linha['ultimo_agendamento_aberto'] ?></td><td><?= $linha['observacao_ultima_manutencao'] ?></td><td><?= $linha['uf'] ?></td><td><?= $linha['basegestao'] ?></td><td><?= $linha['status_veiculo'] ?></td></tr>
+                                <tr class="<?= esc($linha['classe']) ?>"><td><?= $linha['placa'] ?></td><td><?= $linha['condutor'] ?></td><td><?= $linha['matricula'] ?></td><td><?= $linha['ccusto'] ?></td><td><?= $linha['ultima_manutencao'] ?></td><td><?= $linha['hodometro_atual'] ?></td><td><?= $linha['hodometro_ultima_manutencao'] ?></td><td><?= $linha['diferenca'] ?></td><td><?= $linha['locadora'] ?></td><td><?= $linha['devolucao_locadora'] ?></td><td><?= $linha['status'] ?></td><td class="text-center"><?= $linha['acao'] ?></td><td><?= $linha['ultimo_agendamento_aberto'] ?></td><td><?= $linha['observacao_ultima_manutencao'] ?></td><td><?= $linha['uf'] ?></td><td><?= $linha['basegestao'] ?></td><td><?= $linha['status_veiculo'] ?></td></tr>
                             <?php endforeach; ?>
                         </tbody>
                     </table>
