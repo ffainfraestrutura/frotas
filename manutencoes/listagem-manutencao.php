@@ -367,11 +367,11 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
                 </form>
                 <div class="filter-action-buttons">
                     <a class="btn btn-secondary" href="../veiculos/listagem-veiculo.php">Veículos Cadastrados</a>
-                    <form method="post" action="importar-manutencao.php" target="_blank">
+                    <!-- <form method="post" action="importar-manutencao.php" target="_blank">
                         <input type="hidden" name="perfil" value="<?= esc($perfilLogado) ?>">
                         <input type="hidden" name="mat_autor" value="<?= esc($matriculaLogada) ?>">
                         <button class="btn btn-primary" type="submit">Importar Manutenções em Lote</button>
-                    </form>
+                    </form> -->
                     <form method="post" action="solicitar-manutencao-preventiva.php">
                         <input type="hidden" name="perfil" value="<?= esc($perfilLogado) ?>">
                         <input type="hidden" name="mat_autor" value="<?= esc($matriculaLogada) ?>">

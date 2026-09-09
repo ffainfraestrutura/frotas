@@ -293,10 +293,10 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                             href="<?= menuSuperiorLink('manutencoes/listagem-manutencao.php', $baseAutofrotaUrl) ?>"
                             target="_self" onclick="window.location.href=this.href; return false;">Cadastrar
                             manutenção</a></li>       
-                            <li><a class="dropdown-item"
+                            <!-- <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/importar-manutencao.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Importar
-                                    manutenção</a></li>
+                                    manutenção</a></li> -->
                             <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('manutencoes/farol-manutencao-preventiva.php', $baseAutofrotaUrl) ?>"
                                     target="_self" onclick="window.location.href=this.href; return false;">Farol manutenção
