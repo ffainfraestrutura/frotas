@@ -49,6 +49,8 @@ if (!function_exists('autofrotaInit')) {
             $resolvedDatabaseCorp = $GLOBALS['databaseCorp'];
         }
 
+        $resolvedDatabaseAssinatura = 'bdassinatura';
+
         if ($resolvedConn instanceof mysqli) {
             $GLOBALS['conn'] = $resolvedConn;
             $GLOBALS['con'] = $resolvedConn;
@@ -72,6 +74,7 @@ if (!function_exists('autofrotaInit')) {
             'conn' => $resolvedConn,
             'databaseName' => $resolvedDatabaseName,
             'databaseCorp' => $resolvedDatabaseCorp,
+            'databaseAssinatura' => $resolvedDatabaseAssinatura,
         ];
     }
 }
