@@ -22,13 +22,11 @@ if ($cpf === '' && $matricula === '') {
     $responder(422, ['ok' => false, 'message' => 'Informe CPF ou matrícula.']);
 }
 
-$filtro = $cpf !== '' ? 'REPLACE(REPLACE(REPLACE(f.cpf, ".", ""), "-", ""), " ", "") = ?' : 'f.matricula = ?';
+$filtro = $cpf !== '' ? 'cpf = ?' : 'matricula = ?';
 $busca = $cpf !== '' ? $cpf : $matricula;
-$sql = "SELECT f.nome, f.matricula, f.cpf, f.ccusto, f.status, cn.numcnh AS cnh, cn.categoria AS categoriacnh, DATE(cn.validade) AS validadecnh
-        FROM `{$databaseName}`.`tbfuncionario` f
-        LEFT JOIN `{$databaseName}`.`tbcnh` cn ON cn.matricula = f.matricula
-        WHERE {$filtro}
-          AND UPPER(TRIM(COALESCE(f.status, ''))) NOT IN ('DEMITIDO', 'AFASTADO', 'FÉRIAS', 'FERIAS')
+$sql = "SELECT nome, matricula, cpf, ccusto, status, statuscond, ativo, placaassoc, dataassoc, datadissoc
+        FROM `{$databaseName}`.`tbcondutor`
+        WHERE {$filtro} AND ativo = 1
         LIMIT 1";
 $stmt = mysqli_prepare($con, $sql);
 if (!$stmt) {
@@ -38,7 +36,7 @@ mysqli_stmt_bind_param($stmt, 's', $busca);
 mysqli_stmt_execute($stmt);
 $condutor = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 if (!$condutor) {
-    $responder(404, ['ok' => false, 'message' => 'Condutor não encontrado ou com status inválido.']);
+    $responder(404, ['ok' => false, 'message' => 'Condutor não encontrado ou inativo na base.']);
 }
 
 $stmtAssociacao = mysqli_prepare(

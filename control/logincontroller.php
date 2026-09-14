@@ -3,6 +3,7 @@ date_default_timezone_set('America/Sao_Paulo');
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/conecta.php';
 require_once __DIR__ . '/../func/log.php';
+require_once __DIR__ . '/../includes/verificar-permissao.php';
 
 if (!$conn) {
     redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Erro de conexão com o banco de dados.'));
@@ -19,35 +20,13 @@ if (!preg_match('/^[0-9]+$/', $usuario)) {
     redirecionarAutofrota('login-acesso.php?erro=' . urlencode('A matrícula deve conter apenas números.'));
 }
 
-$usuarioEsc = mysqli_real_escape_string($conn, $usuario);
-
-$sql = "SELECT usuario, senha, perfil FROM `{$databaseCorp}`.`tbusuario` WHERE usuario = '$usuarioEsc' LIMIT 1";
-$resultado = mysqli_query($conn, $sql);
-
-if (!$resultado) {
+$row = autenticarUsuarioAutofrota($conn, $usuario, $senha, $databaseCorp, $databaseName);
+if ($row === null) {
     mysqli_close($conn);
-    redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Erro ao validar credenciais.'));
+    redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Credenciais inválidas ou acesso ao AutoFrotas não autorizado.'));
 }
 
-if (mysqli_num_rows($resultado) === 0) {
-    mysqli_close($conn);
-    redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Usuário não encontrado.'));
-}
-
-$row = mysqli_fetch_assoc($resultado);
-$perfilLogado = '';
-
-if (!is_array($row)) {
-    mysqli_close($conn);
-    redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Erro ao validar credenciais.'));
-}
-
-$perfilLogado = (string) ($row['perfil'] ?? '');
-
-if (($row['senha'] ?? '') !== $senha) {
-    mysqli_close($conn);
-    redirecionarAutofrota('login-acesso.php?erro=' . urlencode('Senha incorreta.'));
-}
+$perfilLogado = (string) $row['perfil'];
 
 $nomeFuncionario = '';
 $sqlNome = "SELECT nome FROM `{$databaseCorp}`.`tbfuncionario` WHERE matricula = ? LIMIT 1";
@@ -67,7 +46,7 @@ if ($stmtNome) {
 
 $_SESSION['usuario'] = $row['usuario'];
 $_SESSION['nome'] = $nomeFuncionario !== '' ? $nomeFuncionario : $row['usuario'];
-$_SESSION['matricula'] = $row['usuario'];
+$_SESSION['matricula'] = $row['matricula'];
 $_SESSION['perfil'] = $perfilLogado;
 $_SESSION['logado'] = true;
 

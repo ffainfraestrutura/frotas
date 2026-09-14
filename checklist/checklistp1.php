@@ -49,7 +49,7 @@ if ($placa !== '' && $con instanceof mysqli && preg_match('/^[A-Za-z0-9_]+$/', $
     }
   }
 
-  $resultadoStatus = mysqli_query($con, "SELECT idtbastatusvel, status FROM `{$databaseName}`.`tbvelstatus` WHERE idtbastatusvel IN ('1','2','5','18','36','32') ORDER BY status");
+  $resultadoStatus = mysqli_query($con, "SELECT idtbastatusvel, status FROM `{$databaseName}`.`tbvelstatus` WHERE statusgeral = 1 ORDER BY status");
   if ($resultadoStatus instanceof mysqli_result) {
     while ($status = mysqli_fetch_assoc($resultadoStatus)) {
       $statusVeiculo[] = $status;
