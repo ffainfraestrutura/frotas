@@ -39,13 +39,6 @@ if ($conn instanceof mysqli && preg_match('/^[a-zA-Z0-9_]+$/', $databaseName) ==
                                       FROM `{$databaseName}`.`tbvistoriafotos` vf
                                      WHERE vf.idtbvistoria = v.idtbvistoria
                                        AND vf.idtbvistfotos NOT IN (40, 41, 42, 43, 44, 45, 47)
-                                       AND (COALESCE(vf.frontal, '') <> '' OR COALESCE(vf.traseira, '') <> ''
-                                         OR COALESCE(vf.direita, '') <> '' OR COALESCE(vf.esquerda, '') <> ''
-                                         OR COALESCE(vf.bateria, '') <> '' OR COALESCE(vf.painel, '') <> ''
-                                         OR COALESCE(vf.selfie, '') <> '' OR COALESCE(vf.cnh, '') <> ''
-                                         OR COALESCE(vf.extra1, '') <> '' OR COALESCE(vf.extra2, '') <> ''
-                                         OR COALESCE(vf.extra3, '') <> '' OR COALESCE(vf.extra4, '') <> ''
-                                         OR COALESCE(vf.extra5, '') <> '')
                                 ) AS possui_fotos
                            FROM `{$databaseName}`.`tbvistoria` v
                       LEFT JOIN `{$databaseName}`.`tbatipovist` tv ON tv.idtbatipovist = v.tipo
@@ -258,12 +251,9 @@ $formatarData = static function (string $data): string {
         <section aria-labelledby="titulo-resultados">
             <div class="d-flex flex-column align-items-end gap-2 mb-3">
                 <h2 class="h5 mb-0 w-100" id="titulo-resultados">Relatórios de vistoria</h2>
-                <form action="control/exportar-vistorias-placa.php" method="post">
-                    <input type="hidden" name="placa" value="<?= htmlspecialchars($placa, ENT_QUOTES, 'UTF-8') ?>">
-                    <button class="btn btn-outline-success" type="submit" <?= $placa === '' ? 'disabled' : '' ?>>
-                        <i class="fas fa-file-excel me-2"></i>Gerar relatório Excel
-                    </button>
-                </form>
+                <button class="btn btn-outline-success" type="button" disabled title="Exportação ainda não disponível">
+                    <i class="fas fa-file-excel me-2"></i>Gerar relatório Excel
+                </button>
             </div>
 
             <div class="report-card table-card table-responsive">
@@ -294,7 +284,9 @@ $formatarData = static function (string $data): string {
                                 <td class="text-center"><?= (string) ($vistoria['assinadocond'] ?? '') === '1' ? 'Sim' : 'Não' ?></td>
                                 <td><a class="btn btn-success btn-sm text-nowrap" href="verrelatorio.php?id=<?= $idVistoria ?>" target="_blank" rel="noopener"><i class="fas fa-file-pdf me-1"></i>Visualizar relatório</a></td>
                                 <td>
-                                    <a class="btn btn-primary btn-sm text-nowrap" href="verfotos.php?id=<?= $idVistoria ?>" target="_blank" rel="noopener"><i class="fas fa-images me-1"></i>Ver fotos</a>
+                                    <?php if ((int) ($vistoria['possui_fotos'] ?? 0) === 1): ?>
+                                        <a class="btn btn-primary btn-sm text-nowrap" href="verrelatorio.php?id=<?= $idVistoria ?>#fotos-vistoria" target="_blank" rel="noopener"><i class="fas fa-images me-1"></i>Ver fotos</a>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
