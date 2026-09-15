@@ -16,11 +16,21 @@ $id = (int) ($_POST['idinserido'] ?? 0);
 $campo = str_replace('-foto', '', (string) ($_POST['localcarro'] ?? ''));
 $arquivo = $_FILES['file'] ?? null;
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !($con instanceof mysqli) || $id < 1 || !in_array($campo, $permitidos, true)) {
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !($con instanceof mysqli) || $id < 1 || !in_array($campo, $permitidos, true) || preg_match('/^[A-Za-z0-9_]+$/', $databaseName) !== 1) {
     $responder(400, 'Dados do upload inválidos.');
 }
 if (!is_array($arquivo) || ($arquivo['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-    $responder(400, 'Arquivo não recebido.');
+    $errosUpload = [
+        UPLOAD_ERR_INI_SIZE => 'A imagem ultrapassa o limite configurado no servidor.',
+        UPLOAD_ERR_FORM_SIZE => 'A imagem ultrapassa o limite permitido pelo formulário.',
+        UPLOAD_ERR_PARTIAL => 'A imagem foi recebida apenas parcialmente. Tente novamente.',
+        UPLOAD_ERR_NO_FILE => 'Nenhuma imagem foi recebida.',
+        UPLOAD_ERR_NO_TMP_DIR => 'O diretório temporário de upload não está disponível.',
+        UPLOAD_ERR_CANT_WRITE => 'O servidor não conseguiu gravar a imagem.',
+        UPLOAD_ERR_EXTENSION => 'O envio da imagem foi interrompido pelo servidor.',
+    ];
+    $codigoErro = is_array($arquivo) ? (int) ($arquivo['error'] ?? UPLOAD_ERR_NO_FILE) : UPLOAD_ERR_NO_FILE;
+    $responder(400, $errosUpload[$codigoErro] ?? 'Arquivo não recebido.');
 }
 if (($arquivo['size'] ?? 0) > 10 * 1024 * 1024) {
     $responder(413, 'A imagem deve ter no máximo 10 MB.');
@@ -32,20 +42,25 @@ if (!isset($extensoes[$mime])) {
     $responder(415, 'Formato não permitido. Use JPEG, PNG ou WebP.');
 }
 
-$baseHost = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? 'localhost';
-$baseScheme = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int) ($_SERVER['SERVER_PORT'] ?? 0) === 443)) ? 'https' : 'http';
-$diretorio = '/tmp/frotas_docs/vistoria';
-if (!is_dir($diretorio) && !@mkdir($diretorio, 0775, true) && !is_dir($diretorio)) {
+$diretorio = rtrim((string) (getenv('FROTAS_UPLOAD_DIR') ?: diretorioUploadsPortal()), '/\\');
+if ($diretorio === '' || (!is_dir($diretorio) && !@mkdir($diretorio, 0775, true) && !is_dir($diretorio))) {
     $responder(500, 'Não foi possível preparar o diretório de fotos da vistoria.');
+}
+if (!is_writable($diretorio)) {
+    $responder(500, 'O diretório de fotos da vistoria não possui permissão de escrita.');
 }
 $nome = sprintf('%d-%s-%s-%s.%s', $id, date('YmdHis'), $campo, bin2hex(random_bytes(4)), $extensoes[$mime]);
 $destino = $diretorio . DIRECTORY_SEPARATOR . $nome;
-if (!move_uploaded_file($arquivo['tmp_name'], $destino)) {
+if (!is_uploaded_file((string) $arquivo['tmp_name']) || !move_uploaded_file((string) $arquivo['tmp_name'], $destino)) {
     $responder(500, 'Não foi possível salvar a imagem.');
 }
 
-$caminho = $baseScheme . '://' . $baseHost . '/visualizar-upload.php?abrir=' . rawurlencode($nome);
+$caminho = '/visualizar-upload.php?abrir=' . rawurlencode($nome);
 $stmt = mysqli_prepare($con, "UPDATE `{$databaseName}`.`tbvistoriafotos` SET `$campo` = ? WHERE idtbvistoria = ?");
+if (!$stmt) {
+    @unlink($destino);
+    $responder(500, 'Não foi possível preparar o vínculo da imagem com a vistoria.');
+}
 mysqli_stmt_bind_param($stmt, 'si', $caminho, $id);
 if (!mysqli_stmt_execute($stmt) || mysqli_stmt_affected_rows($stmt) < 1) {
     @unlink($destino);
