@@ -278,6 +278,9 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     href="<?= menuSuperiorLink('checklist/checklistinicio.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Iniciar Vistoria</a></li>
                             <li><a class="dropdown-item"
+                                    href="<?= menuSuperiorLink('checklist/checklistfrota.php', $baseAutofrotaUrl) ?>"
+                                    target="_self">Iniciar Vistoria Frota</a></li>
+                            <li><a class="dropdown-item"
                                     href="<?= menuSuperiorLink('checklist/relatorio-vistoria-por-placa.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Relatório de Vistoria por Placa</a></li>
                         </ul>
@@ -389,7 +392,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                 <?php endif; ?>
 
-                <?php if ((int) ($_SESSION['perfil'] ?? 0) !== 0): ?>
+                <?php if (!in_array((int) ($_SESSION['perfil'] ?? 0), [0, 1], true)): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
