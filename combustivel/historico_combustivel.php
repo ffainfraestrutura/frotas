@@ -573,7 +573,7 @@ if (count($historico) > 0) {
                             <li class="breadcrumb-item active">Acompanhe todas as transferências de saldo</li>
                         </ol>
                     </div>
-                    <a href="retirada/" class="btn btn-outline-secondary mt-4">
+                    <a href="#" class="btn btn-outline-secondary mt-4" onclick="window.history.back(); return false;">
                         <i class="fas fa-arrow-left me-2"></i>Voltar
                     </a>
                 </div>
