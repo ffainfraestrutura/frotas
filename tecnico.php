@@ -156,6 +156,7 @@ $pedidosRecentes = consultaPreparada(
         .hero-card { background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%); }
         .status-card { border: 1px solid #bfcde0; border-radius: 12px; background: #fff; height: 100%; box-shadow: inset 0 0 0 1px #eef4fb; }
         .status-icon { width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; }
+        .foto-preview { display: none; width: 100%; max-width: 320px; max-height: 220px; object-fit: contain; border: 1px solid #cbd5e1; border-radius: 10px; background: #f8fafc; }
     </style>
 </head>
 <body class="sb-nav-fixed">
@@ -199,7 +200,12 @@ $pedidosRecentes = consultaPreparada(
                         <div class="col-12 col-md-4"><label class="form-label" for="kmhodometro">Hodômetro atual <span class="text-danger">*</span></label><input id="kmhodometro" name="kmhodometro" type="number" min="0" step="1" class="form-control" placeholder="Digite o valor do hodômetro" required></div>
                         <div class="col-12 col-md-4"><label class="form-label" for="valor">Valor solicitado <span class="text-danger">*</span></label><div class="input-group"><span class="input-group-text">R$</span><input id="valor" name="valor" class="form-control" placeholder="0,00" maxlength="10" required></div></div>
                         <div class="col-12"><label class="form-label" for="justificativa">Justificativa <span class="text-danger">*</span></label><textarea id="justificativa" name="justificativa" class="form-control" rows="3" placeholder="Informe uma justificativa para solicitação" required></textarea></div>
-                        <div class="col-12 col-md-6"><label class="form-label" for="arquivo">Foto do hodômetro <span class="text-danger">*</span></label><input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/*" capture="environment" required></div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label" for="arquivo">Foto do hodômetro <span class="text-danger">*</span></label>
+                            <input id="arquivo" name="arquivo" type="file" class="form-control" accept="image/jpeg,image/png,image/webp" capture="environment" required aria-describedby="arquivoAjuda">
+                            <div id="arquivoAjuda" class="form-text">Formatos aceitos: JPEG, PNG ou WebP, com até 10 MB.</div>
+                            <img id="fotoPreview" class="foto-preview mt-3" alt="Prévia da foto do hodômetro">
+                        </div>
                         <div class="col-12 d-flex flex-wrap gap-2"><button type="submit" class="btn btn-primary" <?= $podeSolicitar ? '' : 'disabled' ?>><i class="fas fa-paper-plane me-2"></i>Enviar solicitação</button></div>
                     </form>
                 </div>
@@ -234,6 +240,21 @@ $pedidosRecentes = consultaPreparada(
             valor = (parseInt(valor, 10) / 100).toFixed(2).replace('.', ',');
             valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
             this.value = valor;
+        });
+        const campoFoto = document.getElementById('arquivo');
+        const fotoPreview = document.getElementById('fotoPreview');
+        let fotoPreviewUrl = '';
+        campoFoto?.addEventListener('change', function () {
+            if (fotoPreviewUrl) URL.revokeObjectURL(fotoPreviewUrl);
+            const arquivo = this.files?.[0];
+            if (!arquivo || !arquivo.type.startsWith('image/')) {
+                fotoPreview.removeAttribute('src');
+                fotoPreview.style.display = 'none';
+                return;
+            }
+            fotoPreviewUrl = URL.createObjectURL(arquivo);
+            fotoPreview.src = fotoPreviewUrl;
+            fotoPreview.style.display = 'block';
         });
     </script>
 </body>
