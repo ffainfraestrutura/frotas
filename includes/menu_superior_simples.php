@@ -392,7 +392,7 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </li>
                 <?php endif; ?>
 
-                <?php if (!in_array((int) ($_SESSION['perfil'] ?? 0), [0, 1, 2], true)): ?>
+                <?php if (!in_array((int) ($_SESSION['perfil'] ?? 0), [0, 1, 2, 3, 10], true)): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivel" role="button"
                             data-bs-toggle="dropdown" aria-expanded="false">
