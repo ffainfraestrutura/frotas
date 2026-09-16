@@ -24,6 +24,11 @@ function moedaCota($valor): string
     return number_format((float) ($valor ?? 0), 2, ',', '.');
 }
 
+function urlFotoCota($caminho): string
+{
+    return urlDocumentoUploadPortal($caminho);
+}
+
 function tabelaAutofrotaExiste(mysqli $conn, string $databaseName, string $tabela): bool
 {
     return buscarUmaLinha(
@@ -297,7 +302,7 @@ if ($supervisorTabela === '') {
                     </thead>
                     <tbody>
                     <?php if ($pedidos === []): ?>
-                        <tr><td colspan="14" class="text-muted">Nenhum pedido pendente encontrado.</td></tr>
+                        <tr><td colspan="15" class="text-muted">Nenhum pedido pendente encontrado.</td></tr>
                     <?php else: ?>
                         <?php foreach ($pedidos as $pedido): ?>
                             <tr>
@@ -306,7 +311,16 @@ if ($supervisorTabela === '') {
                                 <td><?= escCota($pedido['placa']) ?></td>
                                 <td><?= escCota(formatarDataPortal($pedido['data'] ?? '')) ?></td>
                                 <td><?= escCota($pedido['kmhodometro']) ?></td>
-                                <td><?php if (!empty($pedido['dir'])): ?><a class="btn btn-outline-secondary btn-sm" href=".<?= escCota($pedido['dir']) ?>" target="_blank"><i class="fas fa-eye"></i></a><?php endif; ?></td>
+                                <td>
+                                    <?php if (!empty($pedido['dir'])): ?>
+                                        <?php $urlFoto = urlFotoCota($pedido['dir']); ?>
+                                        <a class="btn btn-outline-secondary btn-sm" href="<?= escCota($urlFoto) ?>" target="_blank" rel="noopener noreferrer" title="Visualizar foto do hodômetro" aria-label="Visualizar foto do hodômetro de <?= escCota($pedido['nome_tecnico']) ?>">
+                                            <i class="fas fa-eye" aria-hidden="true"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <span class="text-muted">Sem foto</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>R$ <?= escCota(moedaCota($pedido['orcsemanal'])) ?></td>
                                 <td><?= escCota(number_format((float) $pedido['kmproj'], 0, ',', '.')) ?></td>
                                 <td><?= escCota(number_format((float) $pedido['kmos'], 0, ',', '.')) ?></td>
