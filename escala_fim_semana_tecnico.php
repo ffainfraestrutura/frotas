@@ -32,7 +32,7 @@ function semanaEscalaFimSemana(string $data): string
 
 function nomeTecnicoEscala(mysqli $conn, string $databaseCorp, string $matricula): string
 {
-    $stmt = mysqli_prepare($conn, "SELECT COALESCE(f.nome, u.usuario) AS nome FROM `{$databaseCorp}`.`tbusuario` u LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON f.matricula = u.matricula WHERE u.matricula = ? LIMIT 1");
+    $stmt = mysqli_prepare($conn, "SELECT COALESCE(f.nome, u.usuario) AS nome FROM `{$databaseCorp}`.`tbusuario` u LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON f.matricula COLLATE utf8mb4_unicode_ci = u.matricula COLLATE utf8mb4_unicode_ci WHERE u.matricula COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci LIMIT 1");
     if (!$stmt) {
         return $matricula;
     }
@@ -181,26 +181,39 @@ $tecnicosData = [];
 $segunda = strtotime('monday this week');
 $sabado = date('Y-m-d', strtotime('+5 days', $segunda));
 $domingo = date('Y-m-d', strtotime('+6 days', $segunda));
+$supervisoresTotal = 0;
+$listaIdsSups = [];
+$sqlTecnicos = '';
+$sqlTecnicosFallback = '';
+$erroSqlTecnicos = '';
+$usouFallbackSemVeiculo = false;
 
 if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== '') {
-    $stmtCoord = mysqli_prepare($conn, "SELECT c.idtbcoordenador FROM `{$databaseCorp}`.`tbcoord` c INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON c.matricula = f.matricula WHERE c.matricula = ? AND f.status = 'Ativo' LIMIT 1");
-    mysqli_stmt_bind_param($stmtCoord, 's', $matricula);
-    mysqli_stmt_execute($stmtCoord);
-    $resultadoCoord = mysqli_stmt_get_result($stmtCoord);
-    $dadosCoord = $resultadoCoord ? mysqli_fetch_assoc($resultadoCoord) : [];
-    mysqli_stmt_close($stmtCoord);
+    $stmtCoord = mysqli_prepare($conn, "SELECT c.idtbcoordenador FROM `{$databaseCorp}`.`tbcoord` c INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON c.matricula COLLATE utf8mb4_unicode_ci = f.matricula COLLATE utf8mb4_unicode_ci WHERE c.matricula COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND f.status COLLATE utf8mb4_unicode_ci = 'Ativo' COLLATE utf8mb4_unicode_ci LIMIT 1");
+    if ($stmtCoord) {
+        mysqli_stmt_bind_param($stmtCoord, 's', $matricula);
+        mysqli_stmt_execute($stmtCoord);
+        $resultadoCoord = mysqli_stmt_get_result($stmtCoord);
+        $dadosCoord = $resultadoCoord ? mysqli_fetch_assoc($resultadoCoord) : [];
+        mysqli_stmt_close($stmtCoord);
+    } else {
+        $dadosCoord = [];
+    }
     $idtbcoordenadorlogado = (int) ($dadosCoord['idtbcoordenador'] ?? 0);
 
     if ($idtbcoordenadorlogado > 0) {
         $stmtSup = mysqli_prepare($conn, "SELECT idtbsupervisor FROM `{$databaseCorp}`.`tbsupervisor` WHERE idtbcoordenador = ?");
-        mysqli_stmt_bind_param($stmtSup, 'i', $idtbcoordenadorlogado);
-        mysqli_stmt_execute($stmtSup);
-        $resultadoSup = mysqli_stmt_get_result($stmtSup);
-        $listaIdsSups = [];
-        while ($row = mysqli_fetch_assoc($resultadoSup)) {
-            $listaIdsSups[] = (int) $row['idtbsupervisor'];
+        if ($stmtSup) {
+            mysqli_stmt_bind_param($stmtSup, 'i', $idtbcoordenadorlogado);
+            mysqli_stmt_execute($stmtSup);
+            $resultadoSup = mysqli_stmt_get_result($stmtSup);
+            while ($row = mysqli_fetch_assoc($resultadoSup)) {
+                $listaIdsSups[] = (int) $row['idtbsupervisor'];
+            }
+            mysqli_stmt_close($stmtSup);
         }
-        mysqli_stmt_close($stmtSup);
+
+        $supervisoresTotal = count($listaIdsSups);
 
         if (!empty($listaIdsSups)) {
             $listaIdsSupsStr = implode(',', $listaIdsSups);
@@ -214,24 +227,40 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
                 $escalas[trim((string) $rowEscala['matricula'])][$rowEscala['dia']] = $rowEscala['status'];
             }
 
-            $sqlTecnicos = "SELECT DISTINCT u.matricula, f.nome, u.idtbsupervisor
-                              FROM `{$databaseCorp}`.`tbusuario` u
-                              INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON u.matricula = f.matricula
-                             WHERE (u.perfil = 0 OR u.perfil = '0')
-                               AND f.status = 'Ativo'
-                               AND f.cargo IS NOT NULL
-                               AND f.cargo NOT REGEXP '^(SUPERVISOR|GERENTE|ANALISTA|CADISTA|MONITOR|ASSISTENTE|ENGENHEIRO|COMPRADOR|COORD|RH|RECEPCIONISTA|PROGRAMADOR|PORTEIRO|PROJETISTA|VIGIA|DIRETOR|APRENDIZ|ALMOXARIFE|AUXILIAR ADM|AUXILIAR DE FROTA|AUXILIAR DE ALMOX|AUDITOR DE LOG)'
-                               AND EXISTS (
-                                   SELECT 1
-                                     FROM `{$databaseAutofrota}`.`tbveiculo` v
-                                    WHERE v.matcond = u.matricula
-                                      AND v.placa IS NOT NULL
-                                      AND v.placa <> ''
-                                    LIMIT 1
-                               )
-                               AND u.idtbsupervisor IN ({$listaIdsSupsStr})
-                             ORDER BY f.nome";
-            $resultTecnicos = mysqli_query($conn, $sqlTecnicos);
+                        $sqlTecnicosBase = "SELECT DISTINCT u.matricula, f.nome, u.idtbsupervisor
+                                                            FROM `{$databaseCorp}`.`tbusuario` u
+                                                            INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON u.matricula COLLATE utf8mb4_unicode_ci = f.matricula COLLATE utf8mb4_unicode_ci
+                                                         WHERE (u.perfil = 0 OR u.perfil = '0')
+                                                             AND f.status COLLATE utf8mb4_unicode_ci = 'Ativo' COLLATE utf8mb4_unicode_ci
+                                                             AND f.cargo IS NOT NULL
+                                                             AND u.idtbsupervisor IN ({$listaIdsSupsStr})";
+
+                        $sqlTecnicos = $sqlTecnicosBase . "
+                                                             AND EXISTS (
+                                                                     SELECT 1
+                                                                         FROM `{$databaseAutofrota}`.`tbveiculo` v
+                                                                        WHERE v.matcond COLLATE utf8mb4_unicode_ci = u.matricula COLLATE utf8mb4_unicode_ci
+                                                                            AND v.placa IS NOT NULL
+                                                                            AND v.placa <> ''
+                                                                        LIMIT 1
+                                                             )
+                                                         ORDER BY f.nome";
+
+                        $resultTecnicos = mysqli_query($conn, $sqlTecnicos);
+                        $erroSqlTecnicos = $resultTecnicos === false ? mysqli_error($conn) : '';
+
+                        if ($resultTecnicos && mysqli_num_rows($resultTecnicos) === 0) {
+                                $sqlTecnicosFallback = $sqlTecnicosBase . " ORDER BY f.nome";
+                                $resultTecnicosFallback = mysqli_query($conn, $sqlTecnicosFallback);
+                                if ($resultTecnicosFallback) {
+                                        if (mysqli_num_rows($resultTecnicosFallback) > 0) {
+                                                $resultTecnicos = $resultTecnicosFallback;
+                                                $usouFallbackSemVeiculo = true;
+                                        }
+                                } else {
+                                        $erroSqlTecnicos = mysqli_error($conn);
+                                }
+                        }
 
             while ($tecnico = $resultTecnicos ? mysqli_fetch_assoc($resultTecnicos) : null) {
                 if ($tecnico === null) {
@@ -243,7 +272,7 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
                 $nomeSupervisor = 'Sem supervisor';
 
                 if ($idSupervisor > 0) {
-                    $sqlSupNome = "SELECT f.nome FROM `{$databaseCorp}`.`tbsupervisor` s INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON s.matricula = f.matricula WHERE s.idtbsupervisor = {$idSupervisor}";
+                    $sqlSupNome = "SELECT f.nome FROM `{$databaseCorp}`.`tbsupervisor` s INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON s.matricula COLLATE utf8mb4_unicode_ci = f.matricula COLLATE utf8mb4_unicode_ci WHERE s.idtbsupervisor = {$idSupervisor}";
                     $resultSupNome = mysqli_query($conn, $sqlSupNome);
                     if ($rowSup = $resultSupNome ? mysqli_fetch_assoc($resultSupNome) : null) {
                         $nomeSupervisor = (string) $rowSup['nome'];
@@ -293,6 +322,7 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
 </head>
 <body>
     <div class="container-fluid py-5">
+
         <div class="card shadow-lg mb-5 card-escala">
             <div class="card-header py-4">
                 <div class="row align-items-center">

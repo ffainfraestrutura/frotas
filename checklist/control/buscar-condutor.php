@@ -22,11 +22,25 @@ if ($cpf === '' && $matricula === '') {
     $responder(422, ['ok' => false, 'message' => 'Informe CPF ou matrícula.']);
 }
 
-$filtro = $cpf !== '' ? 'cpf = ?' : 'matricula = ?';
+$filtro = $cpf !== '' ? 'condutor.cpf = ?' : 'condutor.matricula = ?';
 $busca = $cpf !== '' ? $cpf : $matricula;
-$sql = "SELECT nome, matricula, cpf, ccusto, status, statuscond, ativo, placaassoc, dataassoc, datadissoc
-        FROM `{$databaseName}`.`tbcondutor`
-        WHERE {$filtro} AND ativo = 1
+$sql = "SELECT condutor.nome,
+               condutor.matricula,
+               condutor.cpf,
+               condutor.ccusto,
+               condutor.status,
+               condutor.statuscond,
+               condutor.ativo,
+               condutor.placaassoc,
+               condutor.dataassoc,
+               condutor.datadissoc,
+               cnh.numcnh AS cnh,
+               cnh.categoria AS categoriacnh,
+               cnh.validade AS validadecnh
+        FROM `{$databaseName}`.`tbcondutor` AS condutor
+        LEFT JOIN `{$databaseName}`.`tbcnh` AS cnh
+          ON cnh.matricula = condutor.matricula
+        WHERE {$filtro} AND condutor.ativo = 1
         LIMIT 1";
 $stmt = mysqli_prepare($con, $sql);
 if (!$stmt) {
