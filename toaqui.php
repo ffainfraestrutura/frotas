@@ -99,7 +99,7 @@ unset($_SESSION['toaqui_mensagem'], $_SESSION['toaqui_tipo']);
 <script>
 fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=<?= rawurlencode((string) $latitude) ?>&lon=<?= rawurlencode((string) $longitude) ?>&accept-language=pt-BR')
     .then(response => response.ok ? response.json() : Promise.reject())
-    .then(data => { document.getElementById('endereco').value = (data.display_name || '').slice(0, 500); })
+    .then(data => { document.getElementById('endereco').value = (data.display_name || '').replace(/\s+/g, ' ').slice(0, 180); })
     .catch(() => { /* As coordenadas continuam sendo registradas se o endereço não for resolvido. */ });
 </script>
 </body>
