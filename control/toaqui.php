@@ -19,8 +19,15 @@ $latitude = filter_var($_POST['latitude'] ?? null, FILTER_VALIDATE_FLOAT);
 $longitude = filter_var($_POST['longitude'] ?? null, FILTER_VALIDATE_FLOAT);
 $motivosPermitidos = ['base', 'ponto de encontro', 'matriz', 'atividade'];
 
-$falhar = static function (string $mensagem) use ($latitude, $longitude): void {
-    $_SESSION['toaqui_mensagem'] = $mensagem;
+$falhar = static function (string $mensagem, ?string $detalhe = null) use ($latitude, $longitude): void {
+    $texto = $mensagem;
+    if ($detalhe !== null && trim((string) $detalhe) !== '') {
+        $detalhe = preg_replace('/\s+/', ' ', trim((string) $detalhe));
+        $detalhe = mb_substr((string) $detalhe, 0, 300, 'UTF-8');
+        $texto .= ' Detalhe: ' . $detalhe;
+    }
+
+    $_SESSION['toaqui_mensagem'] = $texto;
     $_SESSION['toaqui_tipo'] = 'danger';
     $query = ($latitude !== false && $longitude !== false)
         ? '?' . http_build_query(['latitude' => $latitude, 'longitude' => $longitude])
@@ -66,7 +73,8 @@ if ($motivo === 'atividade') {
 }
 
 $observacao = mb_substr($observacao, 0, 2000);
-$endereco = mb_substr($endereco, 0, 500);
+$endereco = preg_replace('/\s+/', ' ', trim($endereco));
+$endereco = mb_substr($endereco, 0, 180, 'UTF-8');
 if ($endereco === '') {
     $endereco = sprintf('Latitude %.7F, Longitude %.7F', $latitude, $longitude);
 }
@@ -74,14 +82,25 @@ $agora = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
 $dataHora = $agora->format('Y-m-d H:i:s');
 $data = $agora->format('Y-m-d');
 
-$resultado = consultaPreparada(
-    $conn,
-    "INSERT INTO `{$databaseName}`.`tbtoaqui` (matricula, motivo, obs, latitude, longitude, hora, data, endereco) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    'sssddsss',
-    [$matricula, $motivo, $observacao, $latitude, $longitude, $dataHora, $data, $endereco]
-);
+$inserirToaqui = static function (string $enderecoFinal) use ($conn, $databaseName, $matricula, $motivo, $observacao, $latitude, $longitude, $dataHora, $data): array {
+    return consultaPreparada(
+        $conn,
+        "INSERT INTO `{$databaseName}`.`tbtoaqui` (matricula, motivo, obs, latitude, longitude, hora, data, endereco) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        'sssddsss',
+        [$matricula, $motivo, $observacao, $latitude, $longitude, $dataHora, $data, $enderecoFinal]
+    );
+};
+
+$resultado = $inserirToaqui($endereco);
+if (($resultado['erro'] ?? '') !== '' && stripos((string) $resultado['erro'], 'Data too long for column') !== false && stripos((string) $resultado['erro'], 'endereco') !== false) {
+    $endereco = mb_substr($endereco, 0, 120, 'UTF-8');
+    if ($endereco === '') {
+        $endereco = sprintf('Latitude %.7F, Longitude %.7F', $latitude, $longitude);
+    }
+    $resultado = $inserirToaqui($endereco);
+}
 if (($resultado['erro'] ?? '') !== '') {
-    $falhar('Não foi possível registrar sua localização. Tente novamente.');
+    $falhar('Não foi possível registrar sua localização.', $resultado['erro']);
 }
 
 require_once __DIR__ . '/../func/log.php';
