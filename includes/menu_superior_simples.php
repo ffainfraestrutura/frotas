@@ -123,6 +123,15 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                     </a>
                 </li>
 
+                <?php if ((int) ($_SESSION['perfil'] ?? 0) === 0): ?>
+                    <li class="nav-item">
+                        <a class="nav-link<?= menuSuperiorAtivo('toaqui.php', $paginaAtual, $baseAutofrotaUrl) ?>"
+                            href="<?= menuSuperiorLink('toaqui.php', $baseAutofrotaUrl) ?>" target="_self">
+                            <i class="fas fa-location-dot me-1"></i>Tô Aqui
+                        </a>
+                    </li>
+                <?php endif; ?>
+
                 <?php if ($_SESSION['perfil'] == 1): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="afMenuCombustivelSupervisor" role="button"
