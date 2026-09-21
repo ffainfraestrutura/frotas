@@ -5,121 +5,41 @@ $con = $autofrota['conn'];
 $databaseName = (string) ($autofrota['databaseName'] ?? '');
 header('Content-Type: text/html; charset=utf-8');
 
-function urlPublicaRelatorioVistoria(int $id): string
+function gerarConteudoPdfRelatorio(int $idVistoria): array
 {
-    $urlConfigurada = rtrim((string) getenv('AUTOFROTA_PUBLIC_URL'), '/');
-    if ($urlConfigurada !== '') {
-        return $urlConfigurada . '/checklist/verrelatorio.php?id=' . $id;
-    }
+    $getOriginal = $_GET;
+    $_GET['id'] = $idVistoria;
+    $_GET['formato'] = 'pdf';
+    $nivelBuffer = ob_get_level();
+    ob_start();
 
-    $httpsAtivo = !empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off';
-    $protocolo = $httpsAtivo ? 'https' : 'http';
-    $host = preg_replace('/[^a-zA-Z0-9.\-:\[\]]/', '', (string) ($_SERVER['HTTP_HOST'] ?? ''));
-    $diretorioChecklist = dirname(dirname((string) ($_SERVER['SCRIPT_NAME'] ?? '')));
-
-    if ($host === '') {
-        return '';
-    }
-
-    return $protocolo . '://' . $host . $diretorioChecklist . '/verrelatorio.php?id=' . $id;
-}
-
-function gerarTextoRelatorioVistoria(array $vistoria, int $idVistoria): string
-{
-    $placa = strtoupper(trim((string) ($vistoria['placa'] ?? '')));
-    $dataVistoriaBr = date('d/m/Y');
-    $dataVistoriaRaw = trim((string) ($vistoria['datavistoria'] ?? ''));
-    if ($dataVistoriaRaw !== '') {
-        $timestamp = strtotime($dataVistoriaRaw);
-        if ($timestamp !== false) {
-            $dataVistoriaBr = date('d/m/Y', $timestamp);
+    try {
+        include __DIR__ . '/../verrelatorio.php';
+        $conteudo = (string) ob_get_clean();
+    } catch (Throwable $erro) {
+        while (ob_get_level() > $nivelBuffer) {
+            ob_end_clean();
         }
+        $_GET = $getOriginal;
+        error_log('Falha ao gerar PDF da vistoria ' . $idVistoria . ': ' . $erro->getMessage());
+        return ['ok' => false, 'conteudo' => '', 'erro' => 'Não foi possível gerar o PDF completo da vistoria.'];
     }
 
-    $assinante = trim((string) ($vistoria['nome'] ?? ''));
-    if ($assinante === '') {
-        $assinante = trim((string) ($vistoria['vistoriador'] ?? ''));
-    }
-    if ($assinante === '') {
-        $assinante = 'Nao informado';
+    $_GET = $getOriginal;
+    if (strncmp($conteudo, '%PDF-', 5) !== 0) {
+        return ['ok' => false, 'conteudo' => '', 'erro' => 'O gerador não retornou um PDF válido.'];
     }
 
-    if ($placa === '') {
-        return 'Vistoria feita em ' . $dataVistoriaBr . ' assinado por ' . $assinante;
-    }
-
-    return 'Vistoria feita em ' . $dataVistoriaBr . ' da ' . $placa . ' assinado por ' . $assinante;
+    return ['ok' => true, 'conteudo' => $conteudo, 'erro' => ''];
 }
 
-function gerarPdfBasicoPorTexto(string $texto, string $arquivoDestino, int $idVistoria): bool
+function criarRelatorioTemporario(int $idVistoria): array
 {
-    $normalizar = static function (string $valor): string {
-        $valor = preg_replace('/\s+/u', ' ', trim($valor)) ?? '';
-        $convertido = @iconv('UTF-8', 'ISO-8859-1//TRANSLIT', $valor);
-        $base = $convertido !== false ? $convertido : $valor;
-        $base = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $base) ?? '';
-        return $base;
-    };
-
-    $escaparPdf = static function (string $valor): string {
-        return str_replace(
-            ['\\', '(', ')'],
-            ['\\\\', '\\(', '\\)'],
-            $valor
-        );
-    };
-
-    $conteudo = $normalizar($texto);
-    if ($conteudo === '') {
-        $conteudo = 'Vistoria do dia assinar';
+    $relatorio = gerarConteudoPdfRelatorio($idVistoria);
+    if (($relatorio['ok'] ?? false) !== true) {
+        return ['ok' => false, 'arquivo' => null, 'erro' => (string) ($relatorio['erro'] ?? 'Falha ao gerar relatório.')];
     }
-
-    $linhaUnica = mb_substr($conteudo, 0, 120);
-
-    $comandos = [];
-    $comandos[] = 'BT';
-    $comandos[] = '/F1 11 Tf';
-    $comandos[] = '1 0 0 1 40 780 Tm';
-    $comandos[] = '(' . $escaparPdf($linhaUnica) . ') Tj';
-    $comandos[] = 'ET';
-    $stream = implode("\n", $comandos) . "\n";
-
-    $objetos = [];
-    $objetos[] = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
-    $objetos[] = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
-    $objetos[] = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n";
-    $objetos[] = "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
-    $objetos[] = "5 0 obj\n<< /Length " . strlen($stream) . " >>\nstream\n" . $stream . "endstream\nendobj\n";
-
-    $pdf = "%PDF-1.4\n";
-    $offsets = [0];
-    foreach ($objetos as $objeto) {
-        $offsets[] = strlen($pdf);
-        $pdf .= $objeto;
-    }
-
-    $xrefPos = strlen($pdf);
-    $pdf .= "xref\n0 6\n";
-    $pdf .= "0000000000 65535 f \n";
-    for ($i = 1; $i <= 5; $i++) {
-        $pdf .= sprintf('%010d 00000 n ', $offsets[$i]) . "\n";
-    }
-    $pdf .= "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" . $xrefPos . "\n%%EOF";
-
-    $escrito = @file_put_contents($arquivoDestino, $pdf);
-    if ($escrito === false || $escrito < 1) {
-        return false;
-    }
-
-    $assinatura = @file_get_contents($arquivoDestino, false, null, 0, 5);
-    return $assinatura === '%PDF-';
-}
-
-function baixarRelatorioTemporario(string $urlRelatorio, int $idVistoria, string $textoFallback = ''): array
-{
-    if ($urlRelatorio === '' || !filter_var($urlRelatorio, FILTER_VALIDATE_URL)) {
-        return ['ok' => false, 'arquivo' => null, 'erro' => 'URL do relatório inválida.'];
-    }
+    $conteudo = (string) ($relatorio['conteudo'] ?? '');
 
     $tmpBase = rtrim((string) sys_get_temp_dir(), DIRECTORY_SEPARATOR);
     $tmpDir = $tmpBase . DIRECTORY_SEPARATOR . 'frotas_docs';
@@ -128,19 +48,6 @@ function baixarRelatorioTemporario(string $urlRelatorio, int $idVistoria, string
     }
 
     $arquivoDestino = $tmpDir . DIRECTORY_SEPARATOR . 'vistoria_' . $idVistoria . '_' . bin2hex(random_bytes(4)) . '.pdf';
-    $contextoDownload = stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'timeout' => 20,
-            'ignore_errors' => true,
-        ],
-    ]);
-
-    $conteudo = @file_get_contents($urlRelatorio, false, $contextoDownload);
-    if ($conteudo === false || $conteudo === '') {
-        return ['ok' => false, 'arquivo' => null, 'erro' => 'Não foi possível baixar o PDF do relatório.'];
-    }
-
     $bytesEscritos = @file_put_contents($arquivoDestino, $conteudo);
     if ($bytesEscritos === false || $bytesEscritos < 1) {
         return ['ok' => false, 'arquivo' => null, 'erro' => 'Não foi possível salvar o PDF temporário.'];
@@ -148,27 +55,20 @@ function baixarRelatorioTemporario(string $urlRelatorio, int $idVistoria, string
 
     $assinaturaPdf = @file_get_contents($arquivoDestino, false, null, 0, 5);
     if ($assinaturaPdf !== '%PDF-') {
-        $textoBruto = trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) $conteudo)));
-        if ($textoFallback !== '') {
-            $textoBruto = $textoFallback;
-        }
-        $gerou = gerarPdfBasicoPorTexto($textoBruto, $arquivoDestino, $idVistoria);
-        if (!$gerou) {
-            @unlink($arquivoDestino);
-            return ['ok' => false, 'arquivo' => null, 'erro' => 'Falha ao converter o relatório HTML para PDF válido.'];
-        }
+        @unlink($arquivoDestino);
+        return ['ok' => false, 'arquivo' => null, 'erro' => 'O relatório não foi gerado como PDF válido.'];
     }
 
     return ['ok' => true, 'arquivo' => $arquivoDestino, 'erro' => ''];
 }
 
-function enviarRelatorioParaAssinatura(string $matricula, string $placa, string $urlRelatorio, int $idVistoria, string $textoFallback = ''): array
+function enviarRelatorioParaAssinatura(string $matricula, string $placa, int $idVistoria): array
 {
     $matricula = trim($matricula);
-    if ($matricula === '' || $urlRelatorio === '') {
+    if ($matricula === '') {
         return [
             'ok' => false,
-            'erro' => 'Matrícula do funcionário ou URL do relatório ausente.',
+            'erro' => 'Matrícula do funcionário ausente.',
             'http_status' => 0,
             'resposta' => '',
         ];
@@ -180,7 +80,7 @@ function enviarRelatorioParaAssinatura(string $matricula, string $placa, string 
     $apiKey = (string) (getenv('ASSINATURA_DOCUMENTOS_INTERNAL_API_KEY') ?: '963eee2b2a97cdd77f1172549d403afee8fc2efc6f7c8d4cd571e9d4afdd1fb7');
     $identificacao = trim($placa) !== '' ? ' - ' . strtoupper(trim($placa)) : '';
 
-    $download = baixarRelatorioTemporario($urlRelatorio, $idVistoria, $textoFallback);
+    $download = criarRelatorioTemporario($idVistoria);
     if (($download['ok'] ?? false) !== true || empty($download['arquivo'])) {
         return [
             'ok' => false,
@@ -214,7 +114,7 @@ function enviarRelatorioParaAssinatura(string $matricula, string $placa, string 
 
     $dadosPost = [
         'titulo' => 'Vistoria de veículo' . $identificacao,
-        'descricao' => 'Relatório da vistoria de veículo' . $identificacao,
+        'descricao' => 'Vistoria feita para a placa ' . (trim($placa) !== '' ? strtoupper(trim($placa)) : 'não informada') . ' assinar.',
         'grupo_id' => '20',
         'documento' => new CURLFile($arquivoPdf, 'application/pdf', basename($arquivoPdf)),
         'assinatura_funcionario' => '1',
@@ -252,7 +152,7 @@ function enviarRelatorioParaAssinatura(string $matricula, string $placa, string 
     if ($status < 200 || $status >= 300) {
         error_log(sprintf(
             'Falha ao enviar vistoria %s para assinatura (HTTP %d). Resposta: %s',
-            $urlRelatorio,
+            (string) $idVistoria,
             $status,
             $respostaCurta
         ));
@@ -287,7 +187,7 @@ if (!mysqli_stmt_execute($stmt) || mysqli_stmt_affected_rows($stmt) < 1) {
 }
 
 $envioAssinatura = ['ok' => false, 'erro' => 'Envio não executado.', 'http_status' => 0, 'resposta' => ''];
-$stmtDados = mysqli_prepare($con, "SELECT * FROM `{$databaseName}`.`tbvistoria` WHERE idtbvistoria = ? LIMIT 1");
+$stmtDados = mysqli_prepare($con, "SELECT matricula, matrvistoriador, placa FROM `{$databaseName}`.`tbvistoria` WHERE idtbvistoria = ? LIMIT 1");
 if ($stmtDados) {
     mysqli_stmt_bind_param($stmtDados, 'i', $id);
     mysqli_stmt_execute($stmtDados);
@@ -307,9 +207,7 @@ if ($stmtDados) {
     $envioAssinatura = enviarRelatorioParaAssinatura(
         (string) ($vistoria['matricula'] ?? ''),
         (string) ($vistoria['placa'] ?? ''),
-        urlPublicaRelatorioVistoria($id),
-        $id,
-        gerarTextoRelatorioVistoria($vistoria, $id)
+        $id
     );
 }
 
@@ -333,5 +231,3 @@ if ($assinaturaStatus === 'erro') {
 
 header('Location: ../checklistp3.php?' . implode('&', $params));
 exit;
-// 
-// 
