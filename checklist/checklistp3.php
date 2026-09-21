@@ -21,6 +21,9 @@ if ($id > 0 && $con instanceof mysqli) {
 
 $escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $camposFotos = ['frontal'=>'Frontal','traseira'=>'Traseira','direita'=>'Lateral direita','esquerda'=>'Lateral esquerda','painel'=>'Painel','selfie'=>'Selfie','cnh'=>'CNH','extra1'=>'Extra 1','extra2'=>'Extra 2','extra3'=>'Extra 3'];
+$erroDetalhe = trim((string) ($_GET['erro_detalhe'] ?? ''));
+$erroHttp = (int) ($_GET['erro_http'] ?? 0);
+$erroApi = trim((string) ($_GET['erro_api'] ?? ''));
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>
@@ -37,6 +40,21 @@ header('Content-Type: text/html; charset=utf-8');
 <?php autofrotaMenu(); ?>
 <main class="container-fluid wrap px-4 pb-5">
   <div class="pt-3 pb-2"><h1 class="h2">Revisão da vistoria</h1><p class="text-muted">Checklist · Passo 3<?= !empty($vistoria['placa']) ? ' · '.$escape(strtoupper($vistoria['placa'])) : '' ?></p></div>
+  <?php if (($_GET['assinatura'] ?? '') === 'enviada'): ?><div class="alert alert-success"><i class="fas fa-file-signature me-1"></i>Relatório enviado para assinatura do funcionário.</div><?php endif; ?>
+  <?php if (($_GET['assinatura'] ?? '') === 'erro'): ?>
+    <div class="alert alert-warning">
+      <div><i class="fas fa-triangle-exclamation me-1"></i>A vistoria foi concluída, mas não foi possível enviar o relatório para assinatura.</div>
+      <?php if ($erroDetalhe !== '' || $erroHttp > 0 || $erroApi !== ''): ?>
+        <hr class="my-2">
+        <div class="small mb-1"><strong>Detalhes do erro:</strong></div>
+        <?php if ($erroDetalhe !== ''): ?><div class="small text-break">Motivo: <?= $escape($erroDetalhe) ?></div><?php endif; ?>
+        <?php if ($erroHttp > 0): ?><div class="small">HTTP: <?= $erroHttp ?></div><?php endif; ?>
+        <?php if ($erroApi !== ''): ?><div class="small text-break">Resposta da API: <?= $escape($erroApi) ?></div><?php endif; ?>
+      <?php else: ?>
+        <div class="small mt-1">Tente novamente mais tarde.</div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
   <?php if (!$vistoria): ?>
     <div class="alert alert-warning">Vistoria não encontrada. Volte ao início e realize as etapas anteriores.</div>
   <?php else: ?>
