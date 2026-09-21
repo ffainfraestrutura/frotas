@@ -28,12 +28,8 @@ unset($_SESSION['toaqui_token']);
 $id = filter_input(INPUT_POST, 'idtbtoaqui', FILTER_VALIDATE_INT);
 $decisao = filter_input(INPUT_POST, 'decisao', FILTER_VALIDATE_INT);
 
-// DEBUG TEMPORÁRIO: exibe os dados recebidos antes de rejeitar a requisição.
 if (!$id || !in_array($decisao, [1, 2], true)) {
-    $_SESSION['toaqui_mensagem'] = 'DEBUG POST -> idtbtoaqui=' . var_export($_POST['idtbtoaqui'] ?? null, true) . ' | decisao=' . var_export($_POST['decisao'] ?? null, true) . ' | token=' . var_export($_POST['token'] ?? null, true) . ' | all=' . var_export($_POST, true);
-    $_SESSION['toaqui_tipo_mensagem'] = 'warning';
-    header('Location: ../aceite-toaqui.php');
-    exit;
+    voltarToAqui('Selecione um apontamento e informe se deseja aprová-lo ou rejeitá-lo.');
 }
 
 mysqli_begin_transaction($conn);
