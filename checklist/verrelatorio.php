@@ -4,6 +4,7 @@ $autofrota = autofrotaInit();
 $con = $autofrota['conn'];
 $databaseName = (string) ($autofrota['databaseName'] ?? '');
 $id = (int) ($_GET['id'] ?? 0);
+$formatoPdf = strtolower(trim((string) ($_GET['formato'] ?? ''))) === 'pdf';
 $vistoria = [];
 $fotos = [];
 $tipoVistoria = '';
@@ -72,7 +73,11 @@ $gruposItens = [
     ],
 ];
 $camposFotos = ['frontal'=>'Frontal','traseira'=>'Traseira','direita'=>'Lateral direita','esquerda'=>'Lateral esquerda','bateria'=>'Bateria','painel'=>'Painel','selfie'=>'Selfie','cnh'=>'CNH','extra1'=>'Extra 1','extra2'=>'Extra 2','extra3'=>'Extra 3','extra4'=>'Extra 4','extra5'=>'Extra 5'];
-header('Content-Type: text/html; charset=utf-8');
+if ($formatoPdf) {
+    ob_start();
+} else {
+    header('Content-Type: text/html; charset=utf-8');
+}
 ?>
 <!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Relatório de Vistoria</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"><script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script><style>.report{max-width:1100px}.report-card{border:0;box-shadow:0 .125rem .5rem #00000014}.item-ok{color:#198754}.item-bad{color:#dc3545}.photo{height:210px;object-fit:contain;width:100%;background:#f5f5f5;border-radius:.35rem}@media print{nav,.no-print,footer{display:none!important}body{background:#fff}.report{max-width:none}.report-card{box-shadow:none;border:1px solid #bbb}.photo{height:170px}.page-break{break-before:page}}</style></head><body><?php autofrotaMenu(); ?><main class="container-fluid report px-4 pb-5"><header class="text-center py-4"><i class="fas fa-clipboard-check fa-3x text-success mb-2"></i><h1 class="h2">Relatório de Vistoria</h1><p class="text-muted mb-0">Checklist do veículo<?= !empty($vistoria['placa']) ? ' · '.$e(strtoupper($vistoria['placa'])) : '' ?></p></header>
 <?php if (!$vistoria): ?><div class="alert alert-warning">Vistoria não encontrada.</div><?php else: ?>
@@ -83,3 +88,109 @@ header('Content-Type: text/html; charset=utf-8');
 <section class="card report-card mb-4 page-break"><div class="card-header bg-white"><h2 class="h5 mb-0">Fotos da vistoria</h2></div><div class="card-body row g-3"><?php $temFoto=false; foreach ($camposFotos as $campo=>$rotulo): if (empty($fotos[$campo])) continue; $temFoto=true; ?><figure class="col-md-6 mb-0"><figcaption class="fw-bold mb-2"><?= $e($rotulo) ?></figcaption><img class="photo" src=".<?= $e($fotos[$campo]) ?>" alt="<?= $e($rotulo) ?>"></figure><?php endforeach; if (!$temFoto): ?><div class="col-12 text-muted">Nenhuma foto foi registrada.</div><?php endif ?></div></section>
 <section class="row g-5 mt-5 pt-5"><div class="col-md-6 text-center"><div class="border-top border-dark pt-2">Assinatura do vistoriador — <?= $exibir($vistoria['vistoriador'] ?? '') ?></div></div><div class="col-md-6 text-center"><div class="border-top border-dark pt-2">Assinatura do condutor — <?= $exibir($vistoria['nome'] ?? '') ?></div></div></section>
 <?php endif ?></main><footer class="py-4 bg-light"><div class="container-fluid text-center small text-muted">Copyright &copy; FFA Infraestrutura</div></footer><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script></body></html>
+<?php
+if ($formatoPdf) {
+    $htmlRelatorio = (string) ob_get_clean();
+    unset($htmlRelatorio);
+    require_once dirname(__DIR__) . '/pdf/fpdf/fpdf.php';
+
+    $pdfTexto = static function (mixed $valor): string {
+        $texto = trim((string) $valor);
+        $convertido = iconv('UTF-8', 'windows-1252//TRANSLIT', $texto);
+        return $convertido !== false ? $convertido : $texto;
+    };
+    $pdf = new FPDF('P', 'mm', 'A4');
+    $pdf->SetMargins(14, 14, 14);
+    $pdf->SetAutoPageBreak(true, 16);
+    $pdf->AddPage();
+    $pdf->SetTitle($pdfTexto('Relatório de Vistoria'));
+    $pdf->SetFont('Arial', 'B', 17);
+    $pdf->SetTextColor(25, 135, 84);
+    $pdf->Cell(0, 9, $pdfTexto('Relatório de Vistoria'), 0, 1, 'C');
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->Cell(0, 6, $pdfTexto('Checklist do veículo · ' . strtoupper((string) ($vistoria['placa'] ?? ''))), 0, 1, 'C');
+    $pdf->Ln(4);
+
+    $secao = static function (string $titulo, array $campos) use ($pdf, $pdfTexto): void {
+        $pdf->SetFillColor(242, 244, 246);
+        $pdf->SetTextColor(30, 30, 30);
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->Cell(0, 8, $pdfTexto($titulo), 1, 1, 'L', true);
+        foreach ($campos as $rotulo => $valor) {
+            $valorTexto = trim((string) $valor) !== '' ? (string) $valor : 'Não informado';
+            $pdf->SetFont('Arial', 'B', 8);
+            $pdf->Cell(48, 7, $pdfTexto($rotulo), 1, 0);
+            $pdf->SetFont('Arial', '', 8);
+            $pdf->MultiCell(0, 7, $pdfTexto($valorTexto), 1);
+        }
+        $pdf->Ln(4);
+    };
+
+    $secao('Informações do condutor', [
+        'Nome' => $vistoria['nome'] ?? '', 'Matrícula' => $vistoria['matricula'] ?? '',
+        'CPF' => $vistoria['cpf'] ?? '', 'CNH' => $vistoria['cnh'] ?? '',
+        'Categoria CNH' => $vistoria['categoriacnh'] ?? '', 'Validade CNH' => $vistoria['validadecnh'] ?? '',
+        'Centro de custo' => $vistoria['centrocusto'] ?? '',
+    ]);
+    $secao('Informações do veículo e da vistoria', [
+        'Placa' => strtoupper((string) ($vistoria['placa'] ?? '')), 'Modelo' => $vistoria['modelo'] ?? '',
+        'Ano' => $vistoria['anofabricacao'] ?? '', 'Unidade' => $vistoria['unidade'] ?? '',
+        'Vistoriador' => $vistoria['vistoriador'] ?? '', 'Estado geral' => $vistoria['estado'] ?? '',
+        'Hodômetro' => $vistoria['hodometro'] ?? '', 'Nível do tanque' => $vistoria['niveltanque'] ?? '',
+        'Documentação' => $vistoria['documentacao'] ?? '', 'Tipo' => $tipoVistoria ?: ($vistoria['tipo'] ?? ''),
+        'Status' => $statusVeiculo ?: ($vistoria['statusveic'] ?? ''),
+        'Data da vistoria' => $formatarData($vistoria['datavistoria'] ?? ''),
+        'Possui avaria' => ($vistoria['avaria'] ?? '') === '1' ? 'SIM' : 'NÃO',
+        'Observações' => $vistoria['observacao'] ?? '',
+    ]);
+    foreach ($gruposItens as $grupo => $itens) {
+        $dadosItens = [];
+        foreach ($itens as $campo => $rotulo) {
+            $dadosItens[$rotulo] = $rotuloItem($vistoria[$campo] ?? '');
+        }
+        $secao($grupo, $dadosItens);
+    }
+
+    $pdf->AddPage();
+    $pdf->SetFont('Arial', 'B', 11);
+    $pdf->Cell(0, 8, $pdfTexto('Fotos da vistoria'), 1, 1, 'L', true);
+    $temFotoPdf = false;
+    foreach ($camposFotos as $campo => $rotulo) {
+        $urlFoto = (string) ($fotos[$campo] ?? '');
+        parse_str((string) parse_url($urlFoto, PHP_URL_QUERY), $parametrosFoto);
+        $nomeFoto = basename((string) ($parametrosFoto['abrir'] ?? ''));
+        $arquivoFoto = $nomeFoto !== '' ? rtrim(diretorioUploadsPortal(), '/\\') . DIRECTORY_SEPARATOR . $nomeFoto : '';
+        $mimeFoto = $arquivoFoto !== '' && is_file($arquivoFoto) ? mime_content_type($arquivoFoto) : '';
+        if (!in_array($mimeFoto, ['image/jpeg', 'image/png'], true)) {
+            continue;
+        }
+        if ($pdf->GetY() > 225) {
+            $pdf->AddPage();
+        }
+        $temFotoPdf = true;
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->Cell(0, 6, $pdfTexto($rotulo), 0, 1);
+        $yFoto = $pdf->GetY();
+        $pdf->Image($arquivoFoto, 14, $yFoto, 90, 55);
+        $pdf->SetY($yFoto + 59);
+    }
+    if (!$temFotoPdf) {
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->Cell(0, 8, $pdfTexto('Nenhuma foto compatível foi registrada.'), 0, 1);
+    }
+    if ($pdf->GetY() > 245) {
+        $pdf->AddPage();
+    }
+    $pdf->Ln(18);
+    $pdf->SetFont('Arial', '', 8);
+    $pdf->Cell(82, 7, $pdfTexto('Assinatura do vistoriador — ' . ($vistoria['vistoriador'] ?? '')), 'T', 0, 'C');
+    $pdf->Cell(14, 7, '', 0, 0);
+    $pdf->Cell(82, 7, $pdfTexto('Assinatura do condutor — ' . ($vistoria['nome'] ?? '')), 'T', 1, 'C');
+
+    $placaArquivo = preg_replace('/[^A-Za-z0-9_-]/', '', strtoupper((string) ($vistoria['placa'] ?? ''))) ?: (string) $id;
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: inline; filename="vistoria-' . $placaArquivo . '.pdf"');
+    echo $pdf->Output('', 'S');
+}
+?>

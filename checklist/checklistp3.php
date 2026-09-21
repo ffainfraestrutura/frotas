@@ -21,6 +21,9 @@ if ($id > 0 && $con instanceof mysqli) {
 
 $escape = static fn(mixed $valor): string => htmlspecialchars((string) $valor, ENT_QUOTES, 'UTF-8');
 $camposFotos = ['frontal'=>'Frontal','traseira'=>'Traseira','direita'=>'Lateral direita','esquerda'=>'Lateral esquerda','painel'=>'Painel','selfie'=>'Selfie','cnh'=>'CNH','extra1'=>'Extra 1','extra2'=>'Extra 2','extra3'=>'Extra 3'];
+$erroDetalhe = trim((string) ($_GET['erro_detalhe'] ?? ''));
+$erroHttp = (int) ($_GET['erro_http'] ?? 0);
+$erroApi = trim((string) ($_GET['erro_api'] ?? ''));
 header('Content-Type: text/html; charset=utf-8');
 ?>
 <!DOCTYPE html>
@@ -37,6 +40,21 @@ header('Content-Type: text/html; charset=utf-8');
 <?php autofrotaMenu(); ?>
 <main class="container-fluid wrap px-4 pb-5">
   <div class="pt-3 pb-2"><h1 class="h2">Revisão da vistoria</h1><p class="text-muted">Checklist · Passo 3<?= !empty($vistoria['placa']) ? ' · '.$escape(strtoupper($vistoria['placa'])) : '' ?></p></div>
+  <?php if (($_GET['assinatura'] ?? '') === 'enviada'): ?><div class="alert alert-success"><i class="fas fa-file-signature me-1"></i>Relatório enviado para assinatura do funcionário.</div><?php endif; ?>
+  <?php if (($_GET['assinatura'] ?? '') === 'erro'): ?>
+    <div class="alert alert-warning">
+      <div><i class="fas fa-triangle-exclamation me-1"></i>A vistoria foi concluída, mas não foi possível enviar o relatório para assinatura.</div>
+      <?php if ($erroDetalhe !== '' || $erroHttp > 0 || $erroApi !== ''): ?>
+        <hr class="my-2">
+        <div class="small mb-1"><strong>Detalhes do erro:</strong></div>
+        <?php if ($erroDetalhe !== ''): ?><div class="small text-break">Motivo: <?= $escape($erroDetalhe) ?></div><?php endif; ?>
+        <?php if ($erroHttp > 0): ?><div class="small">HTTP: <?= $erroHttp ?></div><?php endif; ?>
+        <?php if ($erroApi !== ''): ?><div class="small text-break">Resposta da API: <?= $escape($erroApi) ?></div><?php endif; ?>
+      <?php else: ?>
+        <div class="small mt-1">Tente novamente mais tarde.</div>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
   <?php if (!$vistoria): ?>
     <div class="alert alert-warning">Vistoria não encontrada. Volte ao início e realize as etapas anteriores.</div>
   <?php else: ?>
@@ -49,7 +67,13 @@ header('Content-Type: text/html; charset=utf-8');
     <section class="card my-3"><div class="card-header bg-white"><h2 class="h5 mb-0">Fotos salvas no Passo 2</h2></div><div class="card-body row g-3">
       <?php foreach ($camposFotos as $campo=>$titulo): ?><div class="col-6 col-md-4"><strong><?= $titulo ?></strong><?php if (!empty($fotos[$campo])): $fotoSrc = trim((string) $fotos[$campo]); if ($fotoSrc !== '' && !preg_match('/^https?:\/\//i', $fotoSrc) && !str_starts_with($fotoSrc, '/')) { $fotoSrc = '.' . $fotoSrc; } ?><img class="photo mt-2" src="<?= $escape($fotoSrc) ?>" alt="<?= $titulo ?>"><?php else: ?><div class="photo photo-empty mt-2"><span><i class="fas fa-image me-1"></i>Não enviada</span></div><?php endif; ?></div><?php endforeach; ?>
     </div></section>
-    <div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="./checklistinicio.php">Nova vistoria</a><a class="btn btn-success" href="./verrelatorio.php?id=<?= $id ?>"><i class="fas fa-file-lines me-1"></i>Visualizar relatório</a></div>
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+      <a class="btn btn-outline-secondary" href="./checklistinicio.php">Nova vistoria</a>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-success" href="./verrelatorio.php?id=<?= $id ?>"><i class="fas fa-file-lines me-1"></i>Visualizar relatório</a>
+        <a class="btn btn-danger" href="./verrelatorio.php?id=<?= $id ?>&amp;formato=pdf" target="_blank" rel="noopener"><i class="fas fa-file-pdf me-1"></i>Visualizar PDF</a>
+      </div>
+    </div>
   <?php endif; ?>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
