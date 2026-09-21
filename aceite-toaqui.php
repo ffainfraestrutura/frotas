@@ -95,6 +95,7 @@ renderCabecalhoAutofrota('Aprovação de rota — To Aqui');
             <form action="control/toaqui-decisao.php" method="post" id="toaquiForm">
                 <div class="modal-body">
                     <input type="hidden" name="token" value="<?= esc($token) ?>">
+                    <input type="hidden" name="decisao" id="toaquiDecisao" value="">
                     <div id="toaquiLoading" class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Carregando</span></div></div>
                     <div id="toaquiError" class="alert alert-danger d-none"></div>
                     <div class="table-responsive d-none" id="toaquiTableWrapper">
@@ -105,8 +106,8 @@ renderCabecalhoAutofrota('Aprovação de rota — To Aqui');
                 </div>
                 <div class="modal-footer">
                     <small class="text-muted me-auto">Selecione um apontamento por operação.</small>
-                    <button type="submit" name="decisao" value="2" class="btn btn-outline-danger toaqui-submit" disabled><i class="fas fa-xmark me-1"></i>Rejeitar</button>
-                    <button type="submit" name="decisao" value="1" class="btn btn-success toaqui-submit" disabled><i class="fas fa-check me-1"></i>Aprovar e incluir na rota</button>
+                    <button type="submit" value="2" class="btn btn-outline-danger toaqui-submit" disabled><i class="fas fa-xmark me-1"></i>Rejeitar</button>
+                    <button type="submit" value="1" class="btn btn-success toaqui-submit" disabled><i class="fas fa-check me-1"></i>Aprovar e incluir na rota</button>
                 </div>
             </form>
         </div>
@@ -121,11 +122,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const error = document.getElementById('toaquiError');
     const wrapper = document.getElementById('toaquiTableWrapper');
     const submits = document.querySelectorAll('.toaqui-submit');
+    const decisao = document.getElementById('toaquiDecisao');
     const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#039;','"':'&quot;'}[char]));
 
     document.querySelectorAll('.toaqui-open').forEach(button => button.addEventListener('click', async function () {
         document.getElementById('toaquiModalLabel').textContent = 'Detalhes do To Aqui — ' + this.dataset.nome;
         body.innerHTML = '';
+        decisao.value = '';
         loading.classList.remove('d-none'); error.classList.add('d-none'); wrapper.classList.add('d-none');
         submits.forEach(item => item.disabled = true);
         modal.show();
@@ -149,7 +152,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }));
 
     body.addEventListener('change', function () { submits.forEach(item => item.disabled = false); });
-    document.getElementById('toaquiForm').addEventListener('submit', function () { submits.forEach(item => item.disabled = true); });
+    submits.forEach(item => item.addEventListener('click', function () { decisao.value = this.value; }));
+    document.getElementById('toaquiForm').addEventListener('submit', function (event) {
+        // Botões desabilitados não são enviados pelo navegador. Preserve a decisão
+        // antes de bloquear novos cliques durante o processamento da requisição.
+        decisao.value = event.submitter?.value ?? decisao.value;
+        submits.forEach(item => item.disabled = true);
+    });
 });
 </script>
 <?php renderRodapeAutofrota(); ?>
