@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../../includes/autofrota_common.php';
+require_once __DIR__ . '/../../includes/ticketlog_api.php';
 
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
@@ -235,6 +236,24 @@ if ($decisao === 2 && $valorInserido > ($saldoAprovador ?? 0.0)) {
     voltarAprovacaoCota('Saldo insuficiente.', 'warning');
 }
 
+$consultaCartao = consultarSaldoTicketLogPorPlaca($conn, $databaseName, (string) ($pedido['placa'] ?? ''));
+if (!$consultaCartao['sucesso'] || $consultaCartao['numero_cartao'] === '') {
+    voltarAprovacaoCota('Não foi possível localizar o cartão do colaborador: ' . $consultaCartao['mensagem'], 'warning');
+}
+
+$inclusaoSaldo = inserirSaldoTicketLogPorCartao(
+    $conn,
+    $databaseName,
+    $consultaCartao['numero_cartao'],
+    $valorInserido
+);
+if (!$inclusaoSaldo['sucesso']) {
+    voltarAprovacaoCota($inclusaoSaldo['mensagem'], 'warning');
+}
+
+$saldoAtual = (float) ($consultaCartao['saldo'] ?? 0);
+$novoSaldo = $saldoAtual + $valorInserido;
+
 consultaPreparada(
     $conn,
     "UPDATE `{$databaseName}`.`tbpedidostec` SET flag = 2, tipocota = ?, dataplantao = NULL, valorinserido = ? WHERE idtbpedidostec = ? AND flag = 0",
@@ -355,4 +374,4 @@ consultaPreparada(
 
 registrarLogAprovacaoCota($conn, $databaseName, $idPedido, $decisao, (string) $pedido['matricula'], $matriculaLogada, (float) ($pedido['valor'] ?? 0), $valorInserido);
 
-voltarAprovacaoCota('Pedido aprovado com sucesso.', 'success');
+voltarAprovacaoCota('Pedido aprovado e saldo inserido no cartão com sucesso.', 'success');

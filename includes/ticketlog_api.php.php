@@ -83,6 +83,93 @@ function consultarSaldoTicketLogPorPlaca(mysqli $conn, string $databaseName, str
 }
 
 /**
+ * Insere saldo no periodo atual de um cartao TicketLog.
+ *
+ * Mantem a mesma operacao AR/AS/SP utilizada pelo portal legado e pelo
+ * remanejamento de frota.
+ *
+ * @return array{sucesso: bool, mensagem: string}
+ */
+function inserirSaldoTicketLogPorCartao(mysqli $conn, string $databaseName, string $numeroCartao, float $valor): array
+{
+    $numeroCartao = trim($numeroCartao);
+    if ($numeroCartao === '' || $valor <= 0) {
+        return ['sucesso' => false, 'mensagem' => 'Cartão ou valor para inclusão de saldo inválido.'];
+    }
+    if (!function_exists('curl_init')) {
+        return ['sucesso' => false, 'mensagem' => 'Extensão cURL indisponível.'];
+    }
+
+    $configuracao = buscarConfiguracaoTicketLog($conn, $databaseName);
+    if (!$configuracao['sucesso']) {
+        return ['sucesso' => false, 'mensagem' => $configuracao['mensagem']];
+    }
+
+    $curl = curl_init('https://srv1.ticketlog.com.br/ticketlog-servicos/ebs/usuarioCartaoLimite');
+    curl_setopt_array($curl, [
+        CURLOPT_CUSTOMREQUEST => 'PUT',
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Basic ' . $configuracao['basic_auth'],
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ],
+        CURLOPT_POSTFIELDS => json_encode([
+            'codigoCliente' => $configuracao['codigo_cliente'],
+            'codigoProduto' => $configuracao['codigo_produto'],
+            'tipoAlteracao' => 'AR',
+            'tipoLimite' => 'AS',
+            'tipoOperacao' => 'SP',
+            'cartoes' => [[
+                'numeroCartao' => $numeroCartao,
+                'valorLimite' => $valor,
+                'valorLimiteProxPeriodo' => null,
+                'mensagem' => 'Controle Combustivel',
+            ]],
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+    ]);
+
+    $resposta = curl_exec($curl);
+    $erroCurl = curl_error($curl);
+    $statusHttp = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+    curl_close($curl);
+
+    if ($resposta === false || $erroCurl !== '') {
+        return ['sucesso' => false, 'mensagem' => 'Falha de comunicação com a TicketLog.'];
+    }
+
+    $dados = json_decode((string) $resposta, true);
+
+    if ($statusHttp < 200 || $statusHttp >= 300) {
+        return ['sucesso' => false, 'mensagem' => 'A TicketLog recusou a inclusão de saldo (HTTP ' . $statusHttp . ').'];
+    }
+
+    if (!is_array($dados)) {
+        return ['sucesso' => false, 'mensagem' => 'A TicketLog respondeu com conteúdo inválido para inclusão de saldo.'];
+    }
+
+    if (($dados['sucesso'] ?? true) === false) {
+        $mensagemErro = '';
+        foreach (['mensagem', 'message', 'erro', 'error', 'detail', 'details'] as $chave) {
+            if (isset($dados[$chave]) && is_scalar($dados[$chave])) {
+                $mensagemErro = trim((string) $dados[$chave]);
+                break;
+            }
+        }
+
+        $mensagemFinal = $mensagemErro !== ''
+            ? 'A TicketLog respondeu HTTP 200, mas retornou falha de negócio: ' . $mensagemErro
+            : 'A TicketLog respondeu HTTP 200, mas retornou falha de negócio.';
+
+        return ['sucesso' => false, 'mensagem' => $mensagemFinal];
+    }
+
+    return ['sucesso' => true, 'mensagem' => ''];
+}
+
+/**
  * @return array{sucesso: bool, basic_auth: string, codigo_cliente: int, codigo_produto: int, mensagem: string}
  */
 function buscarConfiguracaoTicketLog(mysqli $conn, string $databaseName): array

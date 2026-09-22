@@ -106,16 +106,57 @@ function buscarCartaoAtivoTicketLog(mysqli $conn, string $databaseName, string $
 }
 
 /** @return array{sucesso:bool,mensagem:string,http_status:int} */
-function adicionarSaldoTicketLog(mysqli $conn, string $databaseName, string $numeroCartao, int $centavos): array
+function adicionarSaldoTicketLog(
+    mysqli $conn,
+    string $databaseName,
+    string $numeroCartao,
+    int $centavos,
+    string $descricaoJustificativa
+): array
 {
     $config = configuracaoTicketLogSaldo($conn, $databaseName);
     if (!$config) {
         return ['sucesso' => false, 'mensagem' => 'Configuração TicketLog não cadastrada.', 'http_status' => 0];
     }
 
-    $curl = curl_init('https://srv1.ticketlog.com.br/ticketlog-servicos/ebs/usuarioCartaoLimite');
+    // O contrato de /credito define numeroCartao como number, não como string.
+    // A consulta devolve esse campo como texto, então é necessário convertê-lo
+    // antes de montar o JSON enviado ao endpoint de crédito.
+    if (!preg_match('/^\d{1,18}$/', $numeroCartao)) {
+        return ['sucesso' => false, 'mensagem' => 'Número do cartão retornado pela TicketLog é inválido.', 'http_status' => 0];
+    }
+    $descricaoJustificativa = trim($descricaoJustificativa);
+    if ($descricaoJustificativa === '') {
+        return ['sucesso' => false, 'mensagem' => 'A justificativa do crédito não foi informada.', 'http_status' => 0];
+    }
+
+    $agoraSaoPaulo = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+    $payload = [
+        'codigoCredito' => random_int(1, 2147483647),
+        'codigoCliente' => $config['codigo_cliente'],
+        'codigoProduto' => $config['codigo_produto'],
+        'valorCredito' => $centavos / 100,
+        'numeroCartao' => (int) $numeroCartao,
+        'dataValidade' => $agoraSaoPaulo
+            ->modify('+1 year')
+            ->setTime(23, 59, 59)
+            ->format('Y-m-d\TH:i:sP'),
+        'dataLiberacao' => $agoraSaoPaulo->format('Y-m-d'),
+        'descricaoJustificativa' => mb_substr($descricaoJustificativa, 0, 255),
+    ];
+    $corpo = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+    if ($corpo === false) {
+        return ['sucesso' => false, 'mensagem' => 'Não foi possível montar a requisição para a TicketLog.', 'http_status' => 0];
+    }
+
+    $payloadLog = $payload;
+    $payloadLog['numeroCartao'] = '************' . substr($numeroCartao, -4);
+    $corpoLog = json_encode($payloadLog, JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION);
+    error_log('[TicketLog] Payload POST /credito: ' . ($corpoLog !== false ? $corpoLog : '[falha ao serializar payload de log]'));
+
+    $curl = curl_init('https://srv1.ticketlog.com.br/ticketlog-servicos/ebs/credito');
     curl_setopt_array($curl, [
-        CURLOPT_CUSTOMREQUEST => 'PUT',
+        CURLOPT_POST => true,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT => 5,
         CURLOPT_TIMEOUT => 20,
@@ -124,22 +165,11 @@ function adicionarSaldoTicketLog(mysqli $conn, string $databaseName, string $num
             'Content-Type: application/json',
             'Accept: application/json',
         ],
-        CURLOPT_POSTFIELDS => json_encode([
-            'codigoCliente' => $config['codigo_cliente'],
-            'codigoProduto' => $config['codigo_produto'],
-            'tipoAlteracao' => 'AR',
-            'tipoLimite' => 'AS',
-            'tipoOperacao' => 'SP',
-            'cartoes' => [[
-                'numeroCartao' => $numeroCartao,
-                'valorLimite' => $centavos / 100,
-                'valorLimiteProxPeriodo' => null,
-                'mensagem' => 'Controle Combustivel',
-            ]],
-        ], JSON_UNESCAPED_SLASHES),
+        CURLOPT_POSTFIELDS => $corpo,
     ]);
     $resposta = curl_exec($curl);
     $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+    $tipoConteudo = trim((string) curl_getinfo($curl, CURLINFO_CONTENT_TYPE));
     $erro = curl_error($curl);
     curl_close($curl);
 
@@ -150,7 +180,7 @@ function adicionarSaldoTicketLog(mysqli $conn, string $databaseName, string $num
     $dados = json_decode((string) $resposta, true);
     $mensagemApi = '';
     if (is_array($dados)) {
-        foreach (['mensagem', 'message', 'erro', 'error', 'descricao'] as $campoMensagem) {
+        foreach (['mensagem', 'errorMessage', 'message', 'erro', 'error', 'descricao'] as $campoMensagem) {
             if (isset($dados[$campoMensagem]) && is_scalar($dados[$campoMensagem])) {
                 $mensagemApi = trim((string) $dados[$campoMensagem]);
                 if ($mensagemApi !== '') {
@@ -160,12 +190,50 @@ function adicionarSaldoTicketLog(mysqli $conn, string $databaseName, string $num
         }
     }
 
+    $codigoErro = is_array($dados) && isset($dados['codigoErro']) && is_scalar($dados['codigoErro'])
+        ? trim((string) $dados['codigoErro'])
+        : (is_array($dados) && isset($dados['errorCode']) && is_scalar($dados['errorCode'])
+            ? trim((string) $dados['errorCode'])
+            : '');
     $sucessoHttp = $status >= 200 && $status < 300;
-    $sucessoApi = !is_array($dados) || !array_key_exists('sucesso', $dados) || $dados['sucesso'] !== false;
+    $sucessoApi = is_array($dados) && ($dados['sucesso'] ?? false) === true;
     if (!$sucessoHttp || !$sucessoApi) {
+        if ($status === 401 || $status === 403) {
+            $motivo = $status === 401 ? 'não foi autenticada' : 'não possui acesso ao endpoint';
+            return [
+                'sucesso' => false,
+                'mensagem' => 'A credencial TicketLog ' . $motivo . ' POST /ticketlog-servicos/ebs/credito (HTTP ' . $status . '). Confirme com a TicketLog a liberação dessa rota para o cliente ' . $config['codigo_cliente'] . ' e produto ' . $config['codigo_produto'] . '.',
+                'http_status' => $status,
+            ];
+        }
+
+        if ($codigoErro === 'OSB-380000' && stripos($mensagemApi, 'autorizad') !== false) {
+            return [
+                'sucesso' => false,
+                'mensagem' => 'A credencial TicketLog não está autorizada a inserir créditos. Solicite à TicketLog a liberação do POST /ticketlog-servicos/ebs/credito para o cliente ' . $config['codigo_cliente'] . ' e produto ' . $config['codigo_produto'] . '.',
+                'http_status' => $status,
+            ];
+        }
+
         $detalhe = 'TicketLog retornou HTTP ' . $status . '.';
+        if ($codigoErro !== '') {
+            $detalhe .= ' Código ' . $codigoErro . '.';
+        }
         if ($mensagemApi !== '') {
             $detalhe .= ' ' . $mensagemApi;
+        } elseif (!is_array($dados)) {
+            $respostaTexto = html_entity_decode(strip_tags((string) $resposta), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $respostaTexto = trim((string) preg_replace('/\s+/u', ' ', $respostaTexto));
+            $respostaTexto = (string) preg_replace('/\b\d{12,19}\b/', '[número protegido]', $respostaTexto);
+            $respostaTexto = mb_substr($respostaTexto, 0, 300);
+            $detalhe .= ' A resposta não contém um JSON válido';
+            if ($tipoConteudo !== '') {
+                $detalhe .= ' (Content-Type: ' . $tipoConteudo . ')';
+            }
+            $detalhe .= '.';
+            if ($respostaTexto !== '') {
+                $detalhe .= ' Retorno: ' . $respostaTexto;
+            }
         }
         return ['sucesso' => false, 'mensagem' => $detalhe, 'http_status' => $status];
     }
@@ -217,9 +285,15 @@ $cartao = buscarCartaoAtivoTicketLog($conn, $databaseName, $placa);
 if (!$cartao['sucesso']) {
     voltarRelatorioSaldo('Saldo não adicionado.', $cartao['mensagem']);
 }
-$alteracaoTicketLog = adicionarSaldoTicketLog($conn, $databaseName, $cartao['numero_cartao'], $centavos);
+$alteracaoTicketLog = adicionarSaldoTicketLog(
+    $conn,
+    $databaseName,
+    $cartao['numero_cartao'],
+    $centavos,
+    $justificativa
+);
 if (!$alteracaoTicketLog['sucesso']) {
-    error_log('[TicketLog] Alteração de limite recusada: ' . $alteracaoTicketLog['mensagem']);
+    error_log('[TicketLog] Inclusão de crédito recusada: ' . $alteracaoTicketLog['mensagem']);
     voltarRelatorioSaldo('Saldo não adicionado.', $alteracaoTicketLog['mensagem']);
 }
 
