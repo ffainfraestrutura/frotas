@@ -162,12 +162,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Remanejar Saldo
                                 </a>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Remover Saldo
                                 </a>
-                            </li>
+                            </li> -->
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('coordenador/aprovacao-cotas.php', $baseAutofrotaUrl) ?>"
@@ -215,12 +215,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Remanejar Saldo
                                 </a>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Remover Saldo
                                 </a>
-                            </li>
+                            </li> -->
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
@@ -379,12 +379,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                     target="_self">Remanejar Saldo
                                 </a>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
                                     target="_self">Retirar Saldo
                                 </a>
-                            </li>
+                            </li> -->
                             <li>
                                 <a class="dropdown-item"
                                     href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
@@ -421,12 +421,12 @@ function menuSuperiorAtivo(string $caminho, string $paginaAtual, string $baseAut
                                         target="_self">Remanejar Saldo
                                     </a>
                                 </li>
-                                <li>
+                                <!-- <li>
                                     <a class="dropdown-item"
                                         href="<?= menuSuperiorLink('combustivel/retirada/index.php', $baseAutofrotaUrl) ?>"
                                         target="_self">Remover Saldo
                                     </a>
-                                </li>
+                                </li> -->
                                 <li>
                                     <a class="dropdown-item"
                                         href="<?= menuSuperiorLink('combustivel/historico_combustivel.php', $baseAutofrotaUrl) ?>"
