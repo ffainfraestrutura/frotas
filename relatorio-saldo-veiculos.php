@@ -2,6 +2,136 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/includes/autofrota_common.php';
+
+/**
+ * Consulta o cartao ativo de uma placa na TicketLog.
+ *
+ * A credencial e os codigos da integracao sao carregados da tabela
+ * tbintegracao_ticketlog. Consulte docs/ticketlog-configuracao.md.
+ *
+ * @return array{sucesso: bool, saldo: ?float, numero_cartao: string, mensagem: string}
+ */
+function consultarSaldoTicketLogPorPlaca(mysqli $conn, string $databaseName, string $placa): array
+{
+    $placa = strtoupper(preg_replace('/[^A-Z0-9]/i', '', trim($placa)) ?? '');
+
+    if ($placa === '') {
+        return ['sucesso' => false, 'saldo' => null, 'numero_cartao' => '', 'mensagem' => 'Placa não informada.'];
+    }
+    if (!function_exists('curl_init')) {
+        return ['sucesso' => false, 'saldo' => null, 'numero_cartao' => '', 'mensagem' => 'Extensão cURL indisponível.'];
+    }
+
+    $configuracao = buscarConfiguracaoTicketLog($conn, $databaseName);
+    if (!$configuracao['sucesso']) {
+        return ['sucesso' => false, 'saldo' => null, 'numero_cartao' => '', 'mensagem' => $configuracao['mensagem']];
+    }
+
+    $credencial = $configuracao['basic_auth'];
+    $codigoCliente = $configuracao['codigo_cliente'];
+    $codigoProduto = $configuracao['codigo_produto'];
+
+    $payload = json_encode([
+        'codigoCliente' => $codigoCliente,
+        'codigoProduto' => $codigoProduto,
+        'placaVeiculo' => $placa,
+        'situacaoCartao' => 'A',
+        'ordem' => 'C',
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    $curl = curl_init('https://srv1.ticketlog.com.br/ticketlog-servicos/ebs/relatorioExtratoSimplificado/search');
+    curl_setopt_array($curl, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Basic ' . $credencial,
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ],
+        CURLOPT_POSTFIELDS => $payload,
+    ]);
+
+    $resposta = curl_exec($curl);
+    $erroCurl = curl_error($curl);
+    $statusHttp = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+    curl_close($curl);
+
+    if ($resposta === false || $erroCurl !== '') {
+        return ['sucesso' => false, 'saldo' => null, 'numero_cartao' => '', 'mensagem' => 'Falha de comunicação com a TicketLog.'];
+    }
+
+    $dados = json_decode($resposta, true);
+    if ($statusHttp < 200 || $statusHttp >= 300 || !is_array($dados) || ($dados['sucesso'] ?? false) !== true) {
+        return ['sucesso' => false, 'saldo' => null, 'numero_cartao' => '', 'mensagem' => 'A TicketLog recusou a consulta.'];
+    }
+
+    foreach (($dados['itens'] ?? []) as $item) {
+        if (!is_array($item) || strtoupper((string) ($item['situacao'] ?? '')) !== 'A') {
+            continue;
+        }
+
+        return [
+            'sucesso' => true,
+            'saldo' => isset($item['saldo']) ? (float) $item['saldo'] : 0.0,
+            'numero_cartao' => (string) ($item['numeroCartao'] ?? ''),
+            'mensagem' => '',
+        ];
+    }
+
+    return ['sucesso' => false, 'saldo' => null, 'numero_cartao' => '', 'mensagem' => 'Nenhum cartão ativo encontrado para a placa.'];
+}
+
+/**
+ * @return array{sucesso: bool, basic_auth: string, codigo_cliente: int, codigo_produto: int, mensagem: string}
+ */
+function buscarConfiguracaoTicketLog(mysqli $conn, string $databaseName): array
+{
+    static $cache = [];
+
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $databaseName)) {
+        return ['sucesso' => false, 'basic_auth' => '', 'codigo_cliente' => 0, 'codigo_produto' => 0, 'mensagem' => 'Banco da configuração TicketLog inválido.'];
+    }
+
+    $cacheKey = spl_object_id($conn) . ':' . $databaseName;
+    if (isset($cache[$cacheKey])) {
+        return $cache[$cacheKey];
+    }
+
+    $sql = "SELECT basic_auth, codigo_cliente, codigo_produto
+              FROM `{$databaseName}`.`tbintegracao_ticketlog`
+             WHERE ativo = 1
+             ORDER BY idtbintegracao_ticketlog DESC
+             LIMIT 1";
+    $resultado = mysqli_query($conn, $sql);
+    if (!$resultado) {
+        $cache[$cacheKey] = ['sucesso' => false, 'basic_auth' => '', 'codigo_cliente' => 0, 'codigo_produto' => 0, 'mensagem' => 'Configuração TicketLog indisponível.'];
+        return $cache[$cacheKey];
+    }
+
+    $linha = mysqli_fetch_assoc($resultado) ?: [];
+    mysqli_free_result($resultado);
+
+    $basicAuth = trim((string) ($linha['basic_auth'] ?? ''));
+    $codigoCliente = (int) ($linha['codigo_cliente'] ?? 0);
+    $codigoProduto = (int) ($linha['codigo_produto'] ?? 0);
+    if ($basicAuth === '' || $codigoCliente <= 0 || $codigoProduto <= 0) {
+        $cache[$cacheKey] = ['sucesso' => false, 'basic_auth' => '', 'codigo_cliente' => 0, 'codigo_produto' => 0, 'mensagem' => 'Configuração TicketLog não cadastrada.'];
+        return $cache[$cacheKey];
+    }
+
+    $cache[$cacheKey] = [
+        'sucesso' => true,
+        'basic_auth' => $basicAuth,
+        'codigo_cliente' => $codigoCliente,
+        'codigo_produto' => $codigoProduto,
+        'mensagem' => '',
+    ];
+
+    return $cache[$cacheKey];
+}
+
 $autofrotaSessao = autofrotaInit();
 
 $conn = $GLOBALS['conn'] ?? null;
@@ -101,6 +231,14 @@ if ($temFiltro) {
                      WHERE " . implode(' AND ', $where) . "
                   ORDER BY f.nome, v.placa";
     $veiculos = buscarLinhasSaldo($conn, $sqlVeiculos, $types, $params);
+
+    foreach ($veiculos as &$veiculo) {
+        $consultaTicketLog = consultarSaldoTicketLogPorPlaca($conn, $databaseName, (string) ($veiculo['placa'] ?? ''));
+        $veiculo['saldo_cartao_api'] = $consultaTicketLog['saldo'];
+        $veiculo['numero_cartao'] = $consultaTicketLog['numero_cartao'];
+        $veiculo['erro_saldo_cartao'] = $consultaTicketLog['sucesso'] ? '' : $consultaTicketLog['mensagem'];
+    }
+    unset($veiculo);
 }
 
 $mensagemRetorno = (string) ($_SESSION['rel_saldo_msg'] ?? '');
@@ -145,8 +283,9 @@ unset($_SESSION['rel_saldo_alert_detalhes']);
             <?php foreach ($veiculos as $row): $formId='form_'.preg_replace('/[^a-zA-Z0-9_]/','_', (string)$row['placa']); $justId='just_'.$formId; ?>
                 <tr>
                     <td><?= escSaldo($row['placa']) ?></td><td><?= escSaldo($row['matricula']) ?></td><td class="text-nowrap"><?= escSaldo($row['nome']) ?></td><td><?= escSaldo($row['supervisor_nome']) ?></td><td><?= escSaldo($row['cargo']) ?></td><td><?= escSaldo($row['ccusto']) ?></td>
-                    <td>R$ <?= moedaSaldo($row['saldo_cartao']) ?></td><td>R$ <?= moedaSaldo($row['orcsemanal']) ?></td><td>R$ <?= moedaSaldo($row['totalextra']) ?></td><td>R$ <?= moedaSaldo($row['valoraplicado']) ?></td>
-                    <td style="min-width:220px"><?php $semSaldoSemanal = (int) ($row['idtbsaldo'] ?? 0) <= 0; ?><form id="<?= escSaldo($formId) ?>" action="control/remanejamentofrota.php" method="post" onsubmit="return validarFormulario('<?= escSaldo($justId) ?>')"><input type="hidden" name="matriculatec" value="<?= escSaldo($row['matricula']) ?>"><input type="hidden" name="idtbsaldo" value="<?= escSaldo($row['idtbsaldo']) ?>"><input type="hidden" name="placa" value="<?= escSaldo($row['placa']) ?>"><input type="hidden" name="saldoatual" value="<?= moedaSaldo($row['saldo_cartao']) ?>"><input type="hidden" name="unidade" value="<?= escSaldo($row['unidade']) ?>"><div class="form-check"><input class="form-check-input" type="radio" name="tipoacao" value="1" required><label class="form-check-label">Adicionar Saldo</label></div><div class="form-check mb-2"><input class="form-check-input" type="radio" name="tipoacao" value="0"><label class="form-check-label">Remover Saldo</label></div><div class="input-group input-group-sm"><input class="form-control" name="valor" placeholder="Valor" required><button class="btn btn-outline-success" type="submit">&gt;</button></div><?php if ($semSaldoSemanal): ?><small class="text-warning d-block mt-1">Sem saldo semanal. Ao enviar, será usado o último saldo disponível.</small><?php endif; ?></form></td>
+                    <?php $saldoCartaoApi = $row['saldo_cartao_api'] ?? null; $erroSaldoCartao = (string) ($row['erro_saldo_cartao'] ?? ''); ?>
+                    <td><?php if ($saldoCartaoApi !== null): ?><span title="Saldo consultado na TicketLog">R$ <?= moedaSaldo($saldoCartaoApi) ?></span><?php else: ?><span class="text-warning" title="<?= escSaldo($erroSaldoCartao) ?>">Indisponível</span><?php endif; ?></td><td>R$ <?= moedaSaldo($row['orcsemanal']) ?></td><td>R$ <?= moedaSaldo($row['totalextra']) ?></td><td>R$ <?= moedaSaldo($row['valoraplicado']) ?></td>
+                    <td style="min-width:220px"><?php $semSaldoSemanal = (int) ($row['idtbsaldo'] ?? 0) <= 0; $consultaDisponivel = $saldoCartaoApi !== null && !empty($row['numero_cartao']); ?><form id="<?= escSaldo($formId) ?>" action="control/remanejamentofrota.php" method="post" onsubmit="return validarFormulario('<?= escSaldo($justId) ?>', this)"><input type="hidden" name="matriculatec" value="<?= escSaldo($row['matricula']) ?>"><input type="hidden" name="idtbsaldo" value="<?= escSaldo($row['idtbsaldo']) ?>"><input type="hidden" name="placa" value="<?= escSaldo($row['placa']) ?>"><input type="hidden" name="numeroCartao" value="<?= escSaldo($row['numero_cartao'] ?? '') ?>"><input type="hidden" name="saldoatual" value="<?= escSaldo($saldoCartaoApi ?? '') ?>"><input type="hidden" name="unidade" value="<?= escSaldo($row['unidade']) ?>"><input type="hidden" name="tipoacao" value="1"><div class="mb-2 fw-semibold text-success"><i class="fa-solid fa-plus-circle"></i> Adicionar Saldo</div><div class="input-group input-group-sm"><span class="input-group-text">R$</span><input type="number" class="form-control" name="valor" placeholder="0,01" min="0.01" step="0.01" inputmode="decimal" required><button class="btn btn-outline-success" type="submit" <?= $consultaDisponivel ? '' : 'disabled' ?>>Adicionar</button></div><small class="text-muted d-block mt-1">Valor mínimo: R$ 0,01. Remoção bloqueada.</small><?php if ($semSaldoSemanal): ?><small class="text-warning d-block mt-1">Sem saldo semanal. Ao enviar, será usado o último saldo disponível.</small><?php endif; ?></form></td>
                     <td style="min-width:280px"><textarea id="<?= escSaldo($justId) ?>" class="form-control form-control-sm" name="justificativa" rows="3" form="<?= escSaldo($formId) ?>" maxlength="500" required placeholder="Justificativa obrigatória (mín. 10 caracteres)"></textarea></td>
                 </tr>
             <?php endforeach; ?>
@@ -175,7 +314,7 @@ if (queryAtual) {
     }
 }
 
-function validarFormulario(id){const v=(document.getElementById(id)?.value||'').trim(); if(v.length<10){alert('Informe uma justificativa com pelo menos 10 caracteres.'); return false;} return true;}
+function validarFormulario(id, form){const v=(document.getElementById(id)?.value||'').trim(); if(v.length<10){alert('Informe uma justificativa com pelo menos 10 caracteres.'); return false;} const campo=form.querySelector('[name="valor"]'); const valor=Number(campo?.value||0); if(!Number.isFinite(valor)||valor<0.01){alert('Informe um valor a partir de R$ 0,01.'); return false;} const botao=form.querySelector('button[type="submit"]'); if(botao){botao.disabled=true; botao.textContent='Processando...';} return true;}
 document.getElementById('btnExportExcel').addEventListener('click',()=>{const html='\ufeff'+document.getElementById('datatablesSimple').outerHTML; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'})); a.download='rel_saldo_veiculos.xls'; a.click();});
 function buscarJustificativas(){ $.post('control/buscar_justificativas.php',{matricula:$('#filtroMatricula').val(),placa:$('#filtroPlaca').val(),tipo_acao:$('#filtroTipoAcao').val(),data_inicio:$('#filtroDataInicio').val(),data_fim:$('#filtroDataFim').val()},function(dados){let html=''; if(!Array.isArray(dados)||!dados.length){html='<tr><td colspan="8" class="text-center text-muted">Nenhum registro encontrado</td></tr>';} else {dados.forEach(function(i){html+='<tr><td>'+i.id+'</td><td>'+i.data_hora_formatada+'</td><td>'+(i.tipo_acao==1?'Adição':'Remoção')+'</td><td>'+i.placa+'</td><td>'+i.matricula_tecnico+'</td><td>R$ '+Number(i.valor||0).toLocaleString('pt-BR',{minimumFractionDigits:2})+'</td><td>'+i.matricula_autor+'</td><td>'+i.justificativa+'</td></tr>';});} $('#corpoTabelaJustificativas').html(html);},'json').fail(function(xhr){$('#corpoTabelaJustificativas').html('<tr><td colspan="8" class="text-center text-danger">Erro ao buscar justificativas.</td></tr>');});}
 document.getElementById('modalJustificativas').addEventListener('shown.bs.modal', buscarJustificativas);
