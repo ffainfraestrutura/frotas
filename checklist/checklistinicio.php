@@ -113,8 +113,8 @@ header('Content-Type: text/html; charset=utf-8');
       <?php elseif ($possuiAssinatura === false): ?>
         <div class="mt-4 alert alert-warning" role="status">
           <i class="fas fa-exclamation-triangle me-1"></i>
-          <strong>Você ainda não tem assinatura.</strong>
-          Por favor, adicione uma em <a class="alert-link" href="https://documentos.painel-telecom.com/" target="_blank" rel="noopener noreferrer">Assinaturas</a>.
+          <strong>Antes de iniciar ou concluir uma vistoria,</strong>
+           Verifique se sua assinatura está cadastrada no Portal<a class="alert-link" href="https://documentos.painel-telecom.com/" target="_blank" rel="noopener noreferrer">Documentos</a>.
         </div>
       <?php else: ?>
         <div class="mt-4 alert alert-secondary" role="status">
