@@ -39,6 +39,7 @@ if (usuarioLogado()) {
         .btn-login { background: var(--dark-bg); border: none; border-radius: 8px; padding: 12px; width: 100%; color: white; }
         .btn-login:hover { background: #1a1d23; color: white; }
         .portal-label { margin-bottom: 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); }
+        .brand-logo { display: block; width: min(100%, 320px); height: auto; margin: 12px auto 0; }
     </style>
 </head>
 <body>
@@ -47,6 +48,7 @@ if (usuarioLogado()) {
             <div class="card-header">
                 <div class="portal-label" aria-label="Portal">Portal</div>
                 <h3>AutoFrota</h3>
+                <img src="pictures/painelTelecom.jpeg" alt="Logo Painel Telecom" class="brand-logo" />
             </div>
             <div class="card-body p-4">
                 <form method="post" action="./control/logincontroller.php">
