@@ -62,7 +62,39 @@ function criarRelatorioTemporario(int $idVistoria): array
     return ['ok' => true, 'arquivo' => $arquivoDestino, 'erro' => ''];
 }
 
-function enviarRelatorioParaAssinatura(string $matricula, string $placa, int $idVistoria): array
+function buscarConfiguracaoAssinatura(mysqli $con, string $databaseName): array
+{
+    if (preg_match('/^[A-Za-z0-9_]+$/', $databaseName) !== 1) {
+        return ['ok' => false, 'erro' => 'Banco de dados da configuração inválido.'];
+    }
+
+    $sql = "SELECT endpoint_base, api_key, grupo_id
+              FROM `{$databaseName}`.`tbintegracao_api`
+             WHERE servico = 'assinatura_documentos' AND ativo = 1
+             LIMIT 1";
+    $stmt = mysqli_prepare($con, $sql);
+    if (!$stmt || !mysqli_stmt_execute($stmt)) {
+        return ['ok' => false, 'erro' => 'Não foi possível consultar a configuração da API de assinatura.'];
+    }
+
+    $configuracao = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: [];
+    $endpointBase = rtrim(trim((string) ($configuracao['endpoint_base'] ?? '')), '/');
+    $apiKey = trim((string) ($configuracao['api_key'] ?? ''));
+    $grupoId = (int) ($configuracao['grupo_id'] ?? 0);
+    if ($endpointBase === '' || !filter_var($endpointBase, FILTER_VALIDATE_URL) || $apiKey === '' || $grupoId < 1) {
+        return ['ok' => false, 'erro' => 'Configuração da API de assinatura ausente ou incompleta.'];
+    }
+
+    return [
+        'ok' => true,
+        'endpoint_base' => $endpointBase,
+        'api_key' => $apiKey,
+        'grupo_id' => $grupoId,
+        'erro' => '',
+    ];
+}
+
+function enviarRelatorioParaAssinatura(mysqli $con, string $databaseName, string $matricula, string $placa, int $idVistoria): array
 {
     $matricula = trim($matricula);
     if ($matricula === '') {
@@ -74,10 +106,20 @@ function enviarRelatorioParaAssinatura(string $matricula, string $placa, int $id
         ];
     }
 
-    $endpoint = 'https://documentos.api.painel-telecom.com/public/api/assinatura-documentos/internal/'
+    $configuracao = buscarConfiguracaoAssinatura($con, $databaseName);
+    if (($configuracao['ok'] ?? false) !== true) {
+        return [
+            'ok' => false,
+            'erro' => (string) ($configuracao['erro'] ?? 'Configuração da API de assinatura indisponível.'),
+            'http_status' => 0,
+            'resposta' => '',
+        ];
+    }
+
+    $endpoint = (string) $configuracao['endpoint_base'] . '/internal/'
         . rawurlencode($matricula)
         . '/documentos/individual';
-    $apiKey = (string) (getenv('ASSINATURA_DOCUMENTOS_INTERNAL_API_KEY') ?: '963eee2b2a97cdd77f1172549d403afee8fc2efc6f7c8d4cd571e9d4afdd1fb7');
+    $apiKey = (string) $configuracao['api_key'];
     $identificacao = trim($placa) !== '' ? ' - ' . strtoupper(trim($placa)) : '';
 
     $download = criarRelatorioTemporario($idVistoria);
@@ -115,7 +157,7 @@ function enviarRelatorioParaAssinatura(string $matricula, string $placa, int $id
     $dadosPost = [
         'titulo' => 'Vistoria de veículo' . $identificacao,
         'descricao' => 'Vistoria feita para a placa ' . (trim($placa) !== '' ? strtoupper(trim($placa)) : 'não informada') . ' assinar.',
-        'grupo_id' => '20',
+        'grupo_id' => (string) $configuracao['grupo_id'],
         'documento' => new CURLFile($arquivoPdf, 'application/pdf', basename($arquivoPdf)),
         'assinatura_funcionario' => '1',
     ];
@@ -205,6 +247,8 @@ if ($stmtDados) {
     }
 
     $envioAssinatura = enviarRelatorioParaAssinatura(
+        $con,
+        $databaseName,
         (string) ($vistoria['matricula'] ?? ''),
         (string) ($vistoria['placa'] ?? ''),
         $id

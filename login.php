@@ -34,17 +34,26 @@ if (usuarioLogado()) {
         body { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--grey-light); }
         .login-container { width: 100%; max-width: 420px; }
         .card { border-radius: 15px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); border: none; }
-        .card-header { background: var(--dark-bg); color: white; border-radius: 15px 15px 0 0; padding: 30px; text-align: center; }
+        .card-header { background: var(--dark-bg); color: white; border-radius: 15px 15px 0 0; padding: 18px 22px 28px; text-align: center; }
         .form-control { border-radius: 8px; padding: 12px; }
         .btn-login { background: var(--dark-bg); border: none; border-radius: 8px; padding: 12px; width: 100%; color: white; }
         .btn-login:hover { background: #1a1d23; color: white; }
         .portal-label { margin-bottom: 6px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.85); }
+        .brand-logo {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto 18px;
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
     <div class="login-container">
         <div class="card">
             <div class="card-header">
+                <img src="pictures/painelTelecom.jpeg" alt="Logo Painel Telecom" class="brand-logo" />
                 <div class="portal-label" aria-label="Portal">Portal</div>
                 <h3>AutoFrota</h3>
             </div>
