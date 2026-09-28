@@ -65,6 +65,7 @@ $editando = $acao === 'editar';
 $matriculaOriginal = trim((string) ($_POST['matricula_original'] ?? ''));
 $matricula = trim((string) ($_POST['matricula'] ?? ''));
 $nome = trim((string) ($_POST['nome'] ?? ''));
+$idEmpresa = trim((string) ($_POST['idtbempresa'] ?? ''));
 $retornoFormulario = $editando && $matriculaOriginal !== ''
     ? '../editar_condutorespj.php?matricula=' . urlencode($matriculaOriginal)
     : '../cadastrar_condutorespj.php';
@@ -76,8 +77,13 @@ function redirecionarComMensagem($url, $mensagem)
     exit;
 }
 
-if ($matricula === '' || $nome === '') {
-    redirecionarComMensagem($retornoFormulario, 'Informe matrícula e nome.');
+if ($matricula === '' || $nome === '' || !ctype_digit($idEmpresa) || (int) $idEmpresa < 1) {
+    redirecionarComMensagem($retornoFormulario, 'Informe matrícula, nome e empresa.');
+}
+
+$empresaExiste = buscarUmaLinha($conn, "SELECT idtbempresa FROM `{$databaseCorp}`.`tbempresa` WHERE idtbempresa = ? LIMIT 1", 'i', [(int) $idEmpresa]);
+if ($empresaExiste === []) {
+    redirecionarComMensagem($retornoFormulario, 'A empresa selecionada não existe.');
 }
 
 if (!$editando && preg_match('/^16[0-9]{5}$/D', $matricula) !== 1) {
@@ -165,13 +171,16 @@ function salvarAnexoCnhCondutor(string $matricula, string $retornoFormulario, bo
     return $nome;
 }
 
-$permitidos = ['matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
+$permitidos = ['idtbempresa','matricula','nome','status','dtadmissao','cpf','rg','dtnasc','uf_trabalho','estado','ccusto','cargo','projeto','endereco','bairro','cidade','cep','email','tel_corp'];
 $colsInfo = consultaPreparada($conn, "SHOW COLUMNS FROM `{$databaseName}`.`tbcondutor`");
 $colunasExistentes = array_column($colsInfo['linhas'], 'Field');
 $dados = [];
 foreach ($permitidos as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $_POST)) {
         $valor = trim((string) $_POST[$coluna]);
+        if ($coluna === 'idtbempresa') {
+            $valor = (string) (int) $valor;
+        }
         if (in_array($coluna, ['cpf', 'tel_corp'], true)) {
             $valor = preg_replace('/\D+/', '', $valor);
         }

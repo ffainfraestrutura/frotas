@@ -6,7 +6,13 @@ $conn = $sessao['conn'] ?? null;
 $databaseCorp = trim((string) ($sessao['databaseCorp'] ?? ($GLOBALS['databaseCorp'] ?? 'bdcorp')));
 $funcionarios = consultaPreparada(
     $conn,
-    "SELECT matricula, nome, status, cargo, ccusto, dtadmissao, cpf, rg, dtnasc, uf_trabalho, estado, projeto, endereco, bairro, cidade, cep, email, tel_corp FROM `{$databaseCorp}`.`tbfuncionario` WHERE idtbempresa = 2 AND UPPER(TRIM(status)) = 'ATIVO' ORDER BY nome"
+    "SELECT f.matricula, f.nome, f.status, f.cargo, f.ccusto, f.dtadmissao, f.cpf, f.rg, f.dtnasc,
+            f.uf_trabalho, f.estado, f.projeto, f.endereco, f.bairro, f.cidade, f.cep, f.email,
+            f.tel_corp, f.idtbempresa, e.descricao AS empresa_descricao
+       FROM `{$databaseCorp}`.`tbfuncionario` f
+       LEFT JOIN `{$databaseCorp}`.`tbempresa` e ON e.idtbempresa = f.idtbempresa
+      WHERE f.idtbempresa = 2 AND UPPER(TRIM(f.status)) = 'ATIVO'
+      ORDER BY f.nome"
 );
 $mensagem = valorRequisicao(['msg']);
 $cnh = [];
@@ -75,6 +81,7 @@ renderCabecalhoAutofrota('Cadastrar CNH de Colaborador');
             <div class="card-header fw-semibold"><i class="fas fa-briefcase me-2"></i>Dados Contratuais</div>
             <div class="card-body">
                 <div class="row g-3 mb-3">
+                    <div class="col-md-3"><label class="form-label">Empresa</label><input class="form-control campo-funcionario" id="empresa_descricao" readonly></div>
                     <div class="col-md-2"><label class="form-label">Matrícula</label><input class="form-control campo-funcionario" id="matricula-exibicao" data-campo="matricula" readonly></div>
                     <div class="col-md-2"><label class="form-label">Situação</label><input class="form-control campo-funcionario" id="status" readonly></div>
                     <div class="col-md-2"><label class="form-label">Data Admissão</label><input class="form-control campo-funcionario" id="dtadmissao" type="date" readonly></div>
