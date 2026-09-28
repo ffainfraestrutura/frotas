@@ -76,7 +76,7 @@ if ($colunasCondutor['erro'] !== '') {
 }
 
 $colunasExistentes = array_column($colunasCondutor['linhas'], 'Field');
-$colunasFuncionario = ['matricula', 'nome', 'status', 'dtadmissao', 'cpf', 'rg', 'dtnasc', 'uf_trabalho', 'estado', 'ccusto', 'cargo', 'projeto', 'endereco', 'bairro', 'cidade', 'cep', 'email', 'tel_corp'];
+$colunasFuncionario = ['idtbempresa', 'matricula', 'nome', 'status', 'dtadmissao', 'cpf', 'rg', 'dtnasc', 'uf_trabalho', 'estado', 'ccusto', 'cargo', 'projeto', 'endereco', 'bairro', 'cidade', 'cep', 'email', 'tel_corp'];
 $dadosCondutor = [];
 foreach ($colunasFuncionario as $coluna) {
     if (in_array($coluna, $colunasExistentes, true) && array_key_exists($coluna, $funcionario)) {

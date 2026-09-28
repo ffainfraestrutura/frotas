@@ -28,6 +28,7 @@ if ($condutor === []) {
 }
 
 $ccustos = consultaPreparada($conn, "SELECT * FROM `{$databaseCorp}`.`tbccusto`");
+$empresas = consultaPreparada($conn, "SELECT idtbempresa, descricao FROM `{$databaseCorp}`.`tbempresa` ORDER BY descricao");
 $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
 $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseName}`.`tbcondutor` WHERE projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
 $cnh = buscarUmaLinha($conn, "SELECT * FROM `{$databaseName}`.`tbcnh` WHERE matricula = ? LIMIT 1", 's', [$matricula]);
@@ -262,6 +263,15 @@ renderCabecalhoAutofrota('Editar Condutor PJ');
                     </div>
                     <div class="card-body collapse show" id="collapseDadosContratuais">
                         <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label for="idtbempresa" class="form-label">Empresa:<span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="idtbempresa" id="idtbempresa" required>
+                                    <option value="">Selecione</option>
+                                    <?php foreach ($empresas['linhas'] as $empresa): $idEmpresa=(string)($empresa['idtbempresa']??''); ?>
+                                        <option value="<?= esc($idEmpresa) ?>" <?= valorCondutorPj($condutor, 'idtbempresa') === $idEmpresa ? 'selected' : '' ?>><?= esc($empresa['descricao'] ?? '') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             <div class="col-md-2">
                                 <label for="matricula" class="form-label">Matrícula:<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc(valorCondutorPj($condutor, 'matricula')) ?>" readonly required style="background-color: #e9ecef;">

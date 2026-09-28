@@ -18,6 +18,7 @@ $proximaMatricula = '1620001';
 $ccustos = ['erro' => '', 'linhas' => []];
 $cargos = ['erro' => '', 'linhas' => []];
 $projetos = ['erro' => '', 'linhas' => []];
+$empresas = ['erro' => '', 'linhas' => []];
 $cnh = [];
 
 if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
@@ -27,6 +28,7 @@ if (isset($conn) && $conn instanceof mysqli && $databaseName !== '') {
     }
 
     $ccustos = consultaPreparada($conn, "SELECT * FROM `{$databaseCorp}`.`tbccusto`");
+    $empresas = consultaPreparada($conn, "SELECT idtbempresa, descricao FROM `{$databaseCorp}`.`tbempresa` ORDER BY descricao");
     $cargos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(cargo)) AS cargo FROM `{$databaseName}`.`tbcondutor` WHERE cargo IS NOT NULL AND TRIM(cargo) <> '' ORDER BY cargo");
     $projetos = consultaPreparada($conn, "SELECT DISTINCT UPPER(TRIM(projeto)) AS projeto FROM `{$databaseName}`.`tbcondutor` WHERE projeto IS NOT NULL AND TRIM(projeto) <> '' ORDER BY projeto");
 }
@@ -252,6 +254,15 @@ renderCabecalhoAutofrota('Cadastrar Condutor PJ');
                     </div>
                     <div class="card-body collapse show" id="collapseDadosContratuais">
                         <div class="row g-3 mb-3">
+                            <div class="col-md-3">
+                                <label for="idtbempresa" class="form-label">Empresa:<span class="text-danger">*</span></label>
+                                <select class="form-select form-select-sm" name="idtbempresa" id="idtbempresa" required>
+                                    <option value="">Selecione</option>
+                                    <?php foreach ($empresas['linhas'] as $empresa): ?>
+                                        <option value="<?= esc($empresa['idtbempresa'] ?? '') ?>"><?= esc($empresa['descricao'] ?? '') ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             <div class="col-md-2">
                                 <label for="matricula" class="form-label">Matrícula:<span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-sm" id="matricula" name="matricula" value="<?= esc($proximaMatricula) ?>" inputmode="numeric" minlength="7" maxlength="7" pattern="16[0-9]{5}" readonly required style="background-color: #e9ecef;">
