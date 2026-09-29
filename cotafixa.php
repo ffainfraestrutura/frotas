@@ -24,6 +24,8 @@ if ($databaseName === '' || !preg_match('/^[A-Za-z0-9_]+$/', $databaseName)) {
 
 $tabelaCotaFixa = sprintf('`%s`.`tbcotafixa`', str_replace('`', '``', $databaseName));
 $tabelaCotaFixaSemSchema = '`tbcotafixa`';
+$tabelaVeiculo = sprintf('`%s`.`tbveiculo`', str_replace('`', '``', $databaseName));
+$tabelaCondutor = sprintf('`%s`.`tbcondutor`', str_replace('`', '``', $databaseName));
 
 if (!$conn instanceof mysqli) {
     http_response_code(500);
@@ -78,6 +80,26 @@ function prepararCotaFixa(mysqli $conn, string $sqlComSchema, string $sqlSemSche
     return $stmt;
 }
 
+function opcaoCotaFixaExiste(mysqli $conn, string $sqlComSchema, string $sqlSemSchema, string $valor): bool
+{
+    $stmt = prepararCotaFixa($conn, $sqlComSchema, $sqlSemSchema);
+    if (!$stmt) {
+        return false;
+    }
+
+    mysqli_stmt_bind_param($stmt, 's', $valor);
+    $sucesso = mysqli_stmt_execute($stmt);
+    if (!$sucesso) {
+        mysqli_stmt_close($stmt);
+        return false;
+    }
+
+    mysqli_stmt_store_result($stmt);
+    $existe = mysqli_stmt_num_rows($stmt) > 0;
+    mysqli_stmt_close($stmt);
+    return $existe;
+}
+
 if (empty($_SESSION['cotafixa_csrf'])) {
     $_SESSION['cotafixa_csrf'] = bin2hex(random_bytes(32));
 }
@@ -127,6 +149,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirecionarCotaFixa('danger', 'Preencha placa, matrícula e valor com dados válidos.');
         }
 
+        $placaExiste = opcaoCotaFixaExiste(
+            $conn,
+            "SELECT 1 FROM {$tabelaVeiculo} WHERE UPPER(TRIM(placa)) = ? LIMIT 1",
+            'SELECT 1 FROM `tbveiculo` WHERE UPPER(TRIM(placa)) = ? LIMIT 1',
+            $placa
+        );
+        $matriculaExiste = opcaoCotaFixaExiste(
+            $conn,
+            "SELECT 1 FROM {$tabelaCondutor} WHERE TRIM(matricula) = ? LIMIT 1",
+            'SELECT 1 FROM `tbcondutor` WHERE TRIM(matricula) = ? LIMIT 1',
+            $matricula
+        );
+        if (!$placaExiste || !$matriculaExiste) {
+            redirecionarCotaFixa('danger', 'Selecione uma placa e uma matrícula disponíveis nas listas.');
+        }
+
         $stmt = prepararCotaFixa(
             $conn,
             "INSERT INTO {$tabelaCotaFixa} (placa, matricula, valor) VALUES (?, ?, ?)",
@@ -166,6 +204,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $cotas = [];
+$placas = [];
+$condutores = [];
 $erroConsulta = '';
 $resultado = mysqli_query($conn, "SELECT placa, matricula, valor FROM {$tabelaCotaFixa} ORDER BY matricula, placa");
 if (!$resultado) {
@@ -176,6 +216,24 @@ if ($resultado instanceof mysqli_result) {
     mysqli_free_result($resultado);
 } else {
     $erroConsulta = 'Não foi possível carregar as cotas fixas no momento. Erro SQL: ' . mysqli_error($conn);
+}
+
+$resultadoPlacas = mysqli_query($conn, "SELECT DISTINCT UPPER(TRIM(placa)) AS placa FROM {$tabelaVeiculo} WHERE placa IS NOT NULL AND TRIM(placa) <> '' ORDER BY placa");
+if (!$resultadoPlacas) {
+    $resultadoPlacas = mysqli_query($conn, "SELECT DISTINCT UPPER(TRIM(placa)) AS placa FROM `tbveiculo` WHERE placa IS NOT NULL AND TRIM(placa) <> '' ORDER BY placa");
+}
+if ($resultadoPlacas instanceof mysqli_result) {
+    $placas = mysqli_fetch_all($resultadoPlacas, MYSQLI_ASSOC);
+    mysqli_free_result($resultadoPlacas);
+}
+
+$resultadoCondutores = mysqli_query($conn, "SELECT matricula, MAX(nome) AS nome FROM {$tabelaCondutor} WHERE matricula IS NOT NULL AND TRIM(matricula) <> '' GROUP BY matricula ORDER BY nome, matricula");
+if (!$resultadoCondutores) {
+    $resultadoCondutores = mysqli_query($conn, "SELECT matricula, MAX(nome) AS nome FROM `tbcondutor` WHERE matricula IS NOT NULL AND TRIM(matricula) <> '' GROUP BY matricula ORDER BY nome, matricula");
+}
+if ($resultadoCondutores instanceof mysqli_result) {
+    $condutores = mysqli_fetch_all($resultadoCondutores, MYSQLI_ASSOC);
+    mysqli_free_result($resultadoCondutores);
 }
 
 $retorno = $_SESSION['cotafixa_retorno'] ?? null;
@@ -287,8 +345,25 @@ unset($_SESSION['cotafixa_retorno']);
                 <input type="hidden" name="csrf_token" value="<?= escCotaFixa($csrfToken) ?>">
                 <input type="hidden" name="action" value="adicionar">
                 <div class="row g-3">
-                    <div class="col-md-4"><label class="form-label" for="novaPlaca">Placa</label><input id="novaPlaca" name="placa" class="form-control text-uppercase" maxlength="10" autocomplete="off" required></div>
-                    <div class="col-md-4"><label class="form-label" for="novaMatricula">Matrícula</label><input id="novaMatricula" name="matricula" class="form-control" maxlength="30" required></div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="novaPlaca">Placa</label>
+                        <select id="novaPlaca" name="placa" class="form-select text-uppercase" required>
+                            <option value="" selected disabled>Selecione uma placa</option>
+                            <?php foreach ($placas as $veiculo): ?>
+                                <option value="<?= escCotaFixa($veiculo['placa']) ?>"><?= escCotaFixa($veiculo['placa']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="novaMatricula">Matrícula</label>
+                        <select id="novaMatricula" name="matricula" class="form-select" required>
+                            <option value="" selected disabled>Selecione uma matrícula</option>
+                            <?php foreach ($condutores as $condutor): ?>
+                                <?php $nomeCondutor = trim((string) ($condutor['nome'] ?? '')); ?>
+                                <option value="<?= escCotaFixa($condutor['matricula']) ?>"><?= escCotaFixa($condutor['matricula']) ?><?= $nomeCondutor !== '' ? ' — ' . escCotaFixa($nomeCondutor) : '' ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="col-md-4"><label class="form-label" for="novoValor">Valor</label><div class="input-group"><span class="input-group-text">R$</span><input id="novoValor" name="valor" class="form-control campo-moeda" inputmode="decimal" placeholder="0,00" required></div></div>
                 </div>
             </div>
