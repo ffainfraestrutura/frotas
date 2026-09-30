@@ -10,7 +10,8 @@ $sql = "SELECT
                 h.valor_atual,
                 s.saldo,
                 s.kmorcsem,
-                s.orcsemanal
+                s.orcsemanal,
+                0
             ) as saldo_atual,
             h.operacao as ultima_operacao,
             h.data as data_ultima_operacao,

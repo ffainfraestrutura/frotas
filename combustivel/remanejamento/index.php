@@ -25,7 +25,7 @@ switch ($_SESSION['perfil']) {
     case 2: // Coordenador - Busca apenas técnicos vinculados a ele
         $sql = "SELECT 
                     sup.idtbsupervisor,
-                    u.nome,
+                    cond.nome,
                     u.matricula,
                     u.perfil,
                     sal.totalextra,
@@ -38,13 +38,22 @@ switch ($_SESSION['perfil']) {
                     JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
                     JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
                     JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
-                    JOIN tbsaldo sal ON sal.matricula = u.matricula
+                    JOIN (
+                        SELECT c.matricula, c.nome
+                        FROM tbcondutor c
+                        JOIN (
+                            SELECT matricula, MAX(idtbcondutor) AS idtbcondutor
+                            FROM tbcondutor
+                            GROUP BY matricula
+                        ) ultimo_condutor ON ultimo_condutor.idtbcondutor = c.idtbcondutor
+                    ) cond ON cond.matricula = u.matricula
+                    LEFT JOIN tbsaldo sal ON sal.matricula = u.matricula
                     LEFT JOIN tbveiculo vei ON vei.matcond = u.matricula
                 WHERE
                     coord.matricula = ?
                     AND tec.status != 'demitido'
                     AND u.perfil = 0
-                ORDER BY u.nome ASC";
+                ORDER BY cond.nome ASC";
 
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
@@ -57,7 +66,7 @@ switch ($_SESSION['perfil']) {
     case 3: // Gerente - Busca técnicos de todos os coordenadores abaixo dele
         $sql = "SELECT 
                     sup.idtbsupervisor,
-                    u.nome,
+                    cond.nome,
                     u.matricula,
                     u.perfil,
                     sal.totalextra,
@@ -71,13 +80,22 @@ switch ($_SESSION['perfil']) {
                     JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
                     JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
                     JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
-                    JOIN tbsaldo sal ON sal.matricula = u.matricula
+                    JOIN (
+                        SELECT c.matricula, c.nome
+                        FROM tbcondutor c
+                        JOIN (
+                            SELECT matricula, MAX(idtbcondutor) AS idtbcondutor
+                            FROM tbcondutor
+                            GROUP BY matricula
+                        ) ultimo_condutor ON ultimo_condutor.idtbcondutor = c.idtbcondutor
+                    ) cond ON cond.matricula = u.matricula
+                    LEFT JOIN tbsaldo sal ON sal.matricula = u.matricula
                     LEFT JOIN tbveiculo vei ON vei.matcond = u.matricula
                 WHERE
                     ger.matricula = ?
                     AND tec.status != 'demitido'
                     AND u.perfil = 0
-                ORDER BY u.nome ASC";
+                ORDER BY cond.nome ASC";
 
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
@@ -90,7 +108,7 @@ switch ($_SESSION['perfil']) {
     case 10: // Diretor - Busca todos os técnicos (visão completa)
         $sql = "SELECT 
                     sup.idtbsupervisor,
-                    u.nome,
+                    cond.nome,
                     u.matricula,
                     u.perfil,
                     sal.totalextra,
@@ -105,13 +123,22 @@ switch ($_SESSION['perfil']) {
                     JOIN bdcorp.tbsupervisor sup ON sup.idtbcoordenador = coord.idtbcoordenador
                     JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
                     JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
-                    JOIN tbsaldo sal ON sal.matricula = u.matricula
+                    JOIN (
+                        SELECT c.matricula, c.nome
+                        FROM tbcondutor c
+                        JOIN (
+                            SELECT matricula, MAX(idtbcondutor) AS idtbcondutor
+                            FROM tbcondutor
+                            GROUP BY matricula
+                        ) ultimo_condutor ON ultimo_condutor.idtbcondutor = c.idtbcondutor
+                    ) cond ON cond.matricula = u.matricula
+                    LEFT JOIN tbsaldo sal ON sal.matricula = u.matricula
                     LEFT JOIN tbveiculo vei ON vei.matcond = u.matricula
                 WHERE
                     dir.matricula = ?
                     AND tec.status != 'demitido'
                     AND u.perfil = 0
-                ORDER BY u.nome ASC";
+                ORDER BY cond.nome ASC";
 
         $stmt = mysqli_prepare($conn, $sql);
         mysqli_stmt_bind_param($stmt, 's', $_SESSION['matricula']);
@@ -124,7 +151,7 @@ switch ($_SESSION['perfil']) {
     case 4:
         $sql = "SELECT 
                     sup.idtbsupervisor,
-                    u.nome,
+                    cond.nome,
                     u.matricula,
                     u.perfil,
                     sal.totalextra,
@@ -136,12 +163,21 @@ switch ($_SESSION['perfil']) {
                     bdcorp.tbsupervisor sup
                     JOIN bdcorp.tbusuario u ON sup.idtbsupervisor = u.idtbsupervisor
                     JOIN bdcorp.tbfuncionario tec ON u.matricula = tec.matricula
-                    JOIN tbsaldo sal ON sal.matricula = u.matricula
+                    JOIN (
+                        SELECT c.matricula, c.nome
+                        FROM tbcondutor c
+                        JOIN (
+                            SELECT matricula, MAX(idtbcondutor) AS idtbcondutor
+                            FROM tbcondutor
+                            GROUP BY matricula
+                        ) ultimo_condutor ON ultimo_condutor.idtbcondutor = c.idtbcondutor
+                    ) cond ON cond.matricula = u.matricula
+                    LEFT JOIN tbsaldo sal ON sal.matricula = u.matricula
                     LEFT JOIN tbveiculo vei ON vei.matcond = u.matricula
                 WHERE
                     tec.status != 'demitido'
                     AND u.perfil = 0
-                ORDER BY u.nome ASC";
+                ORDER BY cond.nome ASC";
 
         $result = mysqli_query($conn, $sql);
         $tecnicos = mysqli_fetch_all($result, MYSQLI_ASSOC);
