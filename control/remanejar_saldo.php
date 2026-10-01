@@ -28,6 +28,33 @@ if ($matricula_origem == $matricula_destino) {
     exit;
 }
 
+// O remanejamento só pode alterar saldos já cadastrados. A listagem permite
+// selecionar qualquer condutor, mas este fluxo não deve criar registros em tbsaldo.
+function possuiRegistroSaldo($conn, $matricula)
+{
+    $sql = "SELECT 1 FROM tbsaldo WHERE matricula = ? LIMIT 1";
+    $stmt = mysqli_prepare($conn, $sql);
+    mysqli_stmt_bind_param($stmt, 's', $matricula);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $possuiRegistro = mysqli_fetch_row($result) !== null;
+    mysqli_stmt_close($stmt);
+
+    return $possuiRegistro;
+}
+
+if (!possuiRegistroSaldo($conn, $matricula_origem)) {
+    $mensagem = 'Não há registro de saldo para o colaborador de origem (matrícula ' . $matricula_origem . ').';
+    header('Location: ../combustivel/remanejamento/index.php?error=' . urlencode($mensagem));
+    exit;
+}
+
+if (!possuiRegistroSaldo($conn, $matricula_destino)) {
+    $mensagem = 'Não há registro de saldo para o colaborador de destino (matrícula ' . $matricula_destino . ').';
+    header('Location: ../combustivel/remanejamento/index.php?error=' . urlencode($mensagem));
+    exit;
+}
+
 // Função para buscar o saldo atual e KM projetado
 function getDadosAtuais($conn, $matricula)
 {
@@ -159,7 +186,7 @@ try {
     // 3. ATUALIZA O tbsaldo COM O NOVO SALDO E NOVO KM PROJETADO
     // Atualiza origem
     $sql_update_origem = "UPDATE tbsaldo SET 
-                            totalextra = totalextra - ?,
+                            totalextra = COALESCE(totalextra, 0) - ?,
                             kmorcsem = ?
                           WHERE matricula = ?";
     $stmt = mysqli_prepare($conn, $sql_update_origem);
@@ -169,7 +196,7 @@ try {
 
     // Atualiza destino
     $sql_update_destino = "UPDATE tbsaldo SET 
-                            totalextra = totalextra + ?,
+                            totalextra = COALESCE(totalextra, 0) + ?,
                             kmorcsem = ?
                           WHERE matricula = ?";
     $stmt = mysqli_prepare($conn, $sql_update_destino);
