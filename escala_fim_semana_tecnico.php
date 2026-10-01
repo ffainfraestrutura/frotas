@@ -13,8 +13,8 @@ $databaseCorp = trim((string) (($GLOBALS['databaseCorp'] ?? '') !== '' ? $GLOBAL
 /** @var mysqli|null $conn */
 $conn = $autofrotaSessao['conn'] ?? null;
 
-if ($perfil === '' || $perfil === '0') {
-    echo "<script>alert('Apenas coordenadores têm acesso'); window.location='index.php';</script>";
+if (!in_array($perfil, ['2', '4'], true)) {
+    echo "<script>alert('Acesso permitido apenas para coordenadores e perfil 4'); window.location='index.php';</script>";
     exit;
 }
 
@@ -49,6 +49,34 @@ function nomeTecnicoEscala(mysqli $conn, string $databaseCorp, string $matricula
     return trim((string) ($linha['nome'] ?? $matricula));
 }
 
+$matriculaCoordenador = $perfil === '2' ? $matricula : trim((string) ($_GET['coordenador'] ?? $_POST['coordenador'] ?? ''));
+$nomeCoordenador = $perfil === '2' ? $nome : '';
+$coordenadorValido = false;
+
+if ($conn instanceof mysqli && $databaseCorp !== '' && $matriculaCoordenador !== '') {
+    $stmtCoordenador = mysqli_prepare($conn, "SELECT c.idtbcoordenador, COALESCE(NULLIF(TRIM(f.nome), ''), NULLIF(TRIM(u.nome), ''), c.matricula) AS nome FROM `{$databaseCorp}`.`tbcoord` c LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON f.matricula COLLATE utf8mb4_unicode_ci = c.matricula COLLATE utf8mb4_unicode_ci INNER JOIN `{$databaseAutofrota}`.`tbusuario` u ON u.matricula COLLATE utf8mb4_unicode_ci = c.matricula COLLATE utf8mb4_unicode_ci WHERE c.matricula COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND u.perfil = 2 AND (f.status IS NULL OR LOWER(f.status) NOT IN ('demitido', 'inativo')) LIMIT 1");
+    if ($stmtCoordenador) {
+        mysqli_stmt_bind_param($stmtCoordenador, 's', $matriculaCoordenador);
+        mysqli_stmt_execute($stmtCoordenador);
+        $resultadoCoordenador = mysqli_stmt_get_result($stmtCoordenador);
+        $dadosCoordenadorSelecionado = $resultadoCoordenador ? mysqli_fetch_assoc($resultadoCoordenador) : [];
+        mysqli_stmt_close($stmtCoordenador);
+        $coordenadorValido = !empty($dadosCoordenadorSelecionado['idtbcoordenador']);
+        $nomeCoordenador = (string) ($dadosCoordenadorSelecionado['nome'] ?? $nomeCoordenador);
+    }
+}
+
+if (!$coordenadorValido) {
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(422);
+        echo json_encode(['success' => false, 'msg' => 'Selecione um coordenador válido']);
+    } else {
+        echo "<script>alert('Selecione um coordenador válido'); window.parent.postMessage('fecharModal', '*');</script>";
+    }
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-Type: application/json; charset=utf-8');
 
@@ -65,12 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $diasFimSemana = [$sabado, $domingo];
 
         if (isset($_POST['limpar'])) {
-            $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?)");
+            $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?) AND mat_coord = ?");
             if (!$stmtLimpar) {
                 throw new RuntimeException('Falha ao preparar limpeza');
             }
 
-            mysqli_stmt_bind_param($stmtLimpar, 'ss', $sabado, $domingo);
+            mysqli_stmt_bind_param($stmtLimpar, 'sss', $sabado, $domingo, $matriculaCoordenador);
             $okLimpar = mysqli_stmt_execute($stmtLimpar);
             $erroLimpar = $okLimpar ? '' : 'Falha ao limpar escalas';
             mysqli_stmt_close($stmtLimpar);
@@ -88,12 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ok = true;
         $erro = '';
 
-        $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?)");
+        $stmtLimpar = mysqli_prepare($conn, "DELETE FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?) AND mat_coord = ?");
         if (!$stmtLimpar) {
             throw new RuntimeException('Falha ao preparar exclusão inicial');
         }
 
-        mysqli_stmt_bind_param($stmtLimpar, 'ss', $sabado, $domingo);
+        mysqli_stmt_bind_param($stmtLimpar, 'sss', $sabado, $domingo, $matriculaCoordenador);
         $ok = mysqli_stmt_execute($stmtLimpar);
         $erro = mysqli_stmt_error($stmtLimpar);
         mysqli_stmt_close($stmtLimpar);
@@ -111,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $dia = substr((string) ($escala['dia'] ?? ''), 0, 10);
                     $status = (int) ($escala['status'] ?? 1);
                     $diaCompleto = $dia . ' 00:00:00';
-                    $matCoord = $matricula;
+                    $matCoord = $matriculaCoordenador;
 
                     if ($matriculaTecnico === '' || !in_array($dia, $diasFimSemana, true)) {
                         continue;
@@ -189,9 +217,9 @@ $erroSqlTecnicos = '';
 $usouFallbackSemVeiculo = false;
 
 if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== '') {
-    $stmtCoord = mysqli_prepare($conn, "SELECT c.idtbcoordenador FROM `{$databaseCorp}`.`tbcoord` c INNER JOIN `{$databaseCorp}`.`tbfuncionario` f ON c.matricula COLLATE utf8mb4_unicode_ci = f.matricula COLLATE utf8mb4_unicode_ci WHERE c.matricula COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND f.status COLLATE utf8mb4_unicode_ci = 'Ativo' COLLATE utf8mb4_unicode_ci LIMIT 1");
+    $stmtCoord = mysqli_prepare($conn, "SELECT c.idtbcoordenador FROM `{$databaseCorp}`.`tbcoord` c LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON c.matricula COLLATE utf8mb4_unicode_ci = f.matricula COLLATE utf8mb4_unicode_ci WHERE c.matricula COLLATE utf8mb4_unicode_ci = ? COLLATE utf8mb4_unicode_ci AND (f.status IS NULL OR LOWER(f.status) NOT IN ('demitido', 'inativo')) LIMIT 1");
     if ($stmtCoord) {
-        mysqli_stmt_bind_param($stmtCoord, 's', $matricula);
+        mysqli_stmt_bind_param($stmtCoord, 's', $matriculaCoordenador);
         mysqli_stmt_execute($stmtCoord);
         $resultadoCoord = mysqli_stmt_get_result($stmtCoord);
         $dadosCoord = $resultadoCoord ? mysqli_fetch_assoc($resultadoCoord) : [];
@@ -217,14 +245,23 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
 
         if (!empty($listaIdsSups)) {
             $listaIdsSupsStr = implode(',', $listaIdsSups);
-            $sqlEscalas = "SELECT matricula, DATE(dia) AS dia, status FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN ('{$sabado}','{$domingo}')";
-            $resultEscalas = mysqli_query($conn, $sqlEscalas);
+            $stmtEscalas = mysqli_prepare($conn, "SELECT matricula, DATE(dia) AS dia, status FROM `{$databaseAutofrota}`.`tbescala` WHERE DATE(dia) IN (?, ?) AND mat_coord = ?");
+            if ($stmtEscalas) {
+                mysqli_stmt_bind_param($stmtEscalas, 'sss', $sabado, $domingo, $matriculaCoordenador);
+                mysqli_stmt_execute($stmtEscalas);
+                $resultEscalas = mysqli_stmt_get_result($stmtEscalas);
+            } else {
+                $resultEscalas = false;
+            }
             $escalas = [];
             while ($rowEscala = $resultEscalas ? mysqli_fetch_assoc($resultEscalas) : null) {
                 if ($rowEscala === null) {
                     break;
                 }
                 $escalas[trim((string) $rowEscala['matricula'])][$rowEscala['dia']] = $rowEscala['status'];
+            }
+            if ($stmtEscalas) {
+                mysqli_stmt_close($stmtEscalas);
             }
 
                         $sqlTecnicosBase = "SELECT DISTINCT u.matricula, f.nome, u.idtbsupervisor
@@ -332,6 +369,7 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
                             Escala Fim de Semana
                             <span class="badge bg-light text-dark ms-2 fs-6"><?= count($tecnicosData) ?> Técnicos</span>
                         </h3>
+                        <div class="text-white mt-2"><i class="fas fa-user-tie me-2"></i><?= escEscalaFimSemana($nomeCoordenador) ?> <small>(<?= escEscalaFimSemana($matriculaCoordenador) ?>)</small></div>
                         <small class="text-white-50">
                             📅 Sábado <?= date('d/m/Y', strtotime($sabado)) ?> | Domingo <?= date('d/m/Y', strtotime($domingo)) ?>
                             <span class="badge bg-warning text-dark ms-2" style="font-size: 1rem;">🔒 Fecha: <?= escEscalaFimSemana(ucfirst($diaEncerramentoTexto)) ?> <?= escEscalaFimSemana($horarioEncerramentoTexto) ?></span>
@@ -414,6 +452,7 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
 
     const DIA_ENCERRAMENTO = <?= (int) $diaEncerramento ?>;
     const HORA_ENCERRAMENTO = <?= (int) $horaEncerramento ?>;
+    const MATRICULA_COORDENADOR = <?= json_encode($matriculaCoordenador, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
     function passouDoDiaEncerramento(diaAtual, diaLimite) {
         if (diaLimite === 0) { return diaAtual >= 1 && diaAtual <= 6; }
@@ -457,7 +496,7 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
                     $.ajax({
                         url: window.location.href,
                         method: 'POST',
-                        data: { limpar: true },
+                        data: { limpar: true, coordenador: MATRICULA_COORDENADOR },
                         dataType: 'json',
                         success: function(resp) {
                             if (resp && resp.success) {
@@ -483,7 +522,7 @@ if ($conn instanceof mysqli && $databaseCorp !== '' && $databaseAutofrota !== ''
             $.ajax({
                 url: window.location.href,
                 method: 'POST',
-                data: {escalas: JSON.stringify(escalas)},
+                data: {escalas: JSON.stringify(escalas), coordenador: MATRICULA_COORDENADOR},
                 dataType: 'json',
                 success: function(resp) {
                     if (resp.success) { alert(`✅ SALVO!\n${totalMarcados} escalas atualizadas com sucesso`); location.reload(); }

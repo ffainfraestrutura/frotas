@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/autofrota_common.php';
+require_once __DIR__ . '/../includes/ticketlog_api.php';
 
 $autofrotaSessao = autofrotaInit();
 $conn = $autofrotaSessao['conn'] ?? ($GLOBALS['conn'] ?? null);
@@ -131,6 +132,16 @@ if ($supervisorTabela === '') {
         $erroTela = $consulta['erro'];
     } else {
         $pedidos = $consulta['linhas'] ?? [];
+
+        foreach ($pedidos as $indice => $pedido) {
+            $consultaSaldo = consultarSaldoTicketLogPorPlaca(
+                $conn,
+                $databaseName,
+                (string) ($pedido['placa'] ?? '')
+            );
+            $pedidos[$indice]['saldo_cartao_api'] = $consultaSaldo['saldo'];
+            $pedidos[$indice]['erro_saldo_cartao'] = $consultaSaldo['sucesso'] ? '' : $consultaSaldo['mensagem'];
+        }
     }
 }
 ?>
@@ -249,7 +260,13 @@ if ($supervisorTabela === '') {
                                 <td>R$ <?= escCota(moedaCota($pedido['orcsemanal'])) ?></td>
                                 <td><?= escCota(number_format((float) $pedido['kmproj'], 0, ',', '.')) ?></td>
                                 <td><?= escCota(number_format((float) $pedido['kmos'], 0, ',', '.')) ?></td>
-                                <td>R$ <?= escCota(moedaCota($pedido['sldcartao'])) ?></td>
+                                <td>
+                                    <?php if (($pedido['saldo_cartao_api'] ?? null) !== null): ?>
+                                        <span title="Saldo consultado na TicketLog">R$ <?= escCota(moedaCota($pedido['saldo_cartao_api'])) ?></span>
+                                    <?php else: ?>
+                                        <span class="text-warning" title="<?= escCota($pedido['erro_saldo_cartao'] ?? 'Saldo indisponível.') ?>">Indisponível</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>R$ <?= escCota(moedaCota($pedido['totalextra'])) ?></td>
                                 <td>R$ <?= escCota(moedaCota($pedido['valor'])) ?></td>
                                 <td class="justificativa"><?= escCota($pedido['justificativa']) ?></td>

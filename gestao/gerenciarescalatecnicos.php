@@ -10,6 +10,7 @@ $matricula1 = (string) ($autofrotaSessao['matricula'] ?? $_SESSION['matricula'] 
 $perfil = (string) ($autofrotaSessao['perfil'] ?? $_SESSION['perfil'] ?? ($_GET['perfil'] ?? ''));
 $tipo = (string) ($_SESSION['tipo'] ?? '');
 $databaseAutofrota = trim((string) (($GLOBALS['databaseName'] ?? '') !== '' ? $GLOBALS['databaseName'] : ($autofrotaSessao['databaseName'] ?? 'bdautofrotas')));
+$databaseCorp = trim((string) (($GLOBALS['databaseCorp'] ?? '') !== '' ? $GLOBALS['databaseCorp'] : ($autofrotaSessao['databaseCorp'] ?? 'bdcorp')));
 
 /** @var mysqli|null $conn */
 $conn = $autofrotaSessao['conn'] ?? null;
@@ -20,9 +21,27 @@ $_SESSION['nome'] = $nome1;
 $_SESSION['usuario'] = $usuariof;
 $_SESSION['tipo'] = $tipo;
 
-if ($perfil === '0' || $perfil === '') {
+if (!in_array($perfil, ['2', '4'], true)) {
     echo "<script>alert('Você não tem permissão para acessar esta página'); window.location='../index.php';</script>";
     exit;
+}
+
+$coordenadores = [];
+if ($perfil === '4' && $conn instanceof mysqli && $databaseCorp !== '') {
+    $sqlCoordenadores = "SELECT DISTINCT c.matricula, COALESCE(NULLIF(TRIM(f.nome), ''), NULLIF(TRIM(u.nome), ''), c.matricula) AS nome
+        FROM `{$databaseCorp}`.`tbcoord` c
+        LEFT JOIN `{$databaseCorp}`.`tbfuncionario` f ON f.matricula COLLATE utf8mb4_unicode_ci = c.matricula COLLATE utf8mb4_unicode_ci
+        INNER JOIN `{$databaseAutofrota}`.`tbusuario` u ON u.matricula COLLATE utf8mb4_unicode_ci = c.matricula COLLATE utf8mb4_unicode_ci
+        WHERE u.perfil = 2
+          AND (f.status IS NULL OR LOWER(f.status) NOT IN ('demitido', 'inativo'))
+        ORDER BY nome";
+    $resultadoCoordenadores = mysqli_query($conn, $sqlCoordenadores);
+    while ($coordenador = $resultadoCoordenadores ? mysqli_fetch_assoc($resultadoCoordenadores) : null) {
+        if ($coordenador === null) {
+            break;
+        }
+        $coordenadores[] = $coordenador;
+    }
 }
 
 function escEscalaLegado($valor): string
@@ -108,8 +127,18 @@ $horarioEncerramentoTexto = sprintf('%02d:00', $horarioEncerramento);
             <div class="card-body p-4 text-center">
               <div class="mb-4">
                 <label class="form-label fw-bold"><i class="fas fa-user-tie me-2"></i>Coordenador</label>
+                <?php if ($perfil === '4'): ?>
+                <select class="form-select form-select-lg text-center" id="coordenadorSelecionado">
+                  <option value="">Selecione um coordenador</option>
+                  <?php foreach ($coordenadores as $coordenador): ?>
+                  <option value="<?= escEscalaLegado($coordenador['matricula']) ?>"><?= escEscalaLegado($coordenador['nome']) ?> — <?= escEscalaLegado($coordenador['matricula']) ?></option>
+                  <?php endforeach; ?>
+                </select>
+                <small class="text-muted">Escolha o coordenador para visualizar os técnicos da equipe.</small>
+                <?php else: ?>
                 <input type="text" class="form-control form-control-lg text-center" value="<?= escEscalaLegado($nome1) ?>" readonly style="background-color: #e9ecef;">
                 <small class="text-muted">Matrícula: <?= escEscalaLegado($matricula1) ?></small>
+                <?php endif; ?>
               </div>
 
               <div class="alert alert-info mb-4">
@@ -203,7 +232,17 @@ $horarioEncerramentoTexto = sprintf('%02d:00', $horarioEncerramento);
     }
 
     function abrirEscala() {
-      document.getElementById('iframeEscala').src = '../escala_fim_semana_tecnico.php';
+      let url = '../escala_fim_semana_tecnico.php';
+      const seletorCoordenador = document.getElementById('coordenadorSelecionado');
+      if (seletorCoordenador) {
+        if (!seletorCoordenador.value) {
+          alert('Selecione um coordenador para visualizar os técnicos.');
+          seletorCoordenador.focus();
+          return;
+        }
+        url += '?coordenador=' + encodeURIComponent(seletorCoordenador.value);
+      }
+      document.getElementById('iframeEscala').src = url;
       document.getElementById('importModalLabel').textContent = 'Escala Fim de Semana - Técnicos';
       const modal = new bootstrap.Modal(document.getElementById('importModal'));
       modal.show();
