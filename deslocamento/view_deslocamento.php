@@ -237,9 +237,6 @@ header("Content-type: text/html; charset=utf-8");
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
         /* ESTILO DO CABEÇALHO COM BACKGROUND SECONDARY */
-        html {
-            zoom: 0.8;
-        }
 
         .header-secondary {
             background-color: #6c757d !important;
