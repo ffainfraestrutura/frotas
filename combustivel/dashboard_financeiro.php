@@ -262,12 +262,6 @@ if (!$mostrar_selecao) {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        /* ========================================== */
-        /* ZOOM DA TELA PARA 80% */
-        /* ========================================== */
-        html {
-            zoom: 0.8;
-        }
 
         @media (max-width: 768px) {
             html {

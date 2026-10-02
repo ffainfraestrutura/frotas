@@ -340,10 +340,7 @@ if (count($historico) > 0) {
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
 
     <style>
-        html {
-            zoom: 0.8;
-        }
-
+        
         .badge-adicao {
             background-color: #d4edda;
             color: #155724;

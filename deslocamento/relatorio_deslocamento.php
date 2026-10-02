@@ -236,10 +236,7 @@ header("Content-type: text/html; charset=utf-8");
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
     <style>
-
-        html{
-            zoom: 0.8;
-        }
+        
         .select2-container .select2-selection--single {
             height: 38px !important;
             display: flex;
